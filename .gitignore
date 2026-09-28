@@ -1,5 +1,26 @@
+# --- Python ---
 __pycache__/
+*.py[cod]
+*.egg-info/
 *.pyc
-*.pyo
-.DS_Store
+# --- Environnement virtuel ---
+venv/
+.venv/
+env/
+
+# --- Secrets et configuration locale (ne jamais publier) ---
+.env
+odoo.conf
+*.conf
+
+# --- Odoo : données locales ---
+filestore/
+*.log
+*.pot~
+
+# --- Éditeurs et système ---
+.vscode/
+.idea/
 *.swp
+.DS_Store
+Thumbs.db
