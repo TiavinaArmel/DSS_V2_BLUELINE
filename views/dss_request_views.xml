@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dss_request_form" model="ir.ui.view">
+        <field name="name">dss.request.form</field>
+        <field name="model">dss.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_soumettre" type="object" string="Soumettre"
+                        attrs="{'invisible': [('state', '!=', 'brouillon')]}" class="oe_highlight"/>
+                    <span groups="dss_v2.group_dss_chef">
+                        <button name="action_open_wizard_chef" type="object" string="Valider Chef"
+                            attrs="{'invisible': [('state', '!=', 'valide_chef')]}" class="oe_highlight"/>
+                        <button name="action_open_wizard_rejeter" type="object" string="Rejeter"
+                            attrs="{'invisible': [('state', '!=', 'valide_chef')]}"/>
+                        <button name="action_open_wizard_cloture" type="object" string="Cloturer"
+                            attrs="{'invisible': [('state', '!=', 'approuve')]}" class="oe_highlight"/>
+                    </span>
+                    <span groups="dss_v2.group_dss_magasin">
+                        <button name="action_open_wizard_stock" type="object" string="Valider Stock"
+                            attrs="{'invisible': [('state', '!=', 'valide_magasin')]}" class="oe_highlight"/>
+                        <button name="action_open_wizard_rejeter" type="object" string="Rejeter"
+                            attrs="{'invisible': [('state', '!=', 'valide_magasin')]}"/>
+                        <button name="action_open_modifier_qte_sortie" type="object"
+                            string="Modifier Qte"
+                            attrs="{'invisible': [('state', '=', 'approuve')]}"/>
+                        <button name="action_imprimer_bon_livraison" type="object" string="Bon de Livraison"
+                            attrs="{'invisible': [('state', '!=', 'approuve')]}" class="oe_highlight"/>
+                    </span>
+                    <button name="action_renvoyer_demandeur" type="object" string="Renvoyer au demandeur"
+                        attrs="{'invisible': [('state', '!=', 'rejete')]}" class="oe_highlight"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="brouillon,valide_chef,valide_magasin,approuve,cloture"/>
+                </header>
+                <sheet>
+                    <div class="oe_title" attrs="{'invisible': [('name', '=', '/')]}">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="bci"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="partner_id"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="lieu_intervention"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="date_intervention"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="location_id"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="location_dest_id"
+                                attrs="{'invisible': [('type_intervention', '!=', 'appro_distant')],
+                                        'required': [('type_intervention', '=', 'appro_distant')],
+                                        'readonly': [('state', '!=', 'brouillon')]}"/>
+                        </group>
+                        <group>
+                            <field name="type_intervention"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="sens_mouvement" readonly="1"/>
+                            <field name="has_ecart" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Articles">
+                            <field name="line_ids"
+                                attrs="{'readonly': [('state', '!=', 'brouillon')]}">
+                                <tree editable="bottom">
+                                    <field name="product_id"
+                                        context="{'dss_location_id': parent.location_id}"/>
+                                    <field name="qty_standard" readonly="1"/>
+                                    <field name="qty_demandee_readonly" invisible="1"/>
+                                    <field name="qty_demandee"
+                                        attrs="{'readonly': [('qty_demandee_readonly', '=', True)]}"/>
+                                    <field name="qty_sortie"/>
+                                    <field name="qty_installee"/>
+                                    <field name="qty_retour"/>
+                                    <field name="observation"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_dss_request_tree" model="ir.ui.view">
+        <field name="name">dss.request.tree</field>
+        <field name="model">dss.request</field>
+        <field name="arch" type="xml">
+            <tree default_order="id desc">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="type_intervention"/>
+                <field name="sens_mouvement"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_dss_request" model="ir.actions.act_window">
+        <field name="name">Demandes DSS</field>
+        <field name="res_model">dss.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="view_dss_request_form_readonly" model="ir.ui.view">
+        <field name="name">dss.request.form.readonly</field>
+        <field name="model">dss.request</field>
+        <field name="inherit_id" ref="view_dss_request_form"/>
+        <field name="groups_id" eval="[(6,0,[
+            ref('dss_v2.group_dss_chef'),
+            ref('dss_v2.group_dss_magasin'),
+            ref('dss_v2.group_dss_securite'),
+        ])]"/>
+        <field name="arch" type="xml">
+            <form position="attributes">
+                <attribute name="create">0</attribute>
+                <attribute name="edit">0</attribute>
+                <attribute name="delete">0</attribute>
+            </form>
+            <xpath expr="//button[@name='action_soumettre']" position="replace"/>
+        </field>
+    </record>
+</odoo>

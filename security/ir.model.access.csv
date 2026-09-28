@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dss_request,dss.request,model_dss_request,,1,1,1,1
+access_dss_request_line,dss.request.line,model_dss_request_line,,1,1,1,1
+access_dss_qty_sortie_wizard,dss.qty.sortie.wizard,model_dss_qty_sortie_wizard,dss_v2.group_dss_magasin,1,1,1,1
+access_dss_qty_sortie_wizard_line,dss.qty.sortie.wizard.line,model_dss_qty_sortie_wizard_line,dss_v2.group_dss_magasin,1,1,1,1
+access_dss_rejet_wizard,dss.rejet.wizard,model_dss_rejet_wizard,,1,1,1,1
+access_dss_cloture_wizard,dss.cloture.wizard,model_dss_cloture_wizard,dss_v2.group_dss_chef,1,1,1,1
+access_dss_cloture_wizard_line,dss.cloture.wizard.line,model_dss_cloture_wizard_line,dss_v2.group_dss_chef,1,1,1,1

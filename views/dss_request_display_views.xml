@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dss_request_form_display_inherit" model="ir.ui.view">
+        <field name="name">dss.request.form.display.inherit</field>
+        <field name="model">dss.request</field>
+        <field name="inherit_id" ref="dss_v2.view_dss_request_form"/>
+        <field name="arch" type="xml">
+            <!-- Champ technique nécessaire à l'attrs ci-dessous -->
+            <xpath expr="//field[@name='line_ids']/tree" position="inside">
+                <field name="is_magasin_user" invisible="1"/>
+            </xpath>
+
+            <!-- Qté Sortie : réservé au Responsable Stock -->
+            <xpath expr="//field[@name='line_ids']//field[@name='qty_sortie']" position="attributes">
+                <attribute name="attrs">{'readonly': [('is_magasin_user', '=', False)]}</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

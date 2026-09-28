@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dss_qty_sortie_wizard_form" model="ir.ui.view">
+        <field name="name">dss.qty.sortie.wizard.form</field>
+        <field name="model">dss.qty.sortie.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Modifier Qte">
+                <field name="request_id" invisible="1"/>
+                <field name="line_ids">
+                    <tree editable="bottom">
+                        <field name="product_id" readonly="1"/>
+                        <field name="qty_demandee" readonly="1"/>
+                        <field name="qty_sortie"/>
+                        <field name="qty_retour"/>
+                    </tree>
+                </field>
+                <footer>
+                    <button name="action_valider" type="object" string="Valider" class="oe_highlight"/>
+                    <button string="Annuler" class="oe_link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

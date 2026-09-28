@@ -1,0 +1,22 @@
+{
+    'name': 'DSS V2 - Demande de Sortie de Stock',
+    'version': '2.0',
+    'depends': ['stock', 'mail'],
+    'author': 'Jhon',
+    'category': 'Inventory',
+    'description': "Digitalisation des Demandes de Sortie de Stock (DSS) selon cahier des charges",
+    'data': [
+        'security/dss_security.xml',
+        'security/ir.model.access.csv',
+        'data/dss_sequence.xml',
+        'views/dss_qty_sortie_wizard_views.xml',
+        'views/dss_rejet_wizard_views.xml',
+        'views/dss_cloture_wizard_views.xml',
+        'views/dss_validation_wizard_views.xml',
+        'views/dss_request_views.xml',
+        'views/dss_menu.xml',
+        'views/dss_request_display_views.xml',
+        'report/dss_report.xml',
+    ],
+    'installable': True,
+}

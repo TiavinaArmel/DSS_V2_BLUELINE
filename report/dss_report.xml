@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_bon_livraison_document">
+        <t t-call="report.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="report.external_layout">
+                    <div class="page">
+                        <h2>Bon de Livraison</h2>
+
+                        <table style="width: 100%; margin-bottom: 20px; border: none;">
+                            <tr>
+                                <td style="text-align: center; border: none;">
+                                    <span t-if="o.signataire_chef_id" style="color: green; font-weight: bold;">&#9745;</span>
+                                    <span t-if="not o.signataire_chef_id" style="color: #999;">&#9744;</span>
+                                    Soumis
+                                </td>
+                                <td style="text-align: center; border: none;">
+                                    <span t-if="o.signataire_chef_id" style="color: green; font-weight: bold;">&#9745;</span>
+                                    <span t-if="not o.signataire_chef_id" style="color: #999;">&#9744;</span>
+                                    Validation Chef
+                                </td>
+                                <td style="text-align: center; border: none;">
+                                    <span t-if="o.signataire_magasin_id" style="color: green; font-weight: bold;">&#9745;</span>
+                                    <span t-if="not o.signataire_magasin_id" style="color: #999;">&#9744;</span>
+                                    Validation Stock
+                                </td>
+                                <td style="text-align: center; border: none;">
+                                    <span t-if="o.state == 'approuve'" style="color: green; font-weight: bold;">&#9745;</span>
+                                    <span t-if="o.state != 'approuve'" style="color: #999;">&#9744;</span>
+                                    Approuve
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <strong>Numero DSS :</strong>
+                                <span t-field="o.name"/><br/>
+                                <strong>Client :</strong>
+                                <span t-field="o.partner_id.name"/><br/>
+                                <strong>Lieu d intervention :</strong>
+                                <span t-field="o.lieu_intervention"/><br/>
+                                <strong>Date d intervention :</strong>
+                                <span t-field="o.date_intervention"/>
+                            </div>
+                            <div class="col-xs-6">
+                                <strong>BCI :</strong>
+                                <span t-field="o.bci"/><br/>
+                                <strong>Type d intervention :</strong>
+                                <span t-field="o.type_intervention"/><br/>
+                                <strong>Emplacement :</strong>
+                                <span t-field="o.location_id.display_name"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-condensed" style="margin-top: 20px;">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Qte Demandee</th>
+                                    <th>Qte Sortie</th>
+                                    <th>Qte Installee</th>
+                                    <th>Qte Retour</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="line">
+                                    <td><span t-field="line.product_id.name"/></td>
+                                    <td><span t-field="line.qty_demandee"/></td>
+                                    <td><span t-field="line.qty_sortie"/></td>
+                                    <td><span t-field="line.qty_installee"/></td>
+                                    <td><span t-field="line.qty_retour"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="row" style="margin-top: 40px;">
+                            <div class="col-xs-6">
+                                <strong>Valide par Chef :</strong>
+                                <span t-field="o.signataire_chef_id.name"/><br/>
+                                <span t-field="o.date_validation_chef"/>
+                            </div>
+                            <div class="col-xs-6">
+                                <strong>Valide par Stock :</strong>
+                                <span t-field="o.signataire_magasin_id.name"/><br/>
+                                <span t-field="o.date_validation_magasin"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_bon_livraison" model="ir.actions.report.xml">
+        <field name="name">Bon de Livraison</field>
+        <field name="model">dss.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">dss_v2.report_bon_livraison_document</field>
+        <field name="report_file">dss_v2.report_bon_livraison_document</field>
+        <field name="print_report_name">'Bon de Livraison - %s' % (object.name)</field>
+    </record>
+</odoo>

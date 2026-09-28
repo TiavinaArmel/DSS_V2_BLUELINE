@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_dss_root" name="DSS" sequence="20"/>
+    <menuitem id="menu_dss_request" name="Demandes" parent="menu_dss_root" action="action_dss_request"/>
+</odoo>

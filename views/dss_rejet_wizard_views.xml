@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dss_rejet_wizard_form" model="ir.ui.view">
+        <field name="name">dss.rejet.wizard.form</field>
+        <field name="model">dss.rejet.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="request_id" invisible="1"/>
+                <group>
+                    <field name="motif" placeholder="Expliquez pourquoi cette demande est rejetee..."/>
+                </group>
+                <footer>
+                    <button name="action_confirmer" type="object" string="Confirmer le rejet" class="oe_highlight"/>
+                    <button string="Annuler" class="oe_link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

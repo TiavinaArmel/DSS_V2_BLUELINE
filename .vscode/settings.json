@@ -1,0 +1,7 @@
+{
+  "python.analysis.extraPaths": ["C:/Program Files (x86)/Odoo 10.0/server"],
+  "python.analysis.autoImportCompletions": true,
+  "xml.symbols.enabled": false,
+  "python.languageServer": "None",
+  "Odoo.selectedProfile": "Disabled"
+}

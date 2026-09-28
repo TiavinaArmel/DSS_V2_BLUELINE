@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dss_validation_chef_wizard_form" model="ir.ui.view">
+        <field name="name">dss.validation.chef.wizard.form</field>
+        <field name="model">dss.validation.chef.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirmation de validation">
+                <div class="o_field_widget o_field_many2one">
+                    <p>Vous etes sur le point de valider cette demande en tant que Responsable Chef.</p>
+                    <p>Cette action fera passer la demande a l etape <b>Validation Stock</b>.</p>
+                    <p>Souhaitez-vous continuer ?</p>
+                </div>
+                <footer>
+                    <button name="action_confirmer" type="object"
+                        string="Confirmer" class="oe_highlight"/>
+                    <button name="action_annuler" type="object"
+                        string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_dss_validation_stock_wizard_form" model="ir.ui.view">
+        <field name="name">dss.validation.stock.wizard.form</field>
+        <field name="model">dss.validation.stock.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirmation de validation">
+                <div class="o_field_widget o_field_many2one">
+                    <p>Vous etes sur le point de valider cette demande en tant que Responsable Stock.</p>
+                    <p>Cette validation permettra ensuite l approbation finale de la demande.</p>
+                    <p>Souhaitez-vous continuer ?</p>
+                </div>
+                <footer>
+                    <button name="action_confirmer" type="object"
+                        string="Confirmer" class="oe_highlight"/>
+                    <button name="action_annuler" type="object"
+                        string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_dss_validation_approuver_wizard_form" model="ir.ui.view">
+        <field name="name">dss.validation.approuver.wizard.form</field>
+        <field name="model">dss.validation.approuver.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirmation d approbation">
+                <div class="o_field_widget o_field_many2one">
+                    <p>Vous etes sur le point d approuver definitivement cette demande.</p>
+                    <p>Cette action fera passer la demande a l etat <b>Approuve</b>.</p>
+                    <p>Souhaitez-vous continuer ?</p>
+                </div>
+                <footer>
+                    <button name="action_confirmer" type="object"
+                        string="Confirmer" class="oe_highlight"/>
+                    <button name="action_annuler" type="object"
+                        string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
