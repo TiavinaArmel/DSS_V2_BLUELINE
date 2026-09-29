@@ -1,26 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Définition de la catégorie DSS et des groupes de sécurité du module.
+    Les permissions CRUD seront définies dans ir.model.access.csv.
+-->
 <odoo>
+
+    <!-- Catégorie DSS affichée dans la page Utilisateurs -->
     <record id="module_category_dss" model="ir.module.category">
         <field name="name">DSS</field>
     </record>
 
+    <!-- ============================================ -->
+    <!-- ============ GROUPES UTILISATEURS ========== -->
+    <!-- ============================================ -->
+
+    <!-- Groupe : Demandeur de DSS (création / soumission) -->
     <record id="group_dss_demandeur" model="res.groups">
         <field name="name">DSS / Demandeur</field>
         <field name="category_id" ref="module_category_dss"/>
     </record>
 
+    <!-- Groupe : Chef (validation de la DSS) -->
     <record id="group_dss_chef" model="res.groups">
         <field name="name">DSS / Chef</field>
         <field name="category_id" ref="module_category_dss"/>
     </record>
 
+    <!-- Groupe : Magasin (préparation de la sortie de stock) -->
     <record id="group_dss_magasin" model="res.groups">
         <field name="name">DSS / Magasin</field>
         <field name="category_id" ref="module_category_dss"/>
     </record>
 
+    <!-- Groupe : Sécurité (contrôle de la sortie de stock) -->
     <record id="group_dss_securite" model="res.groups">
         <field name="name">DSS / Securite</field>
         <field name="category_id" ref="module_category_dss"/>
     </record>
+
 </odoo>
