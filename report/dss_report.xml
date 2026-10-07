@@ -1,103 +1,239 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ce fichier décrit un rapport PDF au format XML utilisé par Odoo. -->
 <odoo>
+    <!-- Déclare le modèle QWeb du document imprimé. L'identifiant sert à le retrouver dans Odoo. -->
     <template id="report_bon_livraison_document">
+        <!-- Utilise le conteneur HTML standard nécessaire à la génération du rapport. -->
         <t t-call="report.html_container">
+            <!-- Pour chaque demande DSS à imprimer, la variable « o » représente cette demande. -->
             <t t-foreach="docs" t-as="o">
+                <!-- Ajoute l'en-tête et le pied de page standards d'Odoo autour du document. -->
                 <t t-call="report.external_layout">
+                    <!-- Commence la page du rapport. -->
                     <div class="page">
+                        <!-- Titre affiché en haut du bon. -->
                         <h2>Bon de Livraison</h2>
 
+                        <!-- Tableau des étapes et de leur état sous forme de cases à cocher. -->
                         <table style="width: 100%; margin-bottom: 20px; border: none;">
+                            <!-- Première ligne du tableau. -->
                             <tr>
+                                <!-- Centre la première case et enlève les bordures de cette
+                                cellule. -->
                                 <td style="text-align: center; border: none;">
-                                    <span t-if="o.signataire_chef_id" style="color: green; font-weight: bold;">&#9745;</span>
-                                    <span t-if="not o.signataire_chef_id" style="color: #999;">&#9744;</span>
-                                    Soumis
-                                </td>
+                                    <!-- Affiche une case cochée si un chef a signé. -->
+                                    <span
+                                        t-if="o.signataire_chef_id"
+                                        style="color: green; font-weight: bold;">&#9745;</span>
+                                    <!-- Sinon, affiche une case vide. -->
+                                    <span
+                                        t-if="not o.signataire_chef_id" style="color: #999;">&#9744;</span>
+                                    <!-- Texte associé à cette case. -->
+                                    Soumis </td>
+                                <!-- Cellule indiquant la validation par le chef. -->
                                 <td style="text-align: center; border: none;">
-                                    <span t-if="o.signataire_chef_id" style="color: green; font-weight: bold;">&#9745;</span>
-                                    <span t-if="not o.signataire_chef_id" style="color: #999;">&#9744;</span>
-                                    Validation Chef
-                                </td>
+                                    <!-- Coche la case si un chef a signé. -->
+                                    <span
+                                        t-if="o.signataire_chef_id"
+                                        style="color: green; font-weight: bold;">&#9745;</span>
+                                    <!-- Laisse la case vide si aucun chef n'a signé. -->
+                                    <span
+                                        t-if="not o.signataire_chef_id" style="color: #999;">&#9744;</span>
+                                    <!-- Texte associé à cette case. -->
+                                    Validation Chef </td>
+                                <!-- Cellule indiquant la validation par le magasin ou le stock. -->
                                 <td style="text-align: center; border: none;">
-                                    <span t-if="o.signataire_magasin_id" style="color: green; font-weight: bold;">&#9745;</span>
-                                    <span t-if="not o.signataire_magasin_id" style="color: #999;">&#9744;</span>
-                                    Validation Stock
-                                </td>
+                                    <!-- Coche la case si le magasin a signé. -->
+                                    <span
+                                        t-if="o.signataire_magasin_id"
+                                        style="color: green; font-weight: bold;">&#9745;</span>
+                                    <!-- Laisse la case vide si le magasin n'a pas signé. -->
+                                    <span
+                                        t-if="not o.signataire_magasin_id" style="color: #999;">
+                                    &#9744;</span>
+                                    <!-- Texte associé à cette case. --> Validation Stock </td>
+                                <!-- Cellule indiquant si la demande est approuvée. -->
                                 <td style="text-align: center; border: none;">
-                                    <span t-if="o.state == 'approuve'" style="color: green; font-weight: bold;">&#9745;</span>
-                                    <span t-if="o.state != 'approuve'" style="color: #999;">&#9744;</span>
-                                    Approuve
-                                </td>
+                                    <!-- Coche la case lorsque l'état de la demande est « approuve
+                                    ». -->
+                                    <span
+                                        t-if="o.state == 'approuve'"
+                                        style="color: green; font-weight: bold;">&#9745;</span>
+                                    <!-- Sinon, affiche une case vide. -->
+                                    <span
+                                        t-if="o.state != 'approuve'" style="color: #999;">&#9744;</span>
+                                    <!-- Texte associé à cette case. -->
+                                    Approuve </td>
                             </tr>
                         </table>
 
+                        <!-- Ligne contenant deux colonnes d'informations sur la demande. -->
                         <div class="row">
+                            <!-- Première colonne : numéro, client et détails de l'intervention. -->
                             <div class="col-xs-6">
+                                <!-- Affiche le libellé puis le numéro de la demande DSS. -->
                                 <strong>Numero DSS :</strong>
-                                <span t-field="o.name"/><br/>
+                                <!-- Insère le champ « name » de la demande. -->
+                                <span t-field="o.name" />
+                                <br />
+                                <!-- Affiche le libellé du client. -->
                                 <strong>Client :</strong>
-                                <span t-field="o.partner_id.name"/><br/>
+                                <!-- Insère le nom du client lié à la demande. -->
+                                <span t-field="o.partner_id.name" />
+                                <br />
+                                <!-- Affiche le libellé du lieu de l'intervention. -->
                                 <strong>Lieu d intervention :</strong>
-                                <span t-field="o.lieu_intervention"/><br/>
+                                <!-- Insère le lieu indiqué dans la demande. -->
+                                <span t-field="o.lieu_intervention" />
+                                <br />
+                                <!-- Affiche le libellé de la date. -->
                                 <strong>Date d intervention :</strong>
-                                <span t-field="o.date_intervention"/>
+                                <!-- Insère la date de l'intervention. -->
+                                <span t-field="o.date_intervention" />
                             </div>
+                            <!-- Deuxième colonne : bon de commande et autres détails. -->
                             <div class="col-xs-6">
+                                <!-- Affiche le libellé du bon de commande interne. -->
                                 <strong>BCI :</strong>
-                                <span t-field="o.bci"/><br/>
+                                <!-- Insère la valeur du champ BCI. -->
+                                <span t-field="o.bci" />
+                                <br />
+                                <!-- Affiche le libellé du type d'intervention. -->
                                 <strong>Type d intervention :</strong>
-                                <span t-field="o.type_intervention"/><br/>
+                                <!-- Insère le type d'intervention choisi. -->
+                                <span t-field="o.type_intervention" />
+                                <br />
+                                <!-- Affiche le libellé de l'emplacement. -->
                                 <strong>Emplacement :</strong>
-                                <span t-field="o.location_id.display_name"/>
+                                <!-- Insère le nom lisible de l'emplacement lié à la demande. -->
+                                <span t-field="o.location_id.display_name" />
                             </div>
                         </div>
 
+                        <!-- Tableau des articles, avec une marge au-dessus. -->
                         <table class="table table-condensed" style="margin-top: 20px;">
+                            <!-- En-tête du tableau des quantités. -->
                             <thead>
                                 <tr>
+                                    <!-- Colonne du nom de l'article. -->
                                     <th>Article</th>
+                                    <!-- Colonne de la quantité demandée. -->
                                     <th>Qte Demandee</th>
+                                    <!-- Colonne de la quantité sortie du stock. -->
                                     <th>Qte Sortie</th>
+                                    <!-- Colonne de la quantité installée. -->
                                     <th>Qte Installee</th>
+                                    <!-- Colonne de la quantité retournée. -->
                                     <th>Qte Retour</th>
                                 </tr>
                             </thead>
+                            <!-- Corps du tableau : une ligne est créée pour chaque ligne de
+                            demande. -->
                             <tbody>
+                                <!-- Parcourt les lignes liées à la demande « o » ; « line »
+                                représente une ligne. -->
                                 <tr t-foreach="o.line_ids" t-as="line">
-                                    <td><span t-field="line.product_id.name"/></td>
-                                    <td><span t-field="line.qty_demandee"/></td>
-                                    <td><span t-field="line.qty_sortie"/></td>
-                                    <td><span t-field="line.qty_installee"/></td>
-                                    <td><span t-field="line.qty_retour"/></td>
+                                    <!-- Affiche le nom de l'article de cette ligne. -->
+                                    <td>
+                                        <span t-field="line.product_id.name" />
+                                    </td>
+                                    <!-- Affiche la quantité demandée. -->
+                                    <td>
+                                        <span t-field="line.qty_demandee" />
+                                    </td>
+                                    <!-- Affiche la quantité sortie du stock. -->
+                                    <td>
+                                        <span t-field="line.qty_sortie" />
+                                    </td>
+                                    <!-- Affiche la quantité installée. -->
+                                    <td>
+                                        <span t-field="line.qty_installee" />
+                                    </td>
+                                    <!-- Affiche la quantité retournée. -->
+                                    <td>
+                                        <span t-field="line.qty_retour" />
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
 
+                        <!-- Ligne des validations, séparée du tableau par une marge. -->
                         <div class="row" style="margin-top: 40px;">
+                            <!-- Première colonne : nom du chef qui a validé et date de validation. -->
                             <div class="col-xs-6">
+                                <!-- Libellé du signataire chef. -->
                                 <strong>Valide par Chef :</strong>
-                                <span t-field="o.signataire_chef_id.name"/><br/>
-                                <span t-field="o.date_validation_chef"/>
+                                <!-- Affiche le nom du chef signataire. -->
+                                <span t-field="o.signataire_chef_id.name" />
+                                <br />
+                                <!-- Affiche la date de validation par le chef. -->
+                                <span t-field="o.date_validation_chef" />
                             </div>
+                            <!-- Deuxième colonne : nom du signataire du stock et date de
+                            validation. -->
                             <div class="col-xs-6">
+                                <!-- Libellé du signataire du stock. -->
                                 <strong>Valide par Stock :</strong>
-                                <span t-field="o.signataire_magasin_id.name"/><br/>
-                                <span t-field="o.date_validation_magasin"/>
+                                <!-- Affiche le nom du signataire du stock. -->
+                                <span t-field="o.signataire_magasin_id.name" />
+                                <br />
+                                <!-- Affiche la date de validation par le stock. -->
+                                <span t-field="o.date_validation_magasin" />
                             </div>
                         </div>
+                        <!-- Fin de la page du document. -->
                     </div>
+                    <!-- Fin de la mise en page externe d'Odoo. -->
                 </t>
+                <!-- Fin du traitement de cette demande. La boucle continue s'il y en a d'autres. -->
             </t>
+            <!-- Fin du conteneur HTML du rapport. -->
         </t>
+        <!-- Fin du modèle de rapport. -->
     </template>
-
-    <record id="action_report_bon_livraison" model="ir.actions.report.xml">
-        <field name="name">Bon de Livraison</field>
-        <field name="model">dss.request</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">dss_v2.report_bon_livraison_document</field>
-        <field name="report_file">dss_v2.report_bon_livraison_document</field>
-        <field name="print_report_name">'Bon de Livraison - %s' % (object.name)</field>
+    <!-- Déclare un format de papier personnalisé pour le rapport. -->
+    <record id="paperformat_dss_a4" model="report.paperformat">
+        <!-- Nom affiché dans la configuration Odoo. -->
+        <field name="name">A4 DSS</field>
+        <!-- Ce format n'est pas le format par défaut du système. -->
+        <field name="default" eval="False" />
+        <!-- Utilise une feuille au format A4. -->
+        <field name="format">A4</field>
+        <!-- Oriente la feuille en portrait. -->
+        <field name="orientation">Portrait</field>
+        <!-- Définit la marge du haut, en millimètres. -->
+        <field name="margin_top">40</field>
+        <!-- Définit la marge du bas, en millimètres. -->
+        <field name="margin_bottom">23</field>
+        <!-- Définit la marge de gauche, en millimètres. -->
+        <field name="margin_left">7</field>
+        <!-- Définit la marge de droite, en millimètres. -->
+        <field name="margin_right">7</field>
+        <!-- N'ajoute pas de ligne sous l'en-tête. -->
+        <field name="header_line" eval="False" />
+        <!-- Définit l'espace réservé à l'en-tête, en millimètres. -->
+        <field name="header_spacing">35</field>
+        <!-- Définit la résolution du PDF ; 0 laisse Odoo utiliser sa valeur par défaut. -->
+        <field name="dpi">0</field>
     </record>
+
+    <!-- Déclare l'action qui permet d'imprimer le bon depuis une demande DSS. -->
+    <record id="action_report_bon_livraison" model="ir.actions.report.xml">
+        <!-- Nom de l'action et libellé de l'impression. -->
+        <field name="name">Bon de Livraison</field>
+        <!-- Cette action concerne les enregistrements du modèle dss.request. -->
+        <field name="model">dss.request</field>
+        <!-- Produit un fichier PDF à partir du modèle QWeb. -->
+        <field name="report_type">qweb-pdf</field>
+        <!-- Indique à Odoo le modèle QWeb à utiliser. -->
+        <field name="report_name">dss_v2.report_bon_livraison_document</field>
+        <!-- Nom technique du fichier de rapport, correspondant au modèle QWeb. -->
+        <field name="report_file">dss_v2.report_bon_livraison_document</field>
+        <!-- format du papier utilisée pour le pdf -->
+        <field name="paperformat_id" ref="paperformat_dss_a4" />
+        <!-- Construit le nom du PDF avec le numéro de la demande. -->
+        <field name="print_report_name">'Bon de Livraison - %s.pdf' % (object.name)</field>
+        <!-- Fin de la déclaration de l'action d'impression. -->
+    </record>
+    <!-- Fin du fichier de données Odoo. -->
 </odoo>

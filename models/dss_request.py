@@ -732,39 +732,42 @@ class DssRequest(models.Model):
 
     def _generer_bon_livraison(self):
         """
-        Génère le PDF du bon de livraison et l'attache au chatter.
+    Génère le PDF du bon de livraison et l'attache au chatter.
 
-        Utilise le rapport QWeb 'dss_v2.report_bon_livraison_document'
-        pour produire le PDF, puis crée une pièce jointe (ir.attachment)
-        liée à la demande courante. Enfin, poste un message dans le
-        chatter avec cette pièce jointe pour la rendre téléchargeable.
-
-        À appeler une fois la demande approuvée.
+    Utilise le rapport QWeb 'dss_v2.report_bon_livraison_document'
+    avec un paperformat explicite pour éviter le bug d'Odoo 10
+    où Report.get_pdf() ignore le paperformat du rapport.
         """
-
         self.ensure_one()
-        Report = self.env["report"]  # récupération du modèle report d'Odoo
-        pdf_content = Report.get_pdf([self.id], "dss_v2.report_bon_livraison_document")
-
-        # Report.get_pdf() demande à Odoo de générer le rendu PDF du
-        # rapport QWeb nommé 'dss_v2.report_bon_livraison_document' (celui
-        # défini dans report/dss_report.xml)
-
-        attachment = self.env["ir.attachment"].create(
-            # ir.attachment est le modèle standard d'Odoo pour stocker des
-            # fichiers joints
-            {
-                "name": "Bon_Livraison_%s.pdf" % self.name,
-                "type": "binary",
-                "datas": base64.b64encode(pdf_content),
-                # c'est ici qu'on retrouve l'usage de l'import base64 vu
-                # tout en haut du fichier : le champ 'datas' attend du
-                # texte, pas du binaire brut
-                "datas_fname": "Bon_Livraison_%s.pdf" % self.name,
-                "res_model": "dss.request",
-                "res_id": self.id,
-            }
+    
+        # Récupère le paperformat défini dans report/dss_report.xml
+        paperformat = self.env.ref(
+            "dss_v2.paperformat_dss_bon_livraison",
+            raise_if_not_found=False,
         )
+    
+        # Prépare le contexte avec le paperformat explicite
+        ctx = dict(self.env.context)
+        if paperformat:
+            ctx["paperformat_id"] = paperformat.id
+    
+        # Génère le PDF en forçant le paperformat dans le contexte
+        pdf_content = self.env["report"].with_context(ctx).get_pdf(
+            [self.id],
+            "dss_v2.report_bon_livraison_document",
+        )
+    
+        # Crée la pièce jointe
+        attachment = self.env["ir.attachment"].create({
+            "name": "Bon_Livraison_%s.pdf" % self.name,
+            "type": "binary",
+            "datas": base64.b64encode(pdf_content),
+            "datas_fname": "Bon_Livraison_%s.pdf" % self.name,
+            "res_model": "dss.request",
+            "res_id": self.id,
+        })
+    
+        # Poste le message dans le chatter
         self.message_post(
             body="Bon de Livraison genere automatiquement.",
             attachment_ids=[attachment.id],
@@ -772,19 +775,12 @@ class DssRequest(models.Model):
 
     @api.multi
     def action_imprimer_bon_livraison(self):
-        # action déclenchée par un BOUTON dans la vue (pas automatique
-        # comme _generer_bon_livraison) : permet à l'utilisateur de
-        # ré-imprimer/re-télécharger le bon de livraison à la demande
+        # Impression du Bon de Livraison à la demande : on laisse Odoo
+        # construire l'action (report.get_action) pour qu'elle contienne
+        # bien l'id de la demande à imprimer (active_ids).
         self.ensure_one()
-        return {
-            "type": "ir.actions.report.xml",
-            "report_name": "dss_v2.report_bon_livraison_document",
-            "report_type": "qweb-pdf",
-            "context": self.env.context,
-        }
-        # renvoie un dictionnaire spécial qu'Odoo sait interpréter comme
-        # "ouvre/télécharge ce rapport PDF". C'est le mécanisme standard
-        # pour déclencher l'impression d'un rapport depuis un bouton
+        return self.env['report'].get_action(
+            self, 'dss_v2.report_bon_livraison_document')
 
     @api.multi
     def action_approuver(self):
