@@ -6,9 +6,10 @@
     "version": "2.1",
 
     # Dépendances Odoo :
+    # - web   : assets et rapports QWeb
     # - stock : mouvements de stock (Inventory)
     # - mail  : chatter et notifications internes
-    "depends": ["stock", "mail"],
+    "depends": ["web", "stock", "mail"],
 
     # Auteur du module
     "author": "Tiavina Armel",

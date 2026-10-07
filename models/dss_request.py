@@ -208,11 +208,14 @@ class DssRequest(models.Model):
     # request_id défini dans DssRequestLine plus haut
     line_ids = fields.One2many("dss.request.line", "request_id", string="Lignes")
 
-    # Ces 4 champs forment une PISTE D'AUDIT (traçabilité) : qui a validé
-    # en tant que Chef et quand, qui a validé en tant que Magasin et quand.
-    # Tous en readonly=True car remplis uniquement par le code (les
-    # méthodes action_valider_chef et action_valider_magasin plus bas),
-    # jamais saisis à la main.
+    # Ces champs gardent la trace des personnes qui soumettent et valident la DSS.
+    # Ils sont remplis par le workflow et ne sont pas saisis manuellement.
+    signataire_demandeur_id = fields.Many2one(
+        "res.users", string="Soumis par", readonly=True, copy=False
+    )
+    date_soumission = fields.Datetime(
+        string="Date de soumission", readonly=True, copy=False
+    )
 
     signataire_chef_id = fields.Many2one(
         "res.users", string="Valide par Chef", readonly=True
@@ -370,6 +373,8 @@ class DssRequest(models.Model):
                 raise ValidationError(
                     "Vous devez ajouter au moins un article avant de soumettre."
                 )
+            rec.signataire_demandeur_id = self.env.user
+            rec.date_soumission = fields.Datetime.now()
             rec.state = "valide_chef"
             detail = rec._detail_articles_html()
             rec.message_post(
