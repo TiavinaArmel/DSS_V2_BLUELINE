@@ -5,6 +5,7 @@ from . import stock_picking  # héritage de stock.picking
 from . import product_template  # héritage de product.template
 from . import dss_request  # modèles principaux DSS
 from . import dss_request_line  # lignes des demandes DSS
+from . import dss_rejet_wizard  # wizard de rejet DSS
 from . import dss_qty_sortie_wizard  # wizard de quantité à sortir
 from . import dss_cloture_wizard  # wizard de clôture
 from . import dss_request_display  # modèle d'affichage
