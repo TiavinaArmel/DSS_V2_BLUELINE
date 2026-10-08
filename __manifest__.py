@@ -3,7 +3,7 @@
     "name": "DSS V2 - Demande de Sortie de Stock",
 
     # Version du module DSS
-    "version": "2.1",
+    "version": "2.4",
 
     # Dépendances Odoo :
     # - web   : assets et rapports QWeb

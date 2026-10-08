@@ -747,7 +747,7 @@ class DssRequest(models.Model):
     
         # Récupère le paperformat défini dans report/dss_report.xml
         paperformat = self.env.ref(
-            "dss_v2.paperformat_dss_bon_livraison",
+            "dss_v2.paperformat_dss_a5",
             raise_if_not_found=False,
         )
     
@@ -762,28 +762,44 @@ class DssRequest(models.Model):
             "dss_v2.report_bon_livraison_document",
         )
     
-        # Crée la pièce jointe
-        attachment = self.env["ir.attachment"].create({
+        # Remplace le PDF déjà attaché ou crée la première pièce jointe.
+        attachment_name = "Bon_Livraison_%s.pdf" % self.name
+        attachment_values = {
             "name": "Bon_Livraison_%s.pdf" % self.name,
             "type": "binary",
             "datas": base64.b64encode(pdf_content),
-            "datas_fname": "Bon_Livraison_%s.pdf" % self.name,
+            "datas_fname": attachment_name,
             "res_model": "dss.request",
             "res_id": self.id,
-        })
-    
-        # Poste le message dans le chatter
-        self.message_post(
-            body="Bon de Livraison genere automatiquement.",
-            attachment_ids=[attachment.id],
+        }
+        attachment_model = self.env["ir.attachment"]
+        attachment = attachment_model.search(
+            [
+                ("name", "=", attachment_name),
+                ("res_model", "=", "dss.request"),
+                ("res_id", "=", self.id),
+            ],
+            limit=1,
         )
+        if attachment:
+            attachment.write(attachment_values)
+        else:
+            attachment = attachment_model.create(attachment_values)
+            self.message_post(
+                body="Bon de Livraison genere automatiquement.",
+                attachment_ids=[attachment.id],
+            )
+    
 
     @api.multi
     def action_imprimer_bon_livraison(self):
         # Impression du Bon de Livraison à la demande : on laisse Odoo
         # construire l'action (report.get_action) pour qu'elle contienne
-        # bien l'id de la demande à imprimer (active_ids).
+        # bien l'id de la demande à imprimer (active_ids). On actualise aussi
+        # la pièce jointe du chatter sans rejouer le workflow de stock.
         self.ensure_one()
+        if self.state == "approuve":
+            self._generer_bon_livraison()
         return self.env['report'].get_action(
             self, 'dss_v2.report_bon_livraison_document')
 

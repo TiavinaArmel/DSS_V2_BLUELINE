@@ -80,28 +80,36 @@ d'extension automatique** ; le `.pdf` doit être écrit dans `print_report_name`
 
 ## 6. Solution (tout est dans le module, rien dans le core)
 
-### 6.1 Format de papier propre au DSS, sans option `--dpi`
+### 6.1 Format A5 paysage propre au DSS, sans option `--dpi`
 
-Dans `report/dss_report.xml` (identifiant utilisé par le code : `paperformat_dss_bon_livraison`) :
+Dans `report/dss_report.xml`, le rapport utilise le format A5 en paysage. L'identifiant
+`paperformat_dss_a5` est conserve de maniere stable par le module.
 
 ```xml
-<record id="paperformat_dss_bon_livraison" model="report.paperformat">
-    <field name="name">A4 DSS</field>
+<record id="paperformat_dss_a5" model="report.paperformat">
+  <field name="name">A5 DSS paysage</field>
     <field name="default" eval="False"/>
-    <field name="format">A4</field>
-    <field name="orientation">Portrait</field>
-    <field name="margin_top">40</field>
-    <field name="margin_bottom">23</field>
+  <field name="format">A5</field>
+  <field name="orientation">Landscape</field>
+  <field name="margin_top">30</field>
+  <field name="margin_bottom">10</field>
     <field name="margin_left">7</field>
     <field name="margin_right">7</field>
     <field name="header_line" eval="False"/>
-    <field name="header_spacing">35</field>
+  <field name="header_spacing">25</field>
     <field name="dpi">0</field>
 </record>
 ```
 
 `dpi = 0` : Odoo n'envoie plus aucune option `--dpi` à wkhtmltopdf.
 Vérification : la commande capturée par PowerShell ne contient plus `--dpi`.
+
+Les styles du rapport sont dans `static/src/css/report_bl.css`. Ils reduisent les
+espacements et la hauteur des zones de validation pour le format paysage.
+La version du module passe a `2.4`. Le script
+`migrations/2.2/pre-rename-paperformat-xmlid.py` renomme l'ancien identifiant
+`paperformat_dss_a4` en `paperformat_dss_a5` sur une base deja installee, sans
+creer un second format papier.
 
 ### 6.2 Déclaration du rapport
 
@@ -112,10 +120,15 @@ Vérification : la commande capturée par PowerShell ne contient plus `--dpi`.
     <field name="report_type">qweb-pdf</field>
     <field name="report_name">dss_v2.report_bon_livraison_document</field>
     <field name="report_file">dss_v2.report_bon_livraison_document</field>
-    <field name="paperformat_id" ref="paperformat_dss_bon_livraison"/>
+    <field name="paperformat_id" ref="paperformat_dss_a5"/>
     <field name="print_report_name">'Bon de Livraison - %s.pdf' % (object.name or 'DSS')</field>
 </record>
 ```
+
+Le tableau du bon n'affiche pas de colonne « Date sortie », car aucune date de
+sortie n'est stockee par ligne. La colonne « Observation » affiche le champ
+`line.observation`. L'impression manuelle et la generation automatique utilisent
+toutes deux l'identifiant `dss_v2.paperformat_dss_a5`.
 
 ### 6.3 Bouton « Bon de Livraison » (impression à la demande)
 
@@ -156,7 +169,7 @@ def _generer_bon_livraison(self):
 
     # Récupère le paperformat défini dans report/dss_report.xml
     paperformat = self.env.ref(
-        "dss_v2.paperformat_dss_bon_livraison",
+        "dss_v2.paperformat_dss_a5",
         raise_if_not_found=False,
     )
 
@@ -171,22 +184,12 @@ def _generer_bon_livraison(self):
         "dss_v2.report_bon_livraison_document",
     )
 
-    # Crée la pièce jointe
-    attachment = self.env["ir.attachment"].create({
-        "name": "Bon_Livraison_%s.pdf" % self.name,
-        "type": "binary",
-        "datas": base64.b64encode(pdf_content),
-        "datas_fname": "Bon_Livraison_%s.pdf" % self.name,
-        "res_model": "dss.request",
-        "res_id": self.id,
-    })
-
-    # Poste le message dans le chatter
-    self.message_post(
-        body="Bon de Livraison genere automatiquement.",
-        attachment_ids=[attachment.id],
-    )
+    # Met à jour la pièce jointe existante ou en crée une nouvelle.
 ```
+
+  Le bouton « Bon de Livraison » actualise également le PDF déjà joint au chatter,
+  puis télécharge le nouveau rapport. Cette action ne relance pas la validation
+  du stock et ne crée donc pas un second mouvement.
 
 Prérequis : `import base64` en haut de `dssrequest.py`.
 

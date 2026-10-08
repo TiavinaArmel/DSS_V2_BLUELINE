@@ -64,7 +64,6 @@
                                         DESIGNATION</th>
                                     <th class="dss-col-demandee"> QTE<br />DEMANDEE</th>
                                     <th class="dss-col-sortie"> QTE<br />SORTIE</th>
-                                    <th class="dss-col-date"> DATE<br />SORTIE</th>
                                     <th class="dss-col-installee"> QTE<br />INSTALLEE</th>
                                     <th class="dss-col-retour">
                                         RETOUR</th>
@@ -84,20 +83,18 @@
                                         <span t-field="line.qty_sortie" />
                                     </td>
                                     <td class="dss-cell-center">
-                                        &#160;</td>
-                                    <td class="dss-cell-center">
                                         <span t-field="line.qty_installee" />
                                     </td>
                                     <td class="dss-cell-center">
                                         <span t-field="line.qty_retour" />
                                     </td>
                                     <td class="dss-product-observation">
-                                        &#160;</td>
+                                        <span t-field="line.observation" />
+                                    </td>
                                 </tr>
                                 <!-- Ajoute des lignes vides pour les demandes avec peu d'articles. -->
                                 <tr t-foreach="range(max(0, 2 - len(o.line_ids)))" t-as="empty_row"
                                     class="dss-empty-row">
-                                    <td>&#160;</td>
                                     <td>&#160;</td>
                                     <td>&#160;</td>
                                     <td>&#160;</td>
@@ -180,29 +177,25 @@
         </t>
         <!-- Fin du modèle de rapport. -->
     </template>
-    <!-- Déclare un format de papier personnalisé pour le rapport. -->
-    <record id="paperformat_dss_a4" model="report.paperformat">
-        <!-- Nom affiché dans la configuration Odoo. -->
-        <field name="name">A4 DSS</field>
+    <!-- Met a jour le format de papier utilise par le bon de livraison. -->
+    <record id="paperformat_dss_a5" model="report.paperformat">
+        <!-- Definit le format A5 paysage du bon de livraison. -->
+        <field name="name">A5 DSS paysage</field>
         <!-- Ce format n'est pas le format par défaut du système. -->
         <field name="default" eval="False" />
-        <!-- Utilise une feuille au format A4. -->
-        <field name="format">A4</field>
-        <!-- Oriente la feuille en portrait. -->
-        <field name="orientation">Portrait</field>
-        <!-- Définit la marge du haut, en millimètres. -->
-        <field name="margin_top">40</field>
-        <!-- Définit la marge du bas, en millimètres. -->
-        <field name="margin_bottom">23</field>
-        <!-- Définit la marge de gauche, en millimètres. -->
+        <!-- Utilise une feuille A5 en orientation paysage. -->
+        <field name="format">A5</field>
+        <field name="orientation">Landscape</field>
+        <!-- Reduit les marges pour conserver assez de place sur la page. -->
+        <field name="margin_top">30</field>
+        <field name="margin_bottom">10</field>
         <field name="margin_left">7</field>
-        <!-- Définit la marge de droite, en millimètres. -->
         <field name="margin_right">7</field>
         <!-- N'ajoute pas de ligne sous l'en-tête. -->
         <field name="header_line" eval="False" />
-        <!-- Définit l'espace réservé à l'en-tête, en millimètres. -->
-        <field name="header_spacing">35</field>
-        <!-- Définit la résolution du PDF ; 0 laisse Odoo utiliser sa valeur par défaut. -->
+        <!-- Garde un espace reduit pour l'en-tete externe Odoo. -->
+        <field name="header_spacing">25</field>
+        <!-- La valeur 0 evite l'option DPI qui a cause le PDF blanc sous Windows. -->
         <field name="dpi">0</field>
     </record>
 
@@ -218,8 +211,8 @@
         <field name="report_name">dss_v2.report_bon_livraison_document</field>
         <!-- Nom technique du fichier de rapport, correspondant au modèle QWeb. -->
         <field name="report_file">dss_v2.report_bon_livraison_document</field>
-        <!-- format du papier utilisée pour le pdf -->
-        <field name="paperformat_id" ref="paperformat_dss_a4" />
+        <!-- Utilise le format A5 paysage defini ci-dessus. -->
+        <field name="paperformat_id" ref="paperformat_dss_a5" />
         <!-- Construit le nom du PDF avec le numéro de la demande. -->
         <field name="print_report_name">'Bon de Livraison - %s.pdf' % (object.name)</field>
         <!-- Fin de la déclaration de l'action d'impression. -->

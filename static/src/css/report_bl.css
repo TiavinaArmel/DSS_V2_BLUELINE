@@ -2,27 +2,27 @@
 .dss-bl {
     color: #000000;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 10px;
+    font-size: 15px;
 }
 
-/* Titre principal du document. */
+/* Separe le titre du reste du bon. */
 .dss-bl-title {
-    margin: 0 0 12px;
+    margin: 0 0 20px;
     text-align: center;
     font-size: 2em;
 }
 
-/* Tableau des informations de la demande. */
+/* Tableau des informations avec un espace avant les articles. */
 .dss-header {
     border-collapse: collapse;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
     width: 100%;
 }
 
 /* Colonne de gauche avec les informations du destinataire. */
 .dss-header-left {
     border: none;
-    padding: 2px 4px;
+    padding: 1px 3px;
     vertical-align: top;
     width: 65%;
 }
@@ -30,7 +30,7 @@
 /* Colonne de droite avec les numeros DSS et BCI. */
 .dss-header-right {
     border: none;
-    padding: 2px 4px;
+    padding: 1px 3px;
     text-align: right;
     vertical-align: top;
     width: 35%;
@@ -38,34 +38,40 @@
 
 /* Espace entre les informations de la demande. */
 .dss-info-line {
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 
 /* Cadre autour des numeros DSS et BCI. */
 .dss-number-box {
     border: 1px solid #555555;
     display: inline-block;
-    padding: 4px 8px;
+    padding: 3px 6px;
 }
 
 /* Ajoute un espace sous le numero DSS. */
 .dss-number-box-first {
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 /* Tableau des articles et des quantites. */
 .dss-products {
     border-collapse: collapse;
-    font-size: 9px;
-    margin-top: 8px;
+    font-size: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
     width: 100%;
 }
 
 /* Bordures et espacements des cellules du tableau des articles. */
 .dss-products th,
 .dss-products td {
-    border: 1px solid #555555;
-    padding: 5px;
+    border: 2px solid #555555;
+    padding: 3px;
+}
+
+/* Evite de couper une ligne d'article entre deux pages. */
+.dss-products tr {
+    page-break-inside: avoid;
 }
 
 /* Centre les titres de colonnes. */
@@ -75,37 +81,33 @@
 
 /* Largeur de chaque colonne du tableau des articles. */
 .dss-col-designation {
-    width: 26%;
+    width: 30%;
 }
 
 .dss-col-demandee {
-    width: 11%;
+    width: 12%;
 }
 
 .dss-col-sortie {
-    width: 11%;
-}
-
-.dss-col-date {
-    width: 13%;
+    width: 12%;
 }
 
 .dss-col-installee {
-    width: 13%;
+    width: 14%;
 }
 
 .dss-col-retour {
-    width: 9%;
+    width: 10%;
 }
 
 .dss-col-observation {
-    width: 17%;
+    width: 22%;
 }
 
 /* Hauteur des cellules contenant un article ou une observation. */
 .dss-product-name,
 .dss-product-observation {
-    height: 24px;
+    height: 22px;
 }
 
 /* Centre les valeurs numeriques des quantites. */
@@ -115,22 +117,24 @@
 
 /* Hauteur des lignes vides ajoutees au tableau. */
 .dss-empty-row td {
-    height: 25px;
+    height: 18px;
 }
 
 /* Tableau des validations et des signatures. */
 .dss-signatures {
     border-collapse: collapse;
-    font-size: 9px;
-    margin-top: 18px;
+    font-size: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
     width: 100%;
 }
 
 /* Cadre commun des cinq zones de validation et de signature. */
 .dss-signature-cell {
     border: 1px solid #555555;
-    height: 95px;
-    padding: 5px;
+    height: 65px;
+    padding: 3px;
     text-align: center;
     vertical-align: top;
     width: 20%;
@@ -143,23 +147,23 @@
 
 /* Affiche le nom et la date sous chaque case de validation. */
 .dss-signatory {
-    font-size: 8px;
+    font-size: 15px;
 }
 
 /* Espace reserve a la signature manuscrite. */
 .dss-signature-space {
-    height: 55px;
+    height: 32px;
 }
 
 /* Ligne sur laquelle la personne peut signer. */
 .dss-signature-rule {
     border-top: 1px solid #555555;
-    margin: 0 8px;
-    padding-top: 3px;
+    margin: 0 5px;
+    padding-top: 2px;
 }
 
 /* Affichage discret de l'etat de la demande. */
 .dss-state {
-    font-size: 8px;
-    margin-top: 8px;
+    font-size: 15px;
+    margin-top: 0;
 }
