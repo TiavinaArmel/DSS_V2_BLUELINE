@@ -37,6 +37,7 @@
         "views/dss_cloture_wizard_views.xml",        # clôture de la DSS
         "views/dss_validation_wizard_views.xml",     # validation de la DSS
 
+        "views/dss_request_search_views.xml",
         # Vues principales de la DSS
         "views/dss_request_views.xml",
 

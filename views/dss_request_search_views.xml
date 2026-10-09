@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dss_request_search" model="ir.ui.view">
+        <field name="name">dss.request.search</field>
+        <field name="model">dss.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Numéro DSS"/>
+                <field name="bci" string="BCI"/>
+                <field name="partner_id" string="Client"/>
+                <field name="lieu_intervention" string="Lieu d'intervention"/>
+                <field name="line_ids" string="Article"
+                    filter_domain="[('line_ids.product_id.name', 'ilike', self)]"/>
+            </search>
+        </field>
+    </record>
+</odoo>
