@@ -90,6 +90,42 @@
                     <filter name="group_by_partner" string="Client"
                         context="{'group_by': 'partner_id'}"/>
                 </group>
+
+                <!--
+                    Filtres réservés au groupe DSS / Chef.
+                    L'attribut groups empêche les autres groupes, notamment
+                    DSS / Magasin, de voir ces filtres dans la recherche.
+                -->
+                <filter name="chef_filter_a_valider" string="À valider"
+                    groups="dss_v2.group_dss_chef"
+                    domain="[('state', '=', 'valide_chef')]"/>
+                <filter name="chef_filter_mes_validations" string="Mes validations"
+                    groups="dss_v2.group_dss_chef"
+                    domain="[('signataire_chef_id', '=', uid)]"/>
+                <filter name="chef_filter_a_cloturer" string="À clôturer"
+                    groups="dss_v2.group_dss_chef"
+                    domain="[('state', '=', 'approuve')]"/>
+                <filter name="chef_filter_rejetees" string="Rejetées"
+                    groups="dss_v2.group_dss_chef"
+                    domain="[('state', '=', 'rejete')]"/>
+
+                <!--
+                    Regroupements réservés au groupe DSS / Chef.
+                    Le troisième regroupement utilise la granularité « week »
+                    afin de présenter les demandes par semaine d'intervention.
+                -->
+                <group string="Grouper par (Chef)" groups="dss_v2.group_dss_chef">
+                    <filter name="chef_group_by_demandeur" string="Demandeur"
+                        groups="dss_v2.group_dss_chef"
+                        context="{'group_by': 'signataire_demandeur_id'}"/>
+                    <filter name="chef_group_by_valideur" string="Valideur Chef"
+                        groups="dss_v2.group_dss_chef"
+                        context="{'group_by': 'signataire_chef_id'}"/>
+                    <filter name="chef_group_by_date_intervention_semaine"
+                        string="Date d'intervention (par semaine)"
+                        groups="dss_v2.group_dss_chef"
+                        context="{'group_by': 'date_intervention:week'}"/>
+                </group>
             </search>
         </field>
     </record>
