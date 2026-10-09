@@ -11,6 +11,85 @@
                 <field name="lieu_intervention" string="Lieu d'intervention"/>
                 <field name="line_ids" string="Article"
                     filter_domain="[('line_ids.product_id.name', 'ilike', self)]"/>
+
+                <!--
+                    Filtre : Aujourd'hui.
+                    context_today() récupère la date actuelle selon le contexte
+                    et le fuseau horaire de l'utilisateur Odoo.
+                    La première condition sélectionne les demandes dont la date
+                    d'intervention est supérieure ou égale à aujourd'hui.
+                    La deuxième condition exclut les dates à partir de demain.
+                    Le résultat couvre donc uniquement la journée actuelle.
+                    strftime('%Y-%m-%d') convertit la date au format attendu
+                    par un champ Odoo de type Date.
+                -->
+                <filter name="filter_aujourd_hui" string="Aujourd'hui"
+                    domain="[('date_intervention', '&gt;=', context_today().strftime('%Y-%m-%d')), ('date_intervention', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+
+                <!--
+                    Filtre : Cette semaine.
+                    weekday() retourne le numéro du jour de la semaine :
+                    lundi vaut 0, mardi vaut 1, jusqu'à dimanche qui vaut 6.
+                    La première borne retire ce nombre de jours à la date actuelle
+                    afin d'obtenir le lundi de la semaine en cours.
+                    La deuxième borne ajoute 7 jours à ce lundi pour obtenir
+                    le lundi suivant, qui est exclu du résultat.
+                    Le filtre couvre ainsi la semaine du lundi au dimanche.
+                -->
+                <filter name="filter_cette_semaine" string="Cette semaine"
+                    domain="[('date_intervention', '&gt;=', (context_today() - relativedelta(days=context_today().weekday())).strftime('%Y-%m-%d')), ('date_intervention', '&lt;', (context_today() - relativedelta(days=context_today().weekday()) + relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+
+                <!--
+                    Filtre : Ce mois.
+                    replace(day=1) remplace le jour actuel par le premier jour
+                    du mois en cours : il s'agit de la borne de début incluse.
+                    relativedelta(months=1) avance ensuite cette date d'un mois
+                    pour obtenir le premier jour du mois suivant.
+                    Cette deuxième borne est exclue afin de sélectionner toutes
+                    les demandes du mois en cours, quel que soit son nombre de jours.
+                -->
+                <filter name="filter_ce_mois" string="Ce mois"
+                    domain="[('date_intervention', '&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('date_intervention', '&lt;', (context_today().replace(day=1) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
+
+                <!--
+                    Filtre : Avec écart.
+                    has_ecart est le booléen enregistré sur dss.request.
+                    La valeur True limite les résultats aux demandes pour lesquelles
+                    un écart a été détecté lors du traitement ou de la clôture.
+                -->
+                <filter name="filter_avec_ecart" string="Avec écart"
+                    domain="[('has_ecart', '=', True)]"/>
+
+                <!--
+                    Filtre : Transferts inter-sites.
+                    La valeur technique appro_distant correspond au type
+                    d'intervention « Approvisionnement de stock distant ».
+                    Le filtre affiche donc uniquement les demandes de transfert
+                    entre emplacements ou sites de stock.
+                -->
+                <filter name="filter_transferts_inter_sites" string="Transferts inter-sites"
+                    domain="[('type_intervention', '=', 'appro_distant')]"/>
+
+                <!--
+                    Menu « Grouper par ».
+                    Chaque filtre ci-dessous ne supprime pas les demandes :
+                    il demande à Odoo de les présenter par catégories.
+                    La clé group_by indique le champ utilisé pour constituer
+                    les différents groupes dans la liste des demandes.
+                -->
+                <group string="Grouper par">
+                    <!-- Regroupe les demandes selon leur état de workflow. -->
+                    <filter name="group_by_state" string="État"
+                        context="{'group_by': 'state'}"/>
+
+                    <!-- Regroupe les demandes selon leur type d'intervention. -->
+                    <filter name="group_by_type_intervention" string="Type d'intervention"
+                        context="{'group_by': 'type_intervention'}"/>
+
+                    <!-- Regroupe les demandes selon le client sélectionné. -->
+                    <filter name="group_by_partner" string="Client"
+                        context="{'group_by': 'partner_id'}"/>
+                </group>
             </search>
         </field>
     </record>
