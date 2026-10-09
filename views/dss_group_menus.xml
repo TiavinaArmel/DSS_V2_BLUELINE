@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Actions et menus dédiés aux groupes DSS.
+        Les actions réutilisent les vues tree,form déjà déclarées pour
+        le modèle dss.request ; aucune nouvelle vue de liste ou de formulaire
+        n'est créée dans ce fichier.
+    -->
+
+    <!-- Menu Demandeur : demandes créées ou soumises par l'utilisateur courant. -->
+    <record id="action_dss_mes_demandes" model="ir.actions.act_window">
+        <field name="name">Mes demandes</field>
+        <field name="res_model">dss.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">['|', ('signataire_demandeur_id', '=', uid), ('create_uid', '=', uid)]</field>
+    </record>
+
+    <menuitem id="menu_dss_mes_demandes"
+        name="Mes demandes"
+        parent="menu_dss_root"
+        action="action_dss_mes_demandes"
+        groups="dss_v2.group_dss_demandeur"
+        sequence="10"/>
+
+    <!-- Menu Chef : ouvre directement les demandes en attente de validation Chef. -->
+    <record id="action_dss_chef_a_valider" model="ir.actions.act_window">
+        <field name="name">À valider</field>
+        <field name="res_model">dss.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_chef_filter_a_valider': 1}</field>
+    </record>
+
+    <menuitem id="menu_dss_chef_a_valider"
+        name="À valider"
+        parent="menu_dss_root"
+        action="action_dss_chef_a_valider"
+        groups="dss_v2.group_dss_chef"
+        sequence="20"/>
+
+    <!-- Menu Magasin : demandes validées par le Chef et prêtes pour le Stock. -->
+    <record id="action_dss_magasin_a_valider" model="ir.actions.act_window">
+        <field name="name">À valider Stock</field>
+        <field name="res_model">dss.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_magasin_filter_a_valider_stock': 1}</field>
+    </record>
+
+    <menuitem id="menu_dss_magasin_a_valider"
+        name="À valider Stock"
+        parent="menu_dss_root"
+        action="action_dss_magasin_a_valider"
+        groups="dss_v2.group_dss_magasin"
+        sequence="30"/>
+
+    <!-- Menu Magasin : demandes approuvées, à remettre ou à clôturer. -->
+    <record id="action_dss_magasin_a_remettre" model="ir.actions.act_window">
+        <field name="name">À remettre</field>
+        <field name="res_model">dss.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_magasin_filter_approuvees_a_remettre': 1}</field>
+    </record>
+
+    <menuitem id="menu_dss_magasin_a_remettre"
+        name="À remettre"
+        parent="menu_dss_root"
+        action="action_dss_magasin_a_remettre"
+        groups="dss_v2.group_dss_magasin"
+        sequence="40"/>
+
+    <!--
+        Menu Sécurité provisoire.
+        Aucun état ou filtre spécifique à la Sécurité n'existe actuellement
+        dans dss.request ; l'état approuve sert donc temporairement de base
+        pour la liste « À contrôler ».
+    -->
+    <record id="action_dss_securite_a_controler" model="ir.actions.act_window">
+        <field name="name">À contrôler</field>
+        <field name="res_model">dss.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'approuve')]</field>
+    </record>
+
+    <menuitem id="menu_dss_securite_a_controler"
+        name="À contrôler"
+        parent="menu_dss_root"
+        action="action_dss_securite_a_controler"
+        groups="dss_v2.group_dss_securite"
+        sequence="50"/>
+
+</odoo>

@@ -43,6 +43,7 @@
 
         # Menus et actions
         "views/dss_menu.xml",
+        "views/dss_group_menus.xml",
 
         # Vues d'affichage
         "views/dss_request_display_views.xml",
