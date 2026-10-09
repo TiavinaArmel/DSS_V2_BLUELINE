@@ -126,6 +126,43 @@
                         groups="dss_v2.group_dss_chef"
                         context="{'group_by': 'date_intervention:week'}"/>
                 </group>
+
+                <!--
+                    Filtres réservés au groupe DSS / Magasin.
+                    L'attribut groups limite leur affichage aux utilisateurs
+                    appartenant au groupe dss_v2.group_dss_magasin.
+                    Les utilisateurs qui ne possèdent pas ce groupe ne voient
+                    pas ces filtres dans le menu de recherche.
+                -->
+                <filter name="magasin_filter_a_valider_stock" string="À valider Stock"
+                    groups="dss_v2.group_dss_magasin"
+                    domain="[('state', '=', 'valide_magasin')]"/>
+                <filter name="magasin_filter_approuvees_a_remettre"
+                    string="Approuvées (à remettre)"
+                    groups="dss_v2.group_dss_magasin"
+                    domain="[('state', '=', 'approuve')]"/>
+                <filter name="magasin_filter_mes_validations_stock"
+                    string="Mes validations Stock"
+                    groups="dss_v2.group_dss_magasin"
+                    domain="[('signataire_magasin_id', '=', uid)]"/>
+
+                <!--
+                    Regroupements réservés au groupe DSS / Magasin.
+                    Le regroupement par date utilise la granularité « week »
+                    pour afficher les demandes par semaine d'intervention.
+                -->
+                <group string="Grouper par (Magasin)" groups="dss_v2.group_dss_magasin">
+                    <filter name="magasin_group_by_emplacement" string="Emplacement"
+                        groups="dss_v2.group_dss_magasin"
+                        context="{'group_by': 'location_id'}"/>
+                    <filter name="magasin_group_by_valideur_stock" string="Valideur Stock"
+                        groups="dss_v2.group_dss_magasin"
+                        context="{'group_by': 'signataire_magasin_id'}"/>
+                    <filter name="magasin_group_by_date_intervention_semaine"
+                        string="Date d'intervention (par semaine)"
+                        groups="dss_v2.group_dss_magasin"
+                        context="{'group_by': 'date_intervention:week'}"/>
+                </group>
             </search>
         </field>
     </record>
