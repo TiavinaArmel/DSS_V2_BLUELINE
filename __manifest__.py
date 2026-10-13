@@ -3,12 +3,13 @@
     "name": "DSS V2 - Demande de Sortie de Stock",
 
     # Version du module DSS
-    "version": "2.1",
+    "version": "2.4",
 
     # Dépendances Odoo :
+    # - web   : assets et rapports QWeb
     # - stock : mouvements de stock (Inventory)
     # - mail  : chatter et notifications internes
-    "depends": ["stock", "mail"],
+    "depends": ["web", "stock", "mail"],
 
     # Auteur du module
     "author": "Tiavina Armel",
@@ -36,11 +37,15 @@
         "views/dss_cloture_wizard_views.xml",        # clôture de la DSS
         "views/dss_validation_wizard_views.xml",     # validation de la DSS
 
+        "views/dss_request_search_views.xml",
         # Vues principales de la DSS
         "views/dss_request_views.xml",
+        # Assets backend du Chatter DSS
+        "views/assets_backend.xml",
 
         # Menus et actions
         "views/dss_menu.xml",
+        "views/dss_group_menus.xml",
 
         # Vues d'affichage
         "views/dss_request_display_views.xml",

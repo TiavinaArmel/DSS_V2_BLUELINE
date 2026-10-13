@@ -1,0 +1,169 @@
+/* Mise en forme generale du bon de livraison. */
+.dss-bl {
+    color: #000000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+}
+
+/* Separe le titre du reste du bon. */
+.dss-bl-title {
+    margin: 0 0 20px;
+    text-align: center;
+    font-size: 2em;
+}
+
+/* Tableau des informations avec un espace avant les articles. */
+.dss-header {
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Colonne de gauche avec les informations du destinataire. */
+.dss-header-left {
+    border: none;
+    padding: 1px 3px;
+    vertical-align: top;
+    width: 65%;
+}
+
+/* Colonne de droite avec les numeros DSS et BCI. */
+.dss-header-right {
+    border: none;
+    padding: 1px 3px;
+    text-align: right;
+    vertical-align: top;
+    width: 35%;
+}
+
+/* Espace entre les informations de la demande. */
+.dss-info-line {
+    margin-bottom: 2px;
+}
+
+/* Cadre autour des numeros DSS et BCI. */
+.dss-number-box {
+    border: 1px solid #555555;
+    display: inline-block;
+    padding: 3px 6px;
+}
+
+/* Ajoute un espace sous le numero DSS. */
+.dss-number-box-first {
+    margin-bottom: 3px;
+}
+
+/* Tableau des articles et des quantites. */
+.dss-products {
+    border-collapse: collapse;
+    font-size: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Bordures et espacements des cellules du tableau des articles. */
+.dss-products th,
+.dss-products td {
+    border: 2px solid #555555;
+    padding: 3px;
+}
+
+/* Evite de couper une ligne d'article entre deux pages. */
+.dss-products tr {
+    page-break-inside: avoid;
+}
+
+/* Centre les titres de colonnes. */
+.dss-products th {
+    text-align: center;
+}
+
+/* Largeur de chaque colonne du tableau des articles. */
+.dss-col-designation {
+    width: 30%;
+}
+
+.dss-col-demandee {
+    width: 12%;
+}
+
+.dss-col-sortie {
+    width: 12%;
+}
+
+.dss-col-installee {
+    width: 14%;
+}
+
+.dss-col-retour {
+    width: 10%;
+}
+
+.dss-col-observation {
+    width: 22%;
+}
+
+/* Hauteur des cellules contenant un article ou une observation. */
+.dss-product-name,
+.dss-product-observation {
+    height: 22px;
+}
+
+/* Centre les valeurs numeriques des quantites. */
+.dss-cell-center {
+    text-align: center;
+}
+
+/* Hauteur des lignes vides ajoutees au tableau. */
+.dss-empty-row td {
+    height: 18px;
+}
+
+/* Tableau des validations et des signatures. */
+.dss-signatures {
+    border-collapse: collapse;
+    font-size: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+    width: 100%;
+}
+
+/* Cadre commun des cinq zones de validation et de signature. */
+.dss-signature-cell {
+    border: 1px solid #555555;
+    height: 65px;
+    padding: 3px;
+    text-align: center;
+    vertical-align: top;
+    width: 20%;
+}
+
+/* Taille des cases a cocher. */
+.dss-checkbox {
+    font-size: 18px;
+}
+
+/* Affiche le nom et la date sous chaque case de validation. */
+.dss-signatory {
+    font-size: 15px;
+}
+
+/* Espace reserve a la signature manuscrite. */
+.dss-signature-space {
+    height: 32px;
+}
+
+/* Ligne sur laquelle la personne peut signer. */
+.dss-signature-rule {
+    border-top: 1px solid #555555;
+    margin: 0 5px;
+    padding-top: 2px;
+}
+
+/* Affichage discret de l'etat de la demande. */
+.dss-state {
+    font-size: 15px;
+    margin-top: 0;
+}

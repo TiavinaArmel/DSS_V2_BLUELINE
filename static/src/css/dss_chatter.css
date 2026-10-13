@@ -1,0 +1,233 @@
+/*
+ * DSS Chatter - visual baseline for Odoo 10.
+ *
+ * All rules are scoped to the runtime chatter root. Odoo 10 transfers the
+ * classes from the oe_chatter wrapper to the o_chatter widget before removing
+ * that wrapper, hence the combined selector below.
+ */
+.dss_chatter.o_chatter {
+    box-sizing: border-box;
+    margin-top: 18px;
+    padding: 14px 16px 16px;
+    background: #f7f9fb;
+    border: 1px solid #dfe5eb;
+    border-radius: 6px;
+    color: #34495e;
+}
+
+.dss_chatter.o_chatter .o_chatter_topbar {
+    min-height: 32px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e9ee;
+}
+
+.dss_chatter.o_chatter .o_chatter_button_new_message,
+.dss_chatter.o_chatter .o_chatter_button_log_note {
+    border-radius: 4px;
+}
+
+.dss_chatter.o_chatter .o_chatter_button_new_message {
+    box-shadow: none;
+}
+
+.dss_chatter.o_chatter .o_chatter_button_log_note {
+    color: #5f6f7f;
+}
+
+.dss_chatter.o_chatter .o_followers {
+    color: #526170;
+}
+
+.dss_chatter.o_chatter .o_followers_title_box,
+.dss_chatter.o_chatter .o_followers_actions {
+    margin-top: 0;
+}
+
+.dss_chatter.o_chatter .o_followers_title_box .dropdown-toggle,
+.dss_chatter.o_chatter .o_followers_actions .dropdown-toggle,
+.dss_chatter.o_chatter .o_followers_follow_button {
+    border-radius: 4px;
+}
+
+.dss_chatter.o_chatter .o_followers_title_box .dropdown-toggle:hover,
+.dss_chatter.o_chatter .o_followers_title_box .dropdown-toggle:focus,
+.dss_chatter.o_chatter .o_followers_actions .dropdown-toggle:hover,
+.dss_chatter.o_chatter .o_followers_actions .dropdown-toggle:focus {
+    background: #edf2f6;
+}
+
+.dss_chatter.o_chatter .o_followers_list {
+    border: 1px solid #dfe5eb;
+    border-radius: 4px;
+    box-shadow: 0 3px 10px rgba(34, 50, 64, 0.12);
+}
+
+.dss_chatter.o_chatter .o_followers_list .o_partner:hover,
+.dss_chatter.o_chatter .o_followers_list .o_add_follower:hover,
+.dss_chatter.o_chatter .o_followers_list .o_add_follower_channel:hover {
+    background: #f3f6f8;
+}
+
+.dss_chatter.o_chatter .o_chat_composer {
+    margin-bottom: 14px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #dfe5eb;
+    border-radius: 5px;
+}
+
+.dss_chatter.o_chatter .o_chatter_composer_info {
+    color: #71808f;
+}
+
+.dss_chatter.o_chatter .o_composer {
+    margin-top: 8px;
+}
+
+.dss_chatter.o_chatter .o_composer_text_field {
+    box-sizing: border-box;
+    min-height: 28px;
+    padding: 8px 10px;
+    color: #34495e;
+    background: #ffffff;
+    border: 1px solid #cfd8e1;
+    border-radius: 4px;
+    box-shadow: none;
+    line-height: 1.45;
+}
+
+.dss_chatter.o_chatter .o_composer_text_field:focus {
+    border-color: #7fa9c9;
+    box-shadow: 0 0 0 2px rgba(82, 145, 190, 0.12);
+    outline: none;
+}
+
+.dss_chatter.o_chatter .o_composer_buttons {
+    margin-top: 8px;
+}
+
+.dss_chatter.o_chatter .o_composer_button_send,
+.dss_chatter.o_chatter .o_composer_button_emoji,
+.dss_chatter.o_chatter .o_composer_button_add_attachment,
+.dss_chatter.o_chatter .o_composer_button_full_composer {
+    border-radius: 4px;
+}
+
+.dss_chatter.o_chatter .o_composer_button_emoji,
+.dss_chatter.o_chatter .o_composer_button_add_attachment,
+.dss_chatter.o_chatter .o_composer_button_full_composer {
+    color: #5f6f7f;
+}
+
+.dss_chatter.o_chatter .o_composer_button_emoji:hover,
+.dss_chatter.o_chatter .o_composer_button_add_attachment:hover,
+.dss_chatter.o_chatter .o_composer_button_full_composer:hover {
+    color: #34495e;
+    background: #edf2f6;
+}
+
+.dss_chatter.o_chatter .o_mail_thread {
+    margin-top: 0;
+    padding-top: 2px;
+}
+
+.dss_chatter.o_chatter .o_thread_date_separator {
+    margin-top: 18px;
+    margin-bottom: 22px;
+    border-bottom-color: #dfe5eb;
+}
+
+.dss_chatter.o_chatter .o_thread_date,
+.dss_chatter.o_chatter .o_thread_separator_label {
+    color: #71808f;
+    background: #f7f9fb;
+}
+
+.dss_chatter.o_chatter .o_thread_message {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e8edf1;
+    border-radius: 4px;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.dss_chatter.o_chatter .o_thread_message:last-child {
+    border-bottom: none;
+}
+
+.dss_chatter.o_chatter .o_thread_message:hover,
+.dss_chatter.o_chatter .o_thread_selected_message {
+    background: #f1f5f8;
+}
+
+.dss_chatter.o_chatter .o_thread_message_sidebar {
+    margin-right: 12px;
+}
+
+.dss_chatter.o_chatter .o_thread_message_avatar {
+    border: 1px solid #d5dde5;
+    border-radius: 50%;
+}
+
+.dss_chatter.o_chatter .o_thread_message_core {
+    color: #34495e;
+}
+
+.dss_chatter.o_chatter .o_mail_info {
+    color: #5f6f7f;
+}
+
+.dss_chatter.o_chatter .o_mail_info strong {
+    color: #2f4050;
+}
+
+.dss_chatter.o_chatter .o_mail_timestamp,
+.dss_chatter.o_chatter .o_thread_message_side_date {
+    color: #8794a0;
+}
+
+.dss_chatter.o_chatter .o_thread_message_core.o_mail_note {
+    padding: 8px 10px;
+    background: #fff8df;
+    border-left: 3px solid #e5bd4f;
+    border-radius: 3px;
+}
+
+.dss_chatter.o_chatter .o_thread_message_core p {
+    line-height: 1.5;
+}
+
+.dss_chatter.o_chatter .o_mail_subject,
+.dss_chatter.o_chatter .o_mail_thread_message_tracking {
+    color: #5f6f7f;
+}
+
+.dss_chatter.o_chatter .o_mail_thread_message_tracking {
+    padding-left: 18px;
+}
+
+.dss_chatter.o_chatter .o_attachment {
+    margin-right: 6px;
+    margin-bottom: 10px;
+    padding: 3px;
+    border: 1px solid #dfe5eb;
+    border-radius: 4px;
+    background: #ffffff;
+}
+
+.dss_chatter.o_chatter .o_attachment:hover {
+    border-color: #b9c8d5;
+    background: #f8fafb;
+}
+
+.dss_chatter.o_chatter .o_attachment_name {
+    color: #526170;
+}
+
+.dss_chatter.o_chatter .o_thread_new_messages_separator {
+    border-bottom-color: #9fc2dc;
+}
+
+.dss_chatter.o_chatter .o_thread_show_more .btn {
+    color: #5f6f7f;
+}

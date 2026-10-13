@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="assets_backend_dss_chatter" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/css"
+                href="/dss_v2/static/src/css/dss_chatter.css"/>
+        </xpath>
+    </template>
+</odoo>
