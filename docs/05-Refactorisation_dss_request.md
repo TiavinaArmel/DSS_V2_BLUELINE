@@ -155,9 +155,8 @@ du dépôt (ligne 234). Ils ne doivent **pas** être modifiés implicitement pen
 
 - **Parcours « Sortie + Entrée »** : `picking_id` ne référence que le dernier mouvement créé.
   Sujet fonctionnel à traiter à part.
-- **`action_approuver()`** passe la demande à « approuvé » sans créer les mouvements de stock ni
-  le Bon de Livraison, contrairement à `action_valider_magasin()`. À clarifier avec l'encadreur
-  plutôt que de changer le comportement pendant le refactor.
+- **Branche `action_approuver()`** retirée : elle n'était reliée à aucun bouton de la vue et
+  faisait doublon avec `action_valider_magasin()` tout en omettant les mouvements et le Bon de Livraison.
 - **Contrôle de stock dupliqué** entre la sortie et le transfert. Factorisation envisageable plus tard,
   avec des tests ciblés.
 
@@ -181,7 +180,6 @@ du dépôt (ligne 234). Ils ne doivent **pas** être modifiés implicitement pen
 
 - Valider l'ordre du plan (d'abord `DssRequestLine`) et les noms de fichiers proposés.
 - Décider si `picking_id` pour « Sortie + Entrée » et le contrôle de stock dupliqué sont traités dans un sprint ultérieur.
-- Clarifier avec l'encadreur le rôle de `action_approuver()`.
 - Choisir entre le découpage de l'agent (workflow dans un seul fichier, environ 280 lignes) et la proposition de la section 6
   (workflow et actions séparés).
 
@@ -316,7 +314,7 @@ L'agent juge pertinent un découpage par extensions `_inherit = "dss.request"` (
 
 | Fichier proposé | Contenu | Taille indiquée |
 |---|---|---|
-| `dss_request_workflow.py` | `action_soumettre`, `action_valider_chef`, `action_valider_magasin`, `action_approuver`, `action_rejeter`, `action_renvoyer_demandeur` et les actions d'ouverture des wizards ; `_detail_articles_html()` peut suivre `action_soumettre()` (seul appelant) | environ 280 lignes, réparties entre les repères `dss_request.py:234` et `:720` |
+| `dss_request_workflow.py` | `action_soumettre`, `action_valider_chef`, `action_valider_magasin`, `action_rejeter`, `action_renvoyer_demandeur` et les actions d'ouverture des wizards encore utilisés ; `_detail_articles_html()` peut suivre `action_soumettre()` (seul appelant) | environ 280 lignes, réparties entre les repères `dss_request.py:234` et `:720` |
 | `dss_request_stock.py` | `_generer_mouvement_sortie`, `_generer_mouvement_entree`, `_generer_mouvement_transfert` ; `action_valider_magasin` reste dans le workflow et les appelle via le modèle étendu | environ 276 lignes (repère `:375`) |
 | `dss_request_report.py` (optionnel) | `_generer_bon_livraison()` et `action_imprimer_bon_livraison()` ; sépare le PDF du mouvement de stock, mais ajoute un fichier à maintenir | repère `:708` |
 

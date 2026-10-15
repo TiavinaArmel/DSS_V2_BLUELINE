@@ -67,19 +67,3 @@ class DssValidationStockWizard(models.TransientModel):
         return {"type": "ir.actions.act_window_close"}
 
 
-class DssValidationApprouverWizard(models.TransientModel):
-    #wizard de confirmatoin pour l'approbation finale 
-    _name = "dss.validation.approuver.wizard"
-    _description = "Wizard de confirmation Approbation"
-
-    request_id = fields.Many2one("dss.request", string="Demande DSS", required=True)
-
-    @api.multi
-    def action_confirmer(self):
-        self.ensure_one()
-        self.request_id.action_approuver()#méthodes appelée pour changée juste ne approuveé 
-        return {"type": "ir.actions.act_window_close"}
-
-    @api.multi
-    def action_annuler(self):
-        return {"type": "ir.actions.act_window_close"}

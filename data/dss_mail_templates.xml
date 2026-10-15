@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_template_dss_workflow" model="mail.template">
+        <field name="name">DSS - Notification workflow</field>
+        <field name="model_id" ref="dss_v2.model_dss_request"/>
+        <field name="subject">DSS ${object.name} - ${ctx.get('dss_action_label', 'Notification')}</field>
+        <field name="email_from">${user.email or ''}</field>
+        <field name="body_html"><![CDATA[
+            <p>Bonjour,</p>
+            <p>La demande DSS <strong>${object.name}</strong> a fait l'objet de l'action suivante :</p>
+            <p><strong>${ctx.get('dss_action_label', '')}</strong></p>
+            <p>Statut actuel : <strong>${ctx.get('dss_status', object.state)}</strong></p>
+            % if ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester'):
+            <p>Motif : ${ctx.get('dss_motif', '') or 'Non renseigne'}</p>
+            % endif
+            <p><a href="${ctx.get('dss_workflow_url', '')}">Ouvrir la demande DSS dans Odoo</a></p>
+            <p>Ceci est une notification automatique.</p>
+        ]]></field>
+        <field name="auto_delete" eval="False"/>
+    </record>
+</odoo>

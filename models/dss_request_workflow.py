@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class DssRequestWorkflow(models.Model):
@@ -71,6 +71,7 @@ class DssRequestWorkflow(models.Model):
                 body="<b>%s</b> a soumis la demande.<br/>%s"
                 % (self.env.user.name, detail)
             )
+            rec._dss_notify_submission()
 
     @api.multi
     def action_valider_chef(self):
@@ -84,6 +85,7 @@ class DssRequestWorkflow(models.Model):
                 body="<b>%s</b> a valide la demande en tant que <b>Responsable Chef</b>."
                 % self.env.user.name
             )
+            rec._dss_notify_chef_validation()
 
     @api.multi
     def action_valider_magasin(self):
@@ -113,23 +115,12 @@ class DssRequestWorkflow(models.Model):
                 body="<b>%s</b> a approuve definitivement la demande."
                 % self.env.user.name
             )
-
-    @api.multi
-    def action_approuver(self):
-        for rec in self:
-            if rec.state != "valide_magasin":
-                raise ValidationError(
-                    "La demande doit etre validee par le Stock avant approbation."
-                )
-            rec.state = "approuve"
-            rec.message_post(
-                body="<b>%s</b> a approuve definitivement la demande."
-                % self.env.user.name
-            )
+            rec._dss_notify_stock_approval()
 
     @api.multi
     def action_rejeter(self):
         for rec in self:
+            previous_state = rec.state
             rec.state = "rejete"
             if rec.motif_rejet:
                 rec.message_post(
@@ -140,6 +131,7 @@ class DssRequestWorkflow(models.Model):
                 rec.message_post(
                     body="<b>%s</b> a rejete la demande." % self.env.user.name
                 )
+            rec._dss_notify_rejection(previous_state)
 
     @api.multi
     def action_open_wizard_rejeter(self):
@@ -155,11 +147,23 @@ class DssRequestWorkflow(models.Model):
 
     @api.multi
     def action_renvoyer_demandeur(self):
+        if not self.env.user.has_group("dss_v2.group_dss_chef"):
+            raise AccessError(
+                "Seul un utilisateur du groupe DSS / Chef peut renvoyer une demande."
+            )
         for rec in self:
+            if rec.state != "rejete":
+                raise ValidationError(
+                    "Seule une demande rejetee peut etre renvoyee au demandeur."
+                )
+            demandeur = rec.signataire_demandeur_id or rec.create_uid
+            nom_demandeur = demandeur.name if demandeur else "demandeur"
             rec.state = "brouillon"
             rec.message_post(
-                body="<b>%s</b> a renvoye la demande au demandeur." % self.env.user.name
+                body="<b>%s</b> a renvoye la demande au demandeur <b>%s</b>."
+                % (self.env.user.name, nom_demandeur)
             )
+            rec._dss_notify_return_to_requester()
 
     @api.multi
     def action_open_modifier_qte_sortie(self):
@@ -209,14 +213,3 @@ class DssRequestWorkflow(models.Model):
             "context": {"default_request_id": self.id},
         }
 
-    @api.multi
-    def action_open_wizard_approuver(self):
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Confirmation d approbation",
-            "res_model": "dss.validation.approuver.wizard",
-            "view_mode": "form",
-            "target": "new",
-            "context": {"default_request_id": self.id},
-        }

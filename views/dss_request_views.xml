@@ -28,6 +28,7 @@
                             attrs="{'invisible': [('state', '!=', 'approuve')]}" class="oe_highlight"/>
                     </span>
                     <button name="action_renvoyer_demandeur" type="object" string="Renvoyer au demandeur"
+                        groups="dss_v2.group_dss_chef"
                         attrs="{'invisible': [('state', '!=', 'rejete')]}" class="oe_highlight"/>
                     <field name="state" widget="statusbar"
                         statusbar_visible="brouillon,valide_chef,valide_magasin,approuve,cloture"/>

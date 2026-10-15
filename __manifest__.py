@@ -30,6 +30,7 @@
         # Données techniques : séquence de numérotation DSS 
         #Format DSS/XX/XX/XXXX
         "data/dss_sequence.xml",
+        "data/dss_mail_templates.xml",
 
         # Vues des assistants (wizards)
         "views/dss_qty_sortie_wizard_views.xml",     # quantité à sortir
@@ -59,4 +60,5 @@
 
     # Le module peut être installé
     "installable": True,
+    "tests": ["tests/test_dss_notifications.py"],
 }
