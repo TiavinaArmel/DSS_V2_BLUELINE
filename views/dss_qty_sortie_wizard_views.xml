@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Wizard du magasin pour modifier les quantités de sortie et de retour. -->
     <record id="view_dss_qty_sortie_wizard_form" model="ir.ui.view">
         <field name="name">dss.qty.sortie.wizard.form</field>
         <field name="model">dss.qty.sortie.wizard</field>
         <field name="arch" type="xml">
             <form string="Modifier Qte">
+                <!-- Lien technique vers la demande concernée ; il est fourni par le contexte et reste masqué. -->
                 <field name="request_id" invisible="1"/>
+                <!-- Affiche les lignes du wizard dans un tableau modifiable. -->
                 <field name="line_ids">
                     <tree editable="bottom">
+                        <!-- Article et quantité demandée sont en lecture seule ; les quantités de stock sont ajustables. -->
                         <field name="product_id" readonly="1"/>
                         <field name="qty_demandee" readonly="1"/>
                         <field name="qty_sortie"/>
@@ -15,7 +19,9 @@
                     </tree>
                 </field>
                 <footer>
+                    <!-- Appelle l'action Python qui enregistre les modifications du wizard. -->
                     <button name="action_valider" type="object" string="Valider" class="oe_highlight"/>
+                    <!-- Le bouton standard cancel ferme la fenêtre sans valider les modifications. -->
                     <button string="Annuler" class="oe_link" special="cancel"/>
                 </footer>
             </form>

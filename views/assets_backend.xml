@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Hérite du bundle Web standard pour ajouter une feuille CSS à l'interface Odoo. -->
     <template id="assets_backend_dss_chatter" inherit_id="web.assets_backend">
+        <!-- xpath="." cible le bundle entier ; inside insère le lien sans remplacer son contenu. -->
         <xpath expr="." position="inside">
+            <!-- Charge les styles DSS dans le navigateur pour les vues du module. -->
             <link rel="stylesheet" type="text/css"
                 href="/dss_v2/static/src/css/dss_chatter.css"/>
         </xpath>

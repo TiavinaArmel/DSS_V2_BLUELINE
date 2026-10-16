@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Formulaire temporaire de clôture : les quantités installées et retournées restent éditables. -->
     <record id="view_dss_cloture_wizard_form" model="ir.ui.view">
         <field name="name">dss.cloture.wizard.form</field>
         <field name="model">dss.cloture.wizard</field>
         <field name="arch" type="xml">
             <form string="Cloturer la demande">
+                <!-- Référence cachée vers la demande transmise au wizard par son contexte. -->
                 <field name="request_id" invisible="1"/>
+                <!-- Tableau des lignes rattachées au wizard ; editable="bottom" permet leur édition. -->
                 <field name="line_ids">
                     <tree editable="bottom">
+                        <!-- Article et quantité sortie sont consultables mais verrouillés pendant la clôture. -->
                         <field name="product_id" readonly="1"/>
                         <field name="qty_sortie" readonly="1"/>
                         <field name="qty_installee"/>
@@ -15,7 +19,9 @@
                     </tree>
                 </field>
                 <footer>
+                    <!-- Appelle la méthode Python action_confirmer pour terminer la clôture. -->
                     <button name="action_confirmer" type="object" string="Confirmer la cloture" class="oe_highlight"/>
+                    <!-- special="cancel" ferme le wizard sans confirmer l'opération. -->
                     <button string="Annuler" class="oe_link" special="cancel"/>
                 </footer>
             </form>

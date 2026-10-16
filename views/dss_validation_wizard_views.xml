@@ -1,18 +1,28 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Vue du wizard de confirmation pour l'étape Chef. -->
     <record id="view_dss_validation_chef_wizard_form" model="ir.ui.view">
+        <!-- Nom technique de la vue et modèle temporaire qu'elle affiche. -->
         <field name="name">dss.validation.chef.wizard.form</field>
         <field name="model">dss.validation.chef.wizard</field>
         <field name="arch" type="xml">
+            <!-- Le formulaire modal demande une confirmation avant d'exécuter l'action métier. -->
             <form string="Confirmation de validation">
+                <!-- Conteneur de présentation des messages dans le wizard. -->
                 <div class="o_field_widget o_field_many2one">
+                    <!-- Première phrase : indique le rôle qui effectue la validation. -->
                     <p>Vous etes sur le point de valider cette demande en tant que Responsable Chef.</p>
+                    <!-- Explique l'étape suivante du workflow après confirmation. -->
                     <p>Cette action fera passer la demande a l etape <b>Validation Stock</b>.</p>
+                    <!-- Question affichée avant les boutons de décision. -->
                     <p>Souhaitez-vous continuer ?</p>
                 </div>
+                <!-- Le pied de formulaire regroupe les commandes de confirmation et d'annulation. -->
                 <footer>
+                    <!-- type="object" appelle la méthode action_confirmer du wizard Python. -->
                     <button name="action_confirmer" type="object"
                         string="Confirmer" class="oe_highlight"/>
+                    <!-- Appelle l'action d'annulation du wizard sans valider la demande. -->
                     <button name="action_annuler" type="object"
                         string="Annuler"/>
                 </footer>
@@ -20,19 +30,26 @@
         </field>
     </record>
 
+    <!-- Vue du wizard de confirmation pour l'étape Stock. -->
     <record id="view_dss_validation_stock_wizard_form" model="ir.ui.view">
+        <!-- Identifiant de vue et modèle transitoire correspondant au responsable Stock. -->
         <field name="name">dss.validation.stock.wizard.form</field>
         <field name="model">dss.validation.stock.wizard</field>
         <field name="arch" type="xml">
+            <!-- Formulaire modal affiché avant la validation Stock. -->
             <form string="Confirmation de validation">
                 <div class="o_field_widget o_field_many2one">
+                    <!-- Indique à l'utilisateur quelle validation est en cours. -->
                     <p>Vous etes sur le point de valider cette demande en tant que Responsable Stock.</p>
+                    <!-- Présente la conséquence de cette validation dans le workflow. -->
                     <p>Cette validation permettra ensuite l approbation finale de la demande.</p>
                     <p>Souhaitez-vous continuer ?</p>
                 </div>
                 <footer>
+                    <!-- Appelle l'action Python qui confirme la validation de Stock. -->
                     <button name="action_confirmer" type="object"
                         string="Confirmer" class="oe_highlight"/>
+                    <!-- Ferme le wizard via son action d'annulation. -->
                     <button name="action_annuler" type="object"
                         string="Annuler"/>
                 </footer>
@@ -40,19 +57,26 @@
         </field>
     </record>
 
+    <!-- Vue du wizard de confirmation de l'approbation finale. -->
     <record id="view_dss_validation_approuver_wizard_form" model="ir.ui.view">
+        <!-- Nom technique et modèle temporaire du wizard d'approbation. -->
         <field name="name">dss.validation.approuver.wizard.form</field>
         <field name="model">dss.validation.approuver.wizard</field>
         <field name="arch" type="xml">
+            <!-- Demande une confirmation explicite avant l'état final Approuvé. -->
             <form string="Confirmation d approbation">
                 <div class="o_field_widget o_field_many2one">
+                    <!-- Rappelle que cette action termine le circuit de validation. -->
                     <p>Vous etes sur le point d approuver definitivement cette demande.</p>
+                    <!-- Affiche le nom de l'étape cible du workflow. -->
                     <p>Cette action fera passer la demande a l etat <b>Approuve</b>.</p>
                     <p>Souhaitez-vous continuer ?</p>
                 </div>
                 <footer>
+                    <!-- Appelle la méthode Python qui enregistre l'approbation finale. -->
                     <button name="action_confirmer" type="object"
                         string="Confirmer" class="oe_highlight"/>
+                    <!-- Abandonne la confirmation en appelant l'action d'annulation du wizard. -->
                     <button name="action_annuler" type="object"
                         string="Annuler"/>
                 </footer>

@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Wizard utilisé pour recueillir le motif avant le rejet d'une demande DSS. -->
     <record id="view_dss_rejet_wizard_form" model="ir.ui.view">
         <field name="name">dss.rejet.wizard.form</field>
         <field name="model">dss.rejet.wizard</field>
         <field name="arch" type="xml">
             <form>
+                <!-- Référence cachée à la demande que l'action de rejet doit traiter. -->
                 <field name="request_id" invisible="1"/>
                 <group>
+                    <!-- Texte libre saisi par l'utilisateur puis conservé avec le rejet. -->
                     <field name="motif" placeholder="Expliquez pourquoi cette demande est rejetee..."/>
                 </group>
                 <footer>
+                    <!-- Appelle le traitement Python qui confirme le rejet. -->
                     <button name="action_confirmer" type="object" string="Confirmer le rejet" class="oe_highlight"/>
+                    <!-- Ferme le wizard sans exécuter l'action de rejet. -->
                     <button string="Annuler" class="oe_link" special="cancel"/>
                 </footer>
             </form>

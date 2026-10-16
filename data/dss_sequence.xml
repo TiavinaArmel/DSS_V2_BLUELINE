@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Élément racine attendu par le chargeur des données XML d'Odoo. -->
 <odoo>
+    <!-- noupdate empêche la mise à jour du module de réinitialiser le compteur déjà utilisé. -->
     <data noupdate="1">
+        <!-- Crée une séquence Odoo pour numéroter les demandes DSS. -->
         <record id="seq_dss_request" model="ir.sequence">
+            <!-- Identifiant XML stable utilisé pour retrouver cette séquence dans Odoo. -->
             <field name="name">Numero DSS</field>
+            <!-- Code technique demandé par le Python avec next_by_code('dss.request'). -->
             <field name="code">dss.request</field>
+            <!-- Texte placé au début de chaque numéro généré. -->
             <field name="prefix">DSS-</field>
+            <!-- Longueur minimale de la partie numérique ; 5 donne par exemple 00001. -->
             <field name="padding">5</field>
+            <!-- Valeur de départ du compteur lors de la création de la séquence. -->
             <field name="number_next">1</field>
+            <!-- Nombre ajouté au compteur après chaque numéro attribué. -->
             <field name="number_increment">1</field>
         </record>
     </data>

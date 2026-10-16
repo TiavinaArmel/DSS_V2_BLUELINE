@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Menu racine qui regroupe les fonctions du module DSS dans l'application Odoo. -->
     <menuitem id="menu_dss_root" name="DSS" sequence="20"/>
+    <!-- Sous-menu qui ouvre l'action de recherche et de gestion des demandes. -->
     <menuitem id="menu_dss_request" name="Demandes" parent="menu_dss_root" action="action_dss_request"/>
 </odoo>
