@@ -6,3 +6,4 @@ access_dss_qty_sortie_wizard_line,dss.qty.sortie.wizard.line,model_dss_qty_sorti
 access_dss_rejet_wizard,dss.rejet.wizard,model_dss_rejet_wizard,,1,1,1,1
 access_dss_cloture_wizard,dss.cloture.wizard,model_dss_cloture_wizard,dss_v2.group_dss_chef,1,1,1,1
 access_dss_cloture_wizard_line,dss.cloture.wizard.line,model_dss_cloture_wizard_line,dss_v2.group_dss_chef,1,1,1,1
+access_dss_notification_log,dss.notification.log,model_dss_notification_log,,1,1,1,0

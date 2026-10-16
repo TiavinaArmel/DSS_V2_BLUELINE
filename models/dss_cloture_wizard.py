@@ -132,6 +132,7 @@ class DssClotureWizard(models.TransientModel):
 
         # Poste le message dans le chatter.
         self.request_id.message_post(body=message)
+        self.request_id._dss_notify_closure()
 
         # Ferme la popup.
         return {'type': 'ir.actions.act_window_close'}

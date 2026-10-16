@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class DssRequestWorkflow(models.Model):
@@ -82,6 +82,7 @@ class DssRequestWorkflow(models.Model):
                 body="<b>%s</b> a soumis la demande.<br/>%s"
                 % (self.env.user.name, detail)
             )
+            rec._dss_notify_submission()
 
     @api.multi
     def action_valider_chef(self):
@@ -99,6 +100,7 @@ class DssRequestWorkflow(models.Model):
                 body="<b>%s</b> a valide la demande en tant que <b>Responsable Chef</b>."
                 % self.env.user.name
             )
+            rec._dss_notify_chef_validation()
 
     @api.multi
     def action_valider_magasin(self):
@@ -134,26 +136,14 @@ class DssRequestWorkflow(models.Model):
                 body="<b>%s</b> a approuve definitivement la demande."
                 % self.env.user.name
             )
-
-    @api.multi
-    def action_approuver(self):
-        """Approuve définitivement la demande après le contrôle de l'état attendu."""
-        for rec in self:
-            if rec.state != "valide_magasin":
-                raise ValidationError(
-                    "La demande doit etre validee par le Stock avant approbation."
-                )
-            # Met à jour l'état puis consigne l'approbation dans l'historique du dossier.
-            rec.state = "approuve"
-            rec.message_post(
-                body="<b>%s</b> a approuve definitivement la demande."
-                % self.env.user.name
-            )
+            # Notifie les destinataires de l'approbation finale du stock.
+            rec._dss_notify_stock_approval()
 
     @api.multi
     def action_rejeter(self):
         """Rejette la demande et ajoute le motif au chatter s'il a été saisi."""
         for rec in self:
+            previous_state = rec.state
             rec.state = "rejete"
             # Le motif est facultatif ; les deux branches produisent un message adapté.
             if rec.motif_rejet:
@@ -165,6 +155,7 @@ class DssRequestWorkflow(models.Model):
                 rec.message_post(
                     body="<b>%s</b> a rejete la demande." % self.env.user.name
                 )
+            rec._dss_notify_rejection(previous_state)
 
     @api.multi
     def action_open_wizard_rejeter(self):
@@ -183,13 +174,28 @@ class DssRequestWorkflow(models.Model):
 
     @api.multi
     def action_renvoyer_demandeur(self):
-        """Remet la demande rejetée en brouillon afin qu'elle puisse être corrigée."""
+        """Autorise le Chef à remettre au demandeur une demande précédemment rejetée."""
+        # Le contrôle serveur protège aussi les appels qui ne viennent pas du bouton de l'interface.
+        if not self.env.user.has_group("dss_v2.group_dss_chef"):
+            raise AccessError(
+                "Seul un utilisateur du groupe DSS / Chef peut renvoyer une demande."
+            )
         for rec in self:
-            # Réinitialise l'étape, puis conserve au chatter la trace du renvoi.
+            # Seule une demande rejetée peut revenir au demandeur pour correction.
+            if rec.state != "rejete":
+                raise ValidationError(
+                    "Seule une demande rejetee peut etre renvoyee au demandeur."
+                )
+            # Le signataire est privilégié ; create_uid sert de repli si aucun signataire n'existe.
+            demandeur = rec.signataire_demandeur_id or rec.create_uid
+            nom_demandeur = demandeur.name if demandeur else "demandeur"
+            # Remet la demande en brouillon avant d'ajouter la trace du renvoi au chatter.
             rec.state = "brouillon"
             rec.message_post(
-                body="<b>%s</b> a renvoye la demande au demandeur." % self.env.user.name
+                body="<b>%s</b> a renvoye la demande au demandeur <b>%s</b>."
+                % (self.env.user.name, nom_demandeur)
             )
+            rec._dss_notify_return_to_requester()
 
     @api.multi
     def action_open_modifier_qte_sortie(self):
@@ -245,7 +251,6 @@ class DssRequestWorkflow(models.Model):
 
     @api.multi
     def action_open_wizard_approuver(self):
-        """Ouvre le wizard de confirmation de l'approbation finale."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",

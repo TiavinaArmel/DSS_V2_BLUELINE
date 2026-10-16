@@ -57,30 +57,4 @@
         </field>
     </record>
 
-    <!-- Vue du wizard de confirmation de l'approbation finale. -->
-    <record id="view_dss_validation_approuver_wizard_form" model="ir.ui.view">
-        <!-- Nom technique et modèle temporaire du wizard d'approbation. -->
-        <field name="name">dss.validation.approuver.wizard.form</field>
-        <field name="model">dss.validation.approuver.wizard</field>
-        <field name="arch" type="xml">
-            <!-- Demande une confirmation explicite avant l'état final Approuvé. -->
-            <form string="Confirmation d approbation">
-                <div class="o_field_widget o_field_many2one">
-                    <!-- Rappelle que cette action termine le circuit de validation. -->
-                    <p>Vous etes sur le point d approuver definitivement cette demande.</p>
-                    <!-- Affiche le nom de l'étape cible du workflow. -->
-                    <p>Cette action fera passer la demande a l etat <b>Approuve</b>.</p>
-                    <p>Souhaitez-vous continuer ?</p>
-                </div>
-                <footer>
-                    <!-- Appelle la méthode Python qui enregistre l'approbation finale. -->
-                    <button name="action_confirmer" type="object"
-                        string="Confirmer" class="oe_highlight"/>
-                    <!-- Abandonne la confirmation en appelant l'action d'annulation du wizard. -->
-                    <button name="action_annuler" type="object"
-                        string="Annuler"/>
-                </footer>
-            </form>
-        </field>
-    </record>
 </odoo>

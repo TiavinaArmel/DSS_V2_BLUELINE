@@ -14,3 +14,4 @@ from . import dss_qty_sortie_wizard  # wizard de quantité à sortir
 from . import dss_cloture_wizard  # wizard de clôture
 from . import dss_request_display  # modèle d'affichage
 from . import dss_validation_wizard  # wizards de validation
+from . import dss_notification  # notifications métier DSS

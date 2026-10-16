@@ -10,7 +10,7 @@
 - Distinguer un wizard de simple confirmation et un wizard avec logique métier
 - Comprendre `default_get()` et le mécanisme de pré-remplissage
 - Comprendre comment un wizard reporte ses modifications sur les vraies données
-- Lever l'anomalie du Jour 2 sur les 3 wizards de validation
+- Comprendre les 2 wizards de validation encore utilisés
 
 ---
 
@@ -22,23 +22,22 @@ Contrairement à `models.Model` (utilisé par `dss.request`, `dss.request.line`)
 
 ## 2. Anomalie du Jour 2 résolue
 
-Au Jour 2, on avait repéré que `dss_request.py` ouvrait 3 wizards (`dss.validation.chef.wizard`, `dss.validation.stock.wizard`, `dss.validation.approuver.wizard`) dont les noms n'apparaissaient pas dans `models/__init__.py`.
+Au Jour 2, on avait repéré que `dss_request.py` ouvrait des wizards (`dss.validation.chef.wizard`, `dss.validation.stock.wizard`, `dss.validation.approuver.wizard`) dont les noms n'apparaissaient pas dans `models/__init__.py`.
 
-**Confirmation :** les 3 modèles existent bien, tous les trois regroupés dans le même fichier `dss_validation_wizard.py`, qui est bien importé sous le nom `dss_validation_wizard`. Il n'y a ni bug ni incohérence — simplement 3 classes dans un seul fichier, ce qui n'était pas visible depuis la seule lecture du `__init__.py`.
+**Confirmation :** les deux modèles encore utilisés existent dans le fichier `dss_validation_wizard.py`, qui est bien importé sous le nom `dss_validation_wizard`. L'ancien wizard d'approbation a été retiré : il n'était pas relié à la vue et son action faisait doublon avec la validation Stock.
 
 ---
 
 ## 3. Les wizards de confirmation simple (`dss_validation_wizard.py`)
 
-### Structure commune aux 3 classes
+### Structure commune aux 2 classes
 
 | Classe | `_name` | Appelle sur la demande |
 |---|---|---|
 | `DssValidationChefWizard` | `dss.validation.chef.wizard` | `action_valider_chef()` |
 | `DssValidationStockWizard` | `dss.validation.stock.wizard` | `action_valider_magasin()` |
-| `DssValidationApprouverWizard` | `dss.validation.approuver.wizard` | `action_approuver()` |
 
-Les 3 classes suivent exactement le même patron :
+Les 2 classes suivent exactement le même patron :
 
 ```python
 class DssValidationChefWizard(models.TransientModel):

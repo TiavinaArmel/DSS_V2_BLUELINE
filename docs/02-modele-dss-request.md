@@ -231,20 +231,17 @@ De l'**héritage par extension** (`_inherit` seul, sans `_name`) : on modifie le
 
 ## 7. Points fragiles identifiés — à vérifier au Jour 3
 
-1. **`action_approuver()` ne génère aucun mouvement de stock**, contrairement à `action_valider_magasin()`, bien que les deux fassent passer l'état à `approuve`. Les deux méthodes ne sont donc pas équivalentes. À vérifier : quel bouton de la vue appelle réellement laquelle ?
+1. **`action_rejeter()` n'a aucun garde-fou d'état** (pas de `if rec.state != ...`), contrairement aux actions de validation. La vue n'affiche toutefois les boutons de rejet qu'au Chef en `valide_chef` et au Magasin en `valide_magasin`. Le contrôle côté serveur reste à envisager si l'action doit être impossible depuis d'autres états.
 
-2. **`action_rejeter()` n'a aucun garde-fou d'état** (pas de `if rec.state != ...`), contrairement à toutes les autres actions du circuit. Une demande peut être rejetée à n'importe quelle étape. Volontaire ou oubli ?
-
-3. **Trois méthodes ouvrent des wizards dont le nom technique n'a pas été vu dans `models/__init__.py`** (Jour 1) :
+2. **Deux méthodes ouvrent des wizards dont le nom technique n'a pas été vu dans `models/__init__.py`** (Jour 1) :
    - `action_open_wizard_chef` → `dss.validation.chef.wizard`
    - `action_open_wizard_stock` → `dss.validation.stock.wizard`
-   - `action_open_wizard_approuver` → `dss.validation.approuver.wizard`
 
-   Le `__init__.py` n'importe qu'un seul fichier `dss_validation_wizard`. À vérifier en priorité au Jour 3 : ces 3 modèles existent-ils bien dans ce fichier (avec 3 classes), ou y a-t-il une incohérence à corriger ?
+    Le `__init__.py` n'importe qu'un seul fichier `dss_validation_wizard`, qui contient ces deux modèles. L'ancien wizard d'approbation a été retiré : il n'était pas relié à un bouton de la vue et son action faisait doublon avec `action_valider_magasin()` sans générer les mouvements ni le bon de livraison.
 
-4. **Code dupliqué** entre `_generer_mouvement_sortie()` et `_generer_mouvement_transfert()` : le bloc de contrôle de disponibilité (`StockQuant.read_group` + comparaison) est identique dans les deux méthodes. Candidat naturel à factoriser en une méthode partagée — à proposer à l'encadreur.
+3. **Code dupliqué** entre `_generer_mouvement_sortie()` et `_generer_mouvement_transfert()` : le bloc de contrôle de disponibilité (`StockQuant.read_group` + comparaison) est identique dans les deux méthodes. Candidat naturel à factoriser en une méthode partagée — à proposer à l'encadreur.
 
-5. **`_generer_mouvement_entree()` écrase `picking_id`** : dans le cas `sens_mouvement == 'Sortie + Entree'`, les deux méthodes sont appelées l'une après l'autre, mais `picking_id` ne garde que le **dernier** picking créé (celui de l'entrée). Le picking de sortie reste accessible via `stock.picking` mais plus directement depuis la fiche DSS. À vérifier en pratique au Jour 4.
+4. **`_generer_mouvement_entree()` écrase `picking_id`** : dans le cas `sens_mouvement == 'Sortie + Entree'`, les deux méthodes sont appelées l'une après l'autre, mais `picking_id` ne garde que le **dernier** picking créé (celui de l'entrée). Le picking de sortie reste accessible via `stock.picking` mais plus directement depuis la fiche DSS. À vérifier en pratique au Jour 4.
 
 ---
 

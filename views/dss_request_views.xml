@@ -33,6 +33,7 @@
                     </span>
                     <!-- Permet de renvoyer au demandeur une demande dont l'état est rejeté. -->
                     <button name="action_renvoyer_demandeur" type="object" string="Renvoyer au demandeur"
+                        groups="dss_v2.group_dss_chef"
                         attrs="{'invisible': [('state', '!=', 'rejete')]}" class="oe_highlight"/>
                     <!-- widget statusbar présente visuellement le workflow du champ state. -->
                     <field name="state" widget="statusbar"

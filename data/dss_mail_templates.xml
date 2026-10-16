@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Élément racine obligatoire des fichiers de données chargés par Odoo. -->
+<odoo>
+    <!-- Déclare un enregistrement du modèle Odoo mail.template. -->
+    <record id="mail_template_dss_workflow" model="mail.template">
+        <!-- Nom interne affiché aux administrateurs dans la configuration des e-mails. -->
+        <field name="name">DSS - Notification workflow</field>
+        <!-- ref pointe vers l'identifiant XML du modèle d'enregistrement dss.request. -->
+        <field name="model_id" ref="dss_v2.model_dss_request"/>
+        <!-- ${...} insère une valeur calculée ; ctx.get(clé, valeur_par_défaut) lit le contexte Odoo. -->
+        <field name="subject">DSS ${object.name} - ${ctx.get('dss_action_label', 'Notification')}</field>
+        <!-- user.email fournit l'adresse de l'utilisateur courant ; or '' utilise une chaîne vide si elle manque. -->
+        <field name="email_from">${user.email or ''}</field>
+        <!-- CDATA empêche XML d'interpréter les balises HTML comme des balises de configuration Odoo. -->
+        <field name="body_html"><![CDATA[
+            <!-- Texte d'accueil fixe, affiché en premier dans le courriel. -->
+            <p>Bonjour,</p>
+            <!-- object désigne la demande DSS liée au modèle de ce courriel ; .name affiche son numéro. -->
+            <p>La demande DSS <strong>${object.name}</strong> a fait l'objet de l'action suivante :</p>
+            <!-- Affiche le libellé de l'action transmis dans le contexte, ou rien s'il est absent. -->
+            <p><strong>${ctx.get('dss_action_label', '')}</strong></p>
+            <!-- Affiche le statut transmis ; object.state sert de valeur de remplacement. -->
+            <p>Statut actuel : <strong>${ctx.get('dss_status', object.state)}</strong></p>
+            <!-- Cette condition Mako n'affiche le motif que pour les trois événements concernés. -->
+            % if ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester'):
+            <!-- or utilise "Non renseigne" si le motif est absent ou vide. -->
+            <p>Motif : ${ctx.get('dss_motif', '') or 'Non renseigne'}</p>
+            <!-- Termine le bloc conditionnel ouvert par % if. -->
+            % endif
+            <!-- href reçoit l'URL de la demande ; le texte du lien reste lisible dans le courriel. -->
+            <p><a href="${ctx.get('dss_workflow_url', '')}">Ouvrir la demande DSS dans Odoo</a></p>
+            <!-- Indique au destinataire que ce message est généré automatiquement. -->
+            <p>Ceci est une notification automatique.</p>
+        ]]></field>
+        <!-- eval interprète False comme un booléen ; le courriel reste conservé après son envoi. -->
+        <field name="auto_delete" eval="False"/>
+    </record>
+</odoo>
