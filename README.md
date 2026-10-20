@@ -4,13 +4,13 @@ Module Odoo permettant de digitaliser et de suivre les demandes de sortie de sto
 
 > **Compatibilité actuelle : Odoo 10 Community**
 
-## Description
+## 1. Présentation
 
 Le module **DSS V2** permet de créer, valider, rejeter, clôturer et suivre les demandes de sortie de stock.
 
 Il prend en charge le workflow complet d’une demande, depuis sa création jusqu’à la sortie effective des articles du magasin.
 
-## Fonctionnalités principales
+## 2. Fonctionnalités principales
 
 - Création d’une demande de sortie de stock ;
 - Attribution automatique d’un numéro DSS ;
@@ -27,18 +27,20 @@ Il prend en charge le workflow complet d’une demande, depuis sa création jusq
 - Recherche, filtres et regroupements avancés ;
 - Gestion des droits d’accès selon le rôle de l’utilisateur.
 
-## Workflow
+## 3. Workflow
 
-Une demande DSS peut suivre les états suivants :
+Le modèle `dss.request` définit le parcours suivant :
 
 ```text
-Brouillon → Soumise → Validée par le chef → Validée par le magasin
-          → Partiellement sortie ou totalement sortie → Clôturée
+brouillon -> valide_chef -> valide_magasin -> approuve -> cloture
+valide_chef -> rejete
+valide_magasin -> rejete
+rejete -> brouillon (renvoi par le groupe Chef)
 ```
 
-Une demande peut également être rejetée avec un motif renseigné par l’utilisateur autorisé.
+Le rejet passe par un wizard qui exige un motif. Le code ne définit pas d'état de sortie partielle.
 
-## Rôles utilisateurs
+## 4. Rôles utilisateurs
 
 - **Demandeur** : crée et consulte ses demandes ;
 - **Chef** : vérifie et valide les demandes ;
@@ -47,7 +49,7 @@ Une demande peut également être rejetée avec un motif renseigné par l’util
 
 Les groupes et les droits d’accès sont configurés dans le dossier `security/`.
 
-## Compatibilité et dépendances
+## 5. Compatibilité et dépendances
 
 | Élément | Valeur |
 |---|---|
@@ -59,9 +61,9 @@ Les groupes et les droits d’accès sont configurés dans le dossier `security/
 | Auteur | Tiavina Armel |
 | Dépendances Odoo | `web`, `stock`, `mail` |
 
-Le module n’est pas déclaré comme compatible avec Odoo Enterprise ou avec une autre version d’Odoo pour le moment.
+Le README annonce Odoo 10 Community. Le manifeste ne fixe pas de version Python; le cahier de projet mentionne Python 2.7. Vérifier l'interpréteur réellement utilisé par l'instance.
 
-## Installation
+## 6. Installation
 
 ### 1. Copier le module
 
@@ -96,7 +98,7 @@ python odoo-bin -c odoo.conf -d NOM_DE_LA_BASE -u dss_v2
 
 Remplacer `NOM_DE_LA_BASE` par le nom réel de la base de données.
 
-## Structure du module
+## 7. Structure du module
 
 ```text
 dss_v2/
@@ -112,7 +114,7 @@ dss_v2/
 └── views/                # Vues, menus et actions XML
 ```
 
-## Tests à effectuer après l’installation
+## 8. Tests à effectuer après l’installation
 
 - Créer une demande DSS ;
 - Ajouter et modifier les lignes d’articles ;
@@ -128,18 +130,11 @@ dss_v2/
 - Vérifier le respect des droits d’accès ;
 - Clôturer une demande terminée.
 
-## Documentation
+## 9. Documentation
 
-La documentation détaillée se trouve dans le dossier `docs/` :
+L'index de la documentation technique et fonctionnelle se trouve dans [`docs/README.md`](docs/README.md). Il présente l'architecture, les modèles, les vues, le workflow, les rapports, les intégrations, la sécurité, les tests et la maintenance.
 
-- Architecture et sécurité ;
-- Modèle de données `dss.request` ;
-- Documentation des assistants ;
-- Documentation du bon de livraison ;
-- Filtres et regroupements ;
-- Refactorisation du modèle DSS.
-
-## Développement
+## 10. Développement
 
 Avant toute modification :
 
@@ -162,7 +157,7 @@ git commit -m "feat: description de la modification"
 git push origin feature/nom-de-la-fonctionnalite
 ```
 
-## Dépôt
+## 11. Dépôt
 
 Le projet est hébergé sur GitHub :
 
@@ -170,8 +165,16 @@ Le projet est hébergé sur GitHub :
 https://github.com/TiavinaArmel/DSS_V2_BLUELINE.git
 ```
 
-## Auteur
+## 12. Auteur
 
 **Tiavina Armel**
 
 Module développé pour la gestion des demandes de sortie de stock dans Odoo 10 Community.
+
+## 13. Fiche de mémorisation
+
+| Repère | À retenir |
+|---|---|
+| Version | `2.4`, selon le manifeste. |
+| Workflow | Chef puis Stock; le workflow principal n'a pas d'étape Sécurité. |
+| Documentation détaillée | [`docs/README.md`](docs/README.md). |
