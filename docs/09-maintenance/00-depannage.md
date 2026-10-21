@@ -18,11 +18,18 @@ Vérifier d'abord si un `dss.notification.log` et un `mail.mail` existent, puis 
 
 | Symptôme possible | Élément source à contrôler |
 |---|---|
+| Boutons Valider/Rejeter Chef ou Magasin absents | Le header DSS a été simplifié : les boutons sont des éléments directs du `<header>` et portent chacun leur attribut `groups`. Mettre à niveau le module sur la base concernée, puis vérifier le groupe de l'utilisateur et l'état de la demande (`valide_chef` pour Chef, `valide_magasin` pour Magasin). Si le problème persiste, inspecter la vue formulaire combinée et les personnalisations de la base. |
 | Action de wizard introuvable | `action_open_wizard_approuver()` référence `dss.validation.approuver.wizard`, non déclaré dans les fichiers Python recensés; aucun bouton ne l'appelle dans la vue principale. |
 | État de picking inattendu | `action_soumettre_dss()` écrit `soumis`, qui n'est pas une option de `dss_validation_state`. |
 | Numéro picking `/` | L'extension cherche `ir.sequence` de code `dss.number`; aucune séquence de ce code n'est déclarée dans les données de ce module. |
 | Refus de soumission | Lire le message `ValidationError` de `action_soumettre()` et vérifier les champs et lignes requis. |
 | Refus de mouvement | Lire l'erreur de quantité du modèle stock et contrôler l'emplacement source et les quantités saisies. |
+
+### Historique du problème d'affichage des boutons DSS
+
+Les boutons d'action Chef et Magasin étaient enveloppés dans des éléments `<span groups="…">` dans le header. Cette structure a été considérée comme une cause possible de leur absence, car certaines versions ou personnalisations de l'en-tête peuvent attendre des éléments directs tels que `<button>` et `<field>`. Sans trace d'erreur du serveur ou inspection de la vue combinée sur la base concernée, cette cause reste une hypothèse de compatibilité, et non un diagnostic confirmé.
+
+Solution appliquée dans `views/dss_request_views.xml` : suppression des deux `<span>` et déplacement de la restriction `groups` sur chaque bouton qu'ils contenaient. L'ordre des boutons, les libellés, les conditions `attrs` et les classes CSS ont été conservés. Après mise à niveau du module, contrôler également que l'utilisateur possède le groupe approprié et que la demande est à l'étape attendue.
 
 ## 4. Fiche de mémorisation
 
