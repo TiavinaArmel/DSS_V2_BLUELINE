@@ -49,6 +49,10 @@ class TestDssNotifications(common.TransactionCase):
 
     def test_mail_is_queued_without_sending(self):
         """Verifie que le mail est en file et reste absent du chatter de la DSS."""
+        # Configure une URL publique de test pour vérifier le logo généré.
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "https://odoo.example.test"
+        )
         # Cree la demande qui servira d'objet au test.
         request = self.Request.create({"name": "TEST-DSS-QUEUE"})
         # Cree une notification vers une adresse de test qui ne peut pas recevoir.
@@ -70,6 +74,12 @@ class TestDssNotifications(common.TransactionCase):
         self.assertTrue(log.mail_id)
         # Verifie que le courriel est en attente de traitement par la file Odoo.
         self.assertEqual(log.mail_id.state, "outgoing")
+        # Vérifie que le template utilise le domaine public et la société courante.
+        self.assertIn(
+            "https://odoo.example.test/web/binary/company_logo?db=%s&company=%s"
+            % (self.env.cr.dbname, self.env.user.company_id.id),
+            log.mail_id.body_html,
+        )
         # Un evenement de soumission ne doit pas afficher la ligne du motif.
         self.assertNotIn("Motif :", log.mail_id.body_html)
         # Le mail reste autonome et n'apparait pas dans le chatter de la demande.

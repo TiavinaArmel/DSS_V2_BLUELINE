@@ -18,7 +18,9 @@ Le template est `dss_v2.mail_template_dss_workflow`. La matrice des événements
 
 ## 3. Rendu et création
 
-Le code transmet au template le libellé d'action, la clé d'événement, le motif, l'état et l'URL de la demande. Il crée `mail.mail` avec `model=False`, `res_id=False` et `auto_delete=False`; le mail est indépendant du chatter, tandis que le journal conserve le lien métier.
+Le code transmet au template le libellé d'action, la clé d'événement, le motif, l'état, l'URL de la demande et l'URL du logo. Le lien du logo est construit depuis le paramètre système `web.base.url`, avec le nom de la base et l'identifiant de la société de l'utilisateur courant; si le paramètre est absent, le template conserve le nom de l'entreprise comme solution de repli. Pour que le logo soit visible à l'extérieur, la base URL doit être publiquement accessible aux destinataires et la route Odoo du logo ne doit pas leur demander une authentification inaccessible.
+
+Le code crée `mail.mail` avec `model=False`, `res_id=False` et `auto_delete=False`; le mail est indépendant du chatter, tandis que le journal conserve le lien métier.
 
 ## 4. Gestion des erreurs
 

@@ -20,7 +20,11 @@ La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `
 
 ## 3. Template et file d'envoi
 
-Le template XML compose le sujet, l'action, l'état et le lien vers la demande. Il n'affiche le motif que pour les clés de rejet et de renvoi. Le code fixe `model=False`, `res_id=False` et `auto_delete=False`, puis crée le mail sans appeler `send()`; il dépend donc de la file de courriels Odoo pour l'envoi réel.
+Le template XML compose le sujet, l'action, l'état, le lien vers la demande et l'en-tête du courriel. Le motif n'apparaît que pour les clés de rejet et de renvoi. Le logo est affiché depuis la route Odoo `/web/binary/company_logo`; son URL est construite avec `web.base.url`, le nom de la base et l'identifiant de la société de l'utilisateur qui déclenche la notification. Si `web.base.url` n'est pas configuré, le template affiche le nom de l'entreprise à la place du logo.
+
+Pour que les destinataires voient le logo, `web.base.url` doit contenir l'adresse du serveur joignable par eux, idéalement en HTTPS; une valeur `localhost` ne fonctionne que sur la machine locale. La route de l'image doit également être accessible depuis leur client de messagerie, qui peut par ailleurs bloquer les images distantes par défaut.
+
+Le code fixe `model=False`, `res_id=False` et `auto_delete=False`, puis crée le mail sans appeler `send()`; il dépend donc de la file de courriels Odoo pour l'envoi réel.
 
 Le modèle `dss.notification.log` garde la demande, la clé d'événement, le mail et les destinataires. Sa contrainte unique limite chaque paire demande/événement à une entrée. Une notification déjà journalisée ne sera pas recréée par un nouvel appel de même clé.
 
