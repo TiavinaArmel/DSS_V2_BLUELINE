@@ -80,6 +80,12 @@ class TestDssNotifications(common.TransactionCase):
             % (self.env.cr.dbname, self.env.user.company_id.id),
             log.mail_id.body_html,
         )
+        # Vérifie que le bouton ouvre la demande dans la base qui a envoyé l'e-mail.
+        self.assertIn(
+            "https://odoo.example.test/web?db=%s#id=%s&view_type=form&model=dss.request"
+            % (self.env.cr.dbname, request.id),
+            log.mail_id.body_html,
+        )
         # Un evenement de soumission ne doit pas afficher la ligne du motif.
         self.assertNotIn("Motif :", log.mail_id.body_html)
         # Le mail reste autonome et n'apparait pas dans le chatter de la demande.

@@ -20,7 +20,7 @@ La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `
 
 ## 3. Template et file d'envoi
 
-Le template XML compose le sujet, l'action, l'état, le lien vers la demande et l'en-tête du courriel. Le motif n'apparaît que pour les clés de rejet et de renvoi. Le logo est affiché depuis la route Odoo `/web/binary/company_logo`; son URL est construite avec `web.base.url`, le nom de la base et l'identifiant de la société de l'utilisateur qui déclenche la notification. Si `web.base.url` n'est pas configuré, le template affiche le nom de l'entreprise à la place du logo.
+Le template XML compose le sujet, l'action, l'état, le lien vers la demande et l'en-tête du courriel. Le lien de la demande inclut le nom de la base qui a créé le courriel afin que le navigateur ouvre le bon registre Odoo, où le modèle `dss.request` est installé. Le destinataire doit tout de même s'authentifier et disposer des droits nécessaires. Le motif n'apparaît que pour les clés de rejet et de renvoi. Le logo est affiché depuis la route Odoo `/web/binary/company_logo`; son URL est construite avec `web.base.url`, le nom de la base et l'identifiant de la société de l'utilisateur qui déclenche la notification. Si `web.base.url` n'est pas configuré, le template affiche le nom de l'entreprise à la place du logo.
 
 Pour que les destinataires voient le logo, `web.base.url` doit contenir l'adresse du serveur joignable par eux, idéalement en HTTPS; une valeur `localhost` ne fonctionne que sur la machine locale. La route de l'image doit également être accessible depuis leur client de messagerie, qui peut par ailleurs bloquer les images distantes par défaut.
 

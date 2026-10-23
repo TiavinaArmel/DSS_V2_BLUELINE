@@ -109,10 +109,12 @@ class DssRequestNotification(models.Model):
         # Sans URL de base, il est impossible de construire un lien complet.
         if not base_url:
             return ""
-        # Assemble l'URL avec le modele et l'identifiant de cette demande.
-        return "%s/web#id=%s&view_type=form&model=dss.request" % (
+        # Selectionne la base de cette demande avant d'ouvrir la fiche dans le web client.
+        return "%s/web?db=%s#id=%s&view_type=form&model=dss.request" % (
             # Retire le slash final pour eviter un double slash dans le lien.
             base_url.rstrip("/"),
+            # Evite que le navigateur ouvre une autre base Odoo sur le meme serveur.
+            self.env.cr.dbname,
             # Insere l'identifiant de la demande dans l'URL.
             self.id,
         )
