@@ -6,7 +6,7 @@
 |---|---|
 | PDF vide alors que le HTML est rendu | Vérifier les journaux Odoo, l'exécutable wkhtmltopdf réellement lancé et les fichiers HTML transmis. Le moteur PDF et sa version dépendent de l'installation. |
 | Format ou orientation inattendus | Contrôler `paperformat_dss_a5`, l'action du rapport et le contexte utilisé par `_generer_bon_livraison()`. |
-| Styles absents | Contrôler le chargement de `report_bl.css` via `report.assets_common` et l'URL `/dss_v2/static/src/css/report_bl.css`. |
+| Styles absents | Contrôler le chargement de `report_bl_server.css` via `report.assets_common` et l'URL `/dss_v2/static/src/css/report_bl_server.css`. |
 
 Un ancien compte rendu du projet attribue un PDF blanc sur l'environnement Windows étudié à l'option `--dpi 96` avec wkhtmltopdf 0.12.1.2; le format DSS a alors été réglé à `dpi=0`. Il s'agit d'un constat d'environnement, pas d'une garantie que cette cause vaut pour toute installation.
 

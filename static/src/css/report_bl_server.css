@@ -1,0 +1,196 @@
+/* Styles scoped to the DSS delivery slip and its dedicated QWeb layout. */
+.dss-bl {
+    color: #000000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+}
+
+.dss-bl-header {
+    border-bottom: 1px solid #000000;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 52px;
+    margin: 0;
+    padding: 0 0 3px;
+}
+
+.dss-bl-header-table {
+    border: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+    height: 52px;
+}
+
+.dss-bl-header-table td {
+    border: 0;
+    padding: 0 2px;
+    vertical-align: middle;
+}
+
+.dss-bl-logo-cell img {
+    border-radius: 4px;
+    height: 50px;
+    max-height: 50px;
+    max-width: 100%;
+    width: 100px;
+}
+
+.dss-bl-title-cell {
+    font-size: 22px;
+    text-align: center;
+}
+
+.dss-bl-reference {
+    border: 0;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin: 0 0 1px auto;
+    width: 150px;
+}
+
+.dss-bl-reference td {
+    border: 0;
+    padding: 2px 0;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.dss-bl .dss-info,
+.dss-bl .dss-products,
+.dss-bl .dss-signatures,
+.dss-bl .dss-state {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.dss-bl .dss-info {
+    font-size: 11px;
+    page-break-inside: avoid;
+}
+
+.dss-bl .dss-info td {
+    line-height: 1.2;
+    padding: 3px 8px 3px 0;
+    vertical-align: middle;
+}
+
+.dss-bl .dss-spacer {
+    border: 0;
+    border-collapse: collapse;
+    height: 3mm;
+}
+
+.dss-bl .dss-spacer td {
+    border: 0;
+    height: 3mm;
+    padding: 0;
+}
+
+.dss-bl .dss-products {
+    font-size: 10px;
+    line-height: 1.15;
+}
+
+.dss-bl .dss-products thead {
+    display: table-header-group;
+}
+
+.dss-bl .dss-products th,
+.dss-bl .dss-products td {
+    border: 1px solid #000000;
+    padding: 2px 3px;
+}
+
+.dss-bl .dss-products th {
+    height: 7mm;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.dss-bl .dss-products tbody tr {
+    height: 5mm;
+    page-break-inside: avoid;
+}
+
+.dss-bl .dss-col-designation {
+    width: 35%;
+}
+
+.dss-bl .dss-col-demandee,
+.dss-bl .dss-col-sortie,
+.dss-bl .dss-col-installee,
+.dss-bl .dss-col-retour {
+    width: 10%;
+}
+
+.dss-bl .dss-col-observation {
+    width: 25%;
+}
+
+.dss-bl .dss-product-name,
+.dss-bl .dss-product-observation {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.dss-bl .dss-cell-center {
+    text-align: center;
+}
+
+.dss-bl .dss-empty-row td {
+    height: 5mm;
+}
+
+.dss-bl .dss-signatures {
+    font-size: 10px;
+    page-break-inside: avoid;
+}
+
+.dss-bl .dss-signatures thead {
+    display: table-header-group;
+}
+
+.dss-bl .dss-signatures th,
+.dss-bl .dss-signatures td {
+    border: 1px solid #000000;
+    padding: 3px;
+    text-align: center;
+}
+
+.dss-bl .dss-signatures th {
+    height: 5mm;
+}
+
+.dss-bl .dss-signature-cell {
+    height: 20mm;
+    vertical-align: top;
+}
+
+.dss-bl .dss-checkbox {
+    font-size: 14px;
+}
+
+.dss-bl .dss-signature-line {
+    border: 0;
+    border-collapse: collapse;
+    margin: 8mm auto 2px;
+    width: 80%;
+}
+
+.dss-bl .dss-signature-line td {
+    border: 0;
+    border-bottom: 1px solid #000000;
+    height: 1px;
+    padding: 0;
+}
+
+.dss-bl .dss-state {
+    font-size: 11px;
+    margin-top: 2mm;
+}
+
+.dss-bl .dss-state td {
+    border: 0;
+    padding: 0 2px 0 0;
+    text-align: left;
+}
