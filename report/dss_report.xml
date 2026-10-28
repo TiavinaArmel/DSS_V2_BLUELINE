@@ -231,15 +231,15 @@
         <field name="format">A5</field>
         <!-- Landscape place la feuille en orientation horizontale. -->
         <field name="orientation">Landscape</field>
-        <!-- Réserve l'espace nécessaire à l'en-tête répété et à son bloc de références. -->
-        <field name="margin_top">22</field>
+        <!-- Marge supérieure demandée pour le format A5, en millimètres. -->
+        <field name="margin_top">15</field>
         <field name="margin_bottom">5</field>
         <field name="margin_left">5</field>
         <field name="margin_right">5</field>
         <!-- N'ajoute pas de ligne sous l'en-tête. -->
         <field name="header_line" eval="False" />
-        <!-- Espace visible entre l'en-tête personnalisé et le contenu du rapport. -->
-        <field name="header_spacing">10</field>
+        <!-- Espace de 15 mm entre l'en-tête personnalisé et le contenu du rapport. -->
+        <field name="header_spacing">15</field>
         <!-- La valeur 0 evite l'option DPI qui a cause le PDF blanc sous Windows. -->
         <field name="dpi">0</field>
     </record>
