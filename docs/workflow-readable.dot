@@ -1,0 +1,22 @@
+﻿digraph DSSWorkflow {
+  rankdir=TB;
+  graph [bgcolor="transparent", margin="0.10", nodesep="0.35", ranksep="0.55"];
+  node [shape=box, style="rounded,filled", fillcolor="#D9E2F3", color="#1F4E79", fontname="Arial", fontsize=11, margin="0.16,0.10"];
+  edge [color="#2E75B6", penwidth=1.5, arrowsize=0.8, fontsize=9, fontname="Arial"];
+  n0 [label="brouillon"];
+  n1 [label="valide_chef"];
+  n2 [label="valide_magasin"];
+  n3 [label="rejete"];
+  n4 [label="approuve"];
+  n5 [label="cloture"];
+  n0 -> n1 [label="Soumettre"];
+  n1 -> n2 [label="Validation Chef"];
+  n1 -> n3 [label="Rejet"];
+  n2 -> n3 [label="Rejet"];
+  n3 -> n0 [label="Renvoi par un Chef"];
+  n2 -> n4 [label="Validation Stock + mouvements + BL"];
+  n4 -> n5 [label="Cloture"];
+  { rank=same; n0; n1; }
+  { rank=same; n2; n3; }
+  { rank=same; n4; n5; }
+}
