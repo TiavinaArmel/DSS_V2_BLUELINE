@@ -11,26 +11,202 @@
         <field name="subject">DSS ${object.name} - ${ctx.get('dss_action_label', 'Notification')}</field>
         <!-- user.email fournit l'adresse de l'utilisateur courant ; or '' utilise une chaîne vide si elle manque. -->
         <field name="email_from">${user.email or ''}</field>
+        <!-- Styles intégrés au HTML pour une meilleure compatibilité avec les clients e-mail. -->
         <!-- CDATA empêche XML d'interpréter les balises HTML comme des balises de configuration Odoo. -->
         <field name="body_html"><![CDATA[
-            <!-- Texte d'accueil fixe, affiché en premier dans le courriel. -->
-            <p>Bonjour,</p>
-            <!-- object désigne la demande DSS liée au modèle de ce courriel ; .name affiche son numéro. -->
-            <p>La demande DSS <strong>${object.name}</strong> a fait l'objet de l'action suivante :</p>
-            <!-- Affiche le libellé de l'action transmis dans le contexte, ou rien s'il est absent. -->
-            <p><strong>${ctx.get('dss_action_label', '')}</strong></p>
-            <!-- Affiche le statut transmis ; object.state sert de valeur de remplacement. -->
-            <p>Statut actuel : <strong>${ctx.get('dss_status', object.state)}</strong></p>
-            <!-- Cette condition Mako n'affiche le motif que pour les trois événements concernés. -->
-            % if ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester'):
-            <!-- or utilise "Non renseigne" si le motif est absent ou vide. -->
-            <p>Motif : ${ctx.get('dss_motif', '') or 'Non renseigne'}</p>
-            <!-- Termine le bloc conditionnel ouvert par % if. -->
-            % endif
-            <!-- href reçoit l'URL de la demande ; le texte du lien reste lisible dans le courriel. -->
-            <p><a href="${ctx.get('dss_workflow_url', '')}">Ouvrir la demande DSS dans Odoo</a></p>
-            <!-- Indique au destinataire que ce message est généré automatiquement. -->
-            <p>Ceci est une notification automatique.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+       border="0" style="margin:0;padding:0;background-color:#f3f6fa;">
+    <tr>
+        <td align="center" style="padding:28px 12px;">
+            <table role="presentation" width="600" cellpadding="0"
+                   cellspacing="0" border="0"
+                   style="width:100%;max-width:600px;background-color:#ffffff;
+                          border:1px solid #e3eaf2;border-radius:10px;
+                          overflow:hidden;font-family:Arial,Helvetica,sans-serif;
+                          color:#24364b;">
+                <tr>
+                    <td style="background-color:#15365b;padding:26px 30px;
+                               border-bottom:4px solid #f5b82e;">
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0">
+                            <tr>
+                                <td style="font-size:23px;font-weight:bold;
+                                           color:#ffffff;letter-spacing:1px;">
+                                    % if ctx.get('dss_logo_url'):
+                                    <img src="${ctx.get('dss_logo_url')}"
+                                         alt="GulfSat Madagascar"
+                                         width="180"
+                                         style="display:block;width:180px;height:auto;
+                                                border:0;"/>
+                                    % else:
+                                    GULFSAT MADAGASCAR
+                                    % endif
+                                </td>
+                                <td align="right"
+                                    style="font-size:11px;color:#d8e5f3;
+                                           line-height:18px;">
+                                    GESTION DES STOCKS<br/>
+                                    DEMANDE DE SORTIE DE STOCK
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:30px 30px 18px 30px;">
+                        <p style="margin:0 0 12px 0;font-size:23px;
+                                  line-height:30px;font-weight:bold;
+                                  color:#15365b;">
+                            Bonjour,
+                        </p>
+                        <p style="margin:0;font-size:15px;line-height:25px;
+                                  color:#53657a;">
+                            Une demande de sortie de stock a fait l'objet
+                            d'une nouvelle action dans le système DSS.
+                            Retrouvez ci-dessous le récapitulatif de
+                            la notification.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:0 30px 22px 30px;">
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0"
+                               style="background-color:#f5f8fc;
+                                      border:1px solid #e0e9f4;
+                                      border-radius:8px;">
+                            <tr>
+                                <td style="padding:20px;">
+                                    <p style="margin:0 0 7px 0;font-size:11px;
+                                              font-weight:bold;color:#71839a;
+                                              letter-spacing:1px;">
+                                        REFERENCE DE LA DEMANDE
+                                    </p>
+                                    <p style="margin:0;font-size:21px;
+                                              line-height:29px;font-weight:bold;
+                                              color:#1769aa;word-break:break-word;">
+                                        ${object.name}
+                                    </p>
+                                    <table role="presentation" width="100%"
+                                           cellpadding="0" cellspacing="0"
+                                           border="0" style="margin-top:18px;">
+                                        <tr>
+                                            <td style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;color:#71839a;">
+                                                Action effectuée
+                                            </td>
+                                            <td align="right"
+                                                style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;font-weight:bold;
+                                                       color:#24364b;">
+                                                ${ctx.get('dss_action_label', 'Notification')}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;color:#71839a;">
+                                                Statut actuel
+                                            </td>
+                                            <td align="right"
+                                                style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;font-weight:bold;
+                                                       color:#15365b;">
+                                                ${ctx.get('dss_status', object.state)}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                % if ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester'):
+                <tr>
+                    <td style="padding:0 30px 22px 30px;">
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0"
+                               style="background-color:#fff8ed;
+                                      border-left:4px solid #e6a23c;">
+                            <tr>
+                                <td style="padding:16px 18px;">
+                                    <p style="margin:0 0 8px 0;font-size:13px;
+                                              font-weight:bold;color:#8b5b12;">
+                                        Motif / commentaire
+                                    </p>
+                                    <p style="margin:0;font-size:14px;
+                                              line-height:23px;color:#604c32;
+                                              word-break:break-word;">
+                                        ${ctx.get('dss_motif', '') or 'Non renseigne'}
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                % endif
+                <tr>
+                    <td align="center" style="padding:4px 30px 12px 30px;">
+                        <table role="presentation" cellpadding="0" cellspacing="0"
+                               border="0">
+                            <tr>
+                                <td align="center" bgcolor="#1769aa"
+                                    style="border-radius:6px;">
+                                    <a href="${ctx.get('dss_workflow_url', '')}"
+                                       style="display:inline-block;padding:15px 28px;
+                                              font-size:14px;font-weight:bold;
+                                              line-height:20px;color:#ffffff;
+                                              text-decoration:none;
+                                              border-radius:6px;">
+                                        Consulter la demande &gt;
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        <p style="margin:13px 0 0 0;font-size:12px;
+                                  line-height:19px;color:#8795a7;">
+                            Cliquez sur le bouton pour accéder à la demande
+                            dans Odoo.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:22px 30px 0 30px;">
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0">
+                            <tr>
+                                <td style="border-top:1px solid #e8edf3;
+                                           font-size:1px;line-height:1px;">
+                                    &nbsp;
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding:20px 30px 24px 30px;">
+                        <p style="margin:0 0 7px 0;font-size:13px;
+                                  font-weight:bold;color:#15365b;">
+                            GulfSat Madagascar
+                        </p>
+                        <p style="margin:0;font-size:12px;line-height:19px;
+                                  color:#8795a7;">
+                            Ce message est une notification automatique
+                            du système de gestion des stocks.
+                        </p>
+                        <p style="margin:12px 0 0 0;font-size:11px;
+                                  color:#a0acba;">
+                            Fiabilité · Performance · Proximité
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
         ]]></field>
         <!-- eval interprète False comme un booléen ; le courriel reste conservé après son envoi. -->
         <field name="auto_delete" eval="False"/>

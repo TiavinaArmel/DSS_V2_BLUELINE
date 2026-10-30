@@ -109,12 +109,30 @@ class DssRequestNotification(models.Model):
         # Sans URL de base, il est impossible de construire un lien complet.
         if not base_url:
             return ""
-        # Assemble l'URL avec le modele et l'identifiant de cette demande.
-        return "%s/web#id=%s&view_type=form&model=dss.request" % (
+        # Selectionne la base de cette demande avant d'ouvrir la fiche dans le web client.
+        return "%s/web?db=%s#id=%s&view_type=form&model=dss.request" % (
             # Retire le slash final pour eviter un double slash dans le lien.
             base_url.rstrip("/"),
+            # Evite que le navigateur ouvre une autre base Odoo sur le meme serveur.
+            self.env.cr.dbname,
             # Insere l'identifiant de la demande dans l'URL.
             self.id,
+        )
+
+    def _dss_company_logo_url(self):
+        """Construit l'URL publique du logo de la société Odoo courante."""
+        # S'assure que le logo correspond au contexte d'une seule demande.
+        self.ensure_one()
+        # Lit l'URL publique du serveur pour éviter toute dépendance à localhost.
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        # Sans URL de base, aucun lien d'image accessible depuis l'e-mail n'est possible.
+        if not base_url:
+            return ""
+        # Utilise la société active et la base courante dans l'URL du logo Odoo.
+        return "%s/web/binary/company_logo?db=%s&company=%s" % (
+            base_url.rstrip("/"),
+            self.env.cr.dbname,
+            self.env.user.company_id.id,
         )
 
     def _dss_notify_once(self, event_key, action_label, recipient_emails, motif=""):
@@ -192,6 +210,8 @@ class DssRequestNotification(models.Model):
                     dss_status=self.state,
                     # Passe le lien direct vers la demande au modele.
                     dss_workflow_url=self._dss_workflow_url(),
+                    # Passe l'URL du logo construite avec la base URL configurée.
+                    dss_logo_url=self._dss_company_logo_url(),
                 ).generate_email(
                     # Demande le rendu du modele pour l'enregistrement courant.
                     self.id,
