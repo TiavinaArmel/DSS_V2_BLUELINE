@@ -5,7 +5,7 @@
 | Terme | Définition | Exemple DSS |
 |---|---|---|
 | Asset | Ressource chargée dans l'interface Web ou dans un rapport. | `views/assets_backend.xml` ajoute le CSS du chatter au bundle Web. |
-| Champ calculé | Champ dont la valeur est fournie par une méthode `compute`. | `qty_standard` est calculé depuis `product_id.qty_available`. |
+| Champ calculé | Champ dont la valeur est fournie par une méthode `compute`. | `qty_standard` est calculé depuis les `stock.quant` de l'article dans l'emplacement exact de la demande. |
 | Chatter | Fil de messages et d'activités associé à un enregistrement via `mail.thread`. | `dss.request` affiche `message_ids` et `message_follower_ids`. |
 | Domaine | Liste de critères utilisée par l'ORM pour filtrer des enregistrements. | Le menu « À contrôler » limite la liste à `state = approuve`. |
 | Groupe | Ensemble d'utilisateurs référencé notamment par les vues et les ACL. | `dss_v2.group_dss_chef`. |

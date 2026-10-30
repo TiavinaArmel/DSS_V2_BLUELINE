@@ -28,28 +28,31 @@ class ProductProduct(models.Model):
         args = args or []
         # si on ne nous donne aucune liste de filtres, on en crée une
         # vide pour pouvoir la compléter plus loin
+        location_context_present = "dss_location_id" in self._context
         location_id = self._context.get("dss_location_id")
         # on regarde si la vue en cours a précisé un emplacement
         # (context.get("dss_location_id")) — l'emplacement où doit se
         # trouver l'article recherché
 
-        if location_id:
-            # si on sait dans quel emplacement on travaille, on demande
-            # quels articles sont réellement disponibles à cet endroit :
-            # on interroge l'inventaire d'Odoo (stock.quant) pour cet
-            # emplacement, en demandant, pour chaque article, combien il
-            # y en a en stock
-            Quant = self.env["stock.quant"]
-            quants = Quant.read_group(
-                [("location_id", "=", location_id)],
-                ["product_id", "qty"],
-                ["product_id"],
-            )
-            product_ids = []
-            for q in quants:
-                if q["product_id"] and q["qty"] > 0:
-                    product_ids.append(q["product_id"][0])
-            args = args + [("id", "in", product_ids)]
+        if location_context_present:
+            if not location_id:
+                # Dans le formulaire DSS, aucun emplacement signifie qu'aucun
+                # article ne doit être proposé par défaut.
+                args = args + [("id", "in", [0])]
+            else:
+                # Si on sait dans quel emplacement on travaille, on demande
+                # quels articles sont réellement disponibles à cet endroit.
+                Quant = self.env["stock.quant"]
+                quants = Quant.read_group(
+                    [("location_id", "=", location_id)],
+                    ["product_id", "qty"],
+                    ["product_id"],
+                )
+                product_ids = []
+                for q in quants:
+                    if q["product_id"] and q["qty"] > 0:
+                        product_ids.append(q["product_id"][0])
+                args = args + [("id", "in", product_ids)]
         return super(ProductProduct, self).name_search(
             name=name, args=args, operator=operator, limit=limit
         )

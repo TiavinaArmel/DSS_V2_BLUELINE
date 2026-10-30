@@ -55,24 +55,29 @@ class DssRequestLine(
         string="Qte Demandee lecture seule", default=False
     )
 
-    # Décorateur @api.depends('product_id') : dit à Odoo "recalcule ce
-    # champ automatiquement à chaque fois que product_id change".
+    # Décorateur @api.depends : recalcule la disponibilité quand l'article ou
+    # l'emplacement source de la demande change.
     # C'est ce qui relie ce compute à sa déclaration plus haut.
-    @api.depends("product_id")
+    @api.depends("product_id", "request_id.location_id")
     def _compute_qty_standard(self):
+        StockQuant = self.env["stock.quant"]
+
         for line in self:
-            # self peut contenir plusieurs lignes à la fois, alors on boucle
-            # sur chacune
-            if line.product_id:
-                # si un article est choisi sur cette ligne
-                line.qty_standard = line.product_id.qty_available
-                # on récupère sa quantité disponible ("qty_available") en
-                # stock, un champ déjà fourni nativement par le modèle
-                # product.product
-            else:  # sinon
+            # Sans article ou sans emplacement source, aucune quantité locale
+            # ne peut être déterminée de manière fiable.
+            if not line.product_id or not line.request_id.location_id:
                 line.qty_standard = 0.0
-                # si aucun article n'est encore choisi, pas de quantité à
-                # afficher : on met 0 plutôt que de laisser une valeur vide
+                continue
+
+            # Le domaine utilise '=' volontairement : les sous-emplacements
+            # ne doivent pas être consolidés dans cette disponibilité.
+            quants = StockQuant.search(
+                [
+                    ("location_id", "=", line.request_id.location_id.id),
+                    ("product_id", "=", line.product_id.id),
+                ]
+            )
+            line.qty_standard = sum(quant.qty for quant in quants)
 
     # @api.onchange (différent de @api.depends) : s'exécute UNIQUEMENT
     # côté interface, en direct pendant que l'utilisateur remplit le

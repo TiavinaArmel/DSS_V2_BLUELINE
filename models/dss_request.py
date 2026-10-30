@@ -164,6 +164,14 @@ class DssRequest(models.Model):
         for line in self.line_ids:
             line.qty_demandee_readonly = self.type_intervention == "retour_materiel"
 
+    @api.onchange("location_id")
+    def _onchange_location_id_qty_standard(self):
+        """Rafraîchit la disponibilité locale des lignes existantes."""
+        for line in self.line_ids:
+            # Appel direct nécessaire dans le formulaire pour actualiser
+            # immédiatement les lignes non encore enregistrées.
+            line._compute_qty_standard()
+
     @api.model
     def create(self, vals):
         """

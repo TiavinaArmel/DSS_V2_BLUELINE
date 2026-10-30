@@ -19,7 +19,7 @@ dss.request.line_ids (One2many) -> dss.request.line
 |---|---|---|---|
 | `request_id` | `Many2one` | Non | Demande parente; suppression en cascade. |
 | `product_id` | `Many2one(product.product)` | Non | Article; `required=True`. |
-| `qty_standard` | `Float` | Oui, stocké | Copie `product_id.qty_available`; vaut `0.0` sans article. |
+| `qty_standard` | `Float` | Oui, stocké | Somme des `stock.quant.qty` de l'article dans l'emplacement exact de la demande; vaut `0.0` sans article ou sans emplacement. |
 | `qty_demandee` | `Float` | Non | Quantité demandée. |
 | `qty_sortie` | `Float` | Non | Quantité effectivement sortie ou déplacée par le flux DSS. |
 | `qty_installee` | `Float` | Non | Quantité déclarée installée lors de la clôture. |
@@ -31,7 +31,7 @@ dss.request.line_ids (One2many) -> dss.request.line
 
 | Méthode | Déclencheur | Effet |
 |---|---|---|
-| `_compute_qty_standard` | `@api.depends('product_id')` | Affecte `product_id.qty_available` ou `0.0`. Le champ est déclaré `store=True`. |
+| `_compute_qty_standard` | `@api.depends('product_id', 'request_id.location_id')` | Somme le stock de l'article dans l'emplacement exact, sans inclure les sous-emplacements; vaut `0.0` si l'article ou l'emplacement manque. Le champ est déclaré `store=True`. |
 | `_onchange_product_id_qty_demandee_readonly` | `@api.onchange('product_id')` | Si la ligne a une demande parente, reflète le type `retour_materiel` dans `qty_demandee_readonly`. |
 
 Le modèle parent met également à jour cet indicateur lors du changement du type d'intervention. L'`onchange` agit sur le formulaire; il ne constitue pas à lui seul une contrainte de sécurité serveur.
@@ -41,6 +41,6 @@ Le modèle parent met également à jour cet indicateur lors du changement du ty
 | Repère | À retenir |
 |---|---|
 | Relation | Une demande possède plusieurs lignes; chaque ligne pointe vers un seul article. |
-| Stock standard | `qty_standard` vient de `product.product.qty_available`, pas de `dss_standard_qty`. |
+| Disponibilité locale | `qty_standard` est calculé depuis `stock.quant` avec `location_id = request_id.location_id`; les sous-emplacements sont exclus. |
 | Quantités | Sortie, installation et retour sont des champs distincts utilisés à des étapes différentes. |
 | Source | [`models/dss_request_line.py`](../../models/dss_request_line.py). |

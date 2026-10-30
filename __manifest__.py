@@ -60,5 +60,8 @@
 
     # Le module peut être installé
     "installable": True,
-    "tests": ["tests/test_dss_notifications.py"],
+    "tests": [
+        "tests/test_dss_notifications.py",
+        "tests/test_dss_stock_location.py",
+    ],
 }
