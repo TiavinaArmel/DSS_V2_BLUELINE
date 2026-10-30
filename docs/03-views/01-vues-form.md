@@ -9,16 +9,18 @@ La vue `view_dss_request_form` déclare un formulaire de `dss.request` avec quat
 | Bouton | Groupe de vue | Condition d'affichage | Méthode appelée |
 |---|---|---|---|
 | Soumettre | Aucun groupe explicite | `state == brouillon` | `action_soumettre` |
-| Valider Chef | DSS / Chef | `state == valide_chef` | `action_open_wizard_chef` |
-| Rejeter | DSS / Chef | `state == valide_chef` | `action_open_wizard_rejeter` |
-| Cloturer | DSS / Chef | `state == approuve` | `action_open_wizard_cloture` |
-| Valider Stock | DSS / Magasin | `state == valide_magasin` | `action_open_wizard_stock` |
-| Rejeter | DSS / Magasin | `state == valide_magasin` | `action_open_wizard_rejeter` |
-| Modifier Qte | DSS / Magasin | Masqué seulement si `state == approuve` | `action_open_modifier_qte_sortie` |
-| Bon de Livraison | DSS / Magasin | `state == approuve` | `action_imprimer_bon_livraison` |
+| Valider Chef | DSS / Chef (attribut `groups` direct sur le bouton) | `state == valide_chef` | `action_open_wizard_chef` |
+| Rejeter | DSS / Chef (attribut `groups` direct sur le bouton) | `state == valide_chef` | `action_open_wizard_rejeter` |
+| Cloturer | DSS / Chef (attribut `groups` direct sur le bouton) | `state == approuve` | `action_open_wizard_cloture` |
+| Valider Stock | DSS / Magasin (attribut `groups` direct sur le bouton) | `state == valide_magasin` | `action_open_wizard_stock` |
+| Rejeter | DSS / Magasin (attribut `groups` direct sur le bouton) | `state == valide_magasin` | `action_open_wizard_rejeter` |
+| Modifier Qte | DSS / Magasin (attribut `groups` direct sur le bouton) | Masqué seulement si `state == approuve` | `action_open_modifier_qte_sortie` |
+| Bon de Livraison | DSS / Magasin (attribut `groups` direct sur le bouton) | `state == approuve` | `action_imprimer_bon_livraison` |
 | Renvoyer au demandeur | DSS / Chef | `state == rejete` | `action_renvoyer_demandeur` |
 
 Le champ `state` est rendu avec le widget `statusbar` et expose les étapes visibles `brouillon`, `valide_chef`, `valide_magasin`, `approuve`, `cloture`. L'état `rejete` n'est pas dans `statusbar_visible`.
+
+Les actions Chef et Magasin sont des boutons directs du `<header>`; aucun `<span>` ne les enveloppe. Les droits de groupe sont définis bouton par bouton avec `groups`, tout en conservant leur ordre, leurs conditions `attrs` et leurs classes CSS. Ce choix évite de dépendre du traitement d'un élément conteneur non standard dans l'en-tête de certaines versions ou personnalisations Odoo.
 
 ## 3. Champs et lignes
 

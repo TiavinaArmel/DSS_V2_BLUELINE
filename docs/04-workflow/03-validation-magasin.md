@@ -2,7 +2,7 @@
 
 ## 1. Acteur et déclencheur
 
-Le bouton « Valider Stock » est limité dans la vue au groupe `dss_v2.group_dss_magasin` et à l'état `valide_magasin`. Il ouvre un wizard de confirmation, qui appelle `action_valider_magasin()`.
+Le bouton « Valider Stock » porte directement l'attribut `groups="dss_v2.group_dss_magasin"` dans le `<header>` et est conditionné par l'état `valide_magasin`. Il ouvre un wizard de confirmation, qui appelle `action_valider_magasin()`.
 
 ## 2. Précondition
 

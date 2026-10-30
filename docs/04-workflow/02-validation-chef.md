@@ -2,7 +2,7 @@
 
 ## 1. Acteur
 
-Le bouton « Valider Chef » est placé dans un bloc de vue réservé au groupe `dss_v2.group_dss_chef`.
+Le bouton « Valider Chef » porte directement l'attribut `groups="dss_v2.group_dss_chef"` dans le `<header>`; il est également conditionné par l'état `valide_chef`.
 
 ## 2. Action
 
