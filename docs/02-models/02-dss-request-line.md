@@ -24,6 +24,7 @@ dss.request.line_ids (One2many) -> dss.request.line
 | `qty_sortie` | `Float` | Non | Quantité effectivement sortie ou déplacée par le flux DSS. |
 | `qty_installee` | `Float` | Non | Quantité déclarée installée lors de la clôture. |
 | `qty_retour` | `Float` | Non | Quantité de retour utilisée par le mouvement entrant. |
+| `motif_ecart` | `Text` | Non | Motif de l'écart saisi par article lorsque la quantité sortie diffère de la quantité demandée. |
 | `observation` | `Char` | Non | Texte d'observation affiché notamment sur le BL. |
 | `qty_demandee_readonly` | `Boolean` | Non | Indicateur lu par la vue pour verrouiller la quantité demandée. |
 
@@ -42,5 +43,5 @@ Le modèle parent met également à jour cet indicateur lors du changement du ty
 |---|---|
 | Relation | Une demande possède plusieurs lignes; chaque ligne pointe vers un seul article. |
 | Disponibilité locale | `qty_standard` est calculé depuis `stock.quant` avec `location_id = request_id.location_id`; les sous-emplacements sont exclus. |
-| Quantités | Sortie, installation et retour sont des champs distincts utilisés à des étapes différentes. |
+| Quantités | Sortie, installation et retour sont des champs distincts utilisés à des étapes différentes. La demande initiale n'est pas écrasée par le wizard. |
 | Source | [`models/dss_request_line.py`](../../models/dss_request_line.py). |

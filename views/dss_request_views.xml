@@ -92,6 +92,7 @@
                                     <field name="qty_sortie"/>
                                     <field name="qty_installee"/>
                                     <field name="qty_retour"/>
+                                    <field name="motif_ecart" readonly="1"/>
                                     <field name="observation"/>
                                 </tree>
                             </field>

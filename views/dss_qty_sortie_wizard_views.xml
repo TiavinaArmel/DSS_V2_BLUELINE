@@ -16,6 +16,7 @@
                         <field name="qty_demandee" readonly="1"/>
                         <field name="qty_sortie"/>
                         <field name="qty_retour"/>
+                        <field name="motif_ecart"/>
                     </tree>
                 </field>
                 <footer>

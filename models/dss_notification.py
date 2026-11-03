@@ -351,6 +351,7 @@ class DssRequestNotification(models.Model):
     def _dss_notify_stock_approval(self):
         # Parcourt chaque demande dont l'approbation Stock vient d'aboutir.
         for rec in self:
+            motifs_ecart = rec._dss_quantity_change_motifs()
             # Notifie le demandeur apres la validation finale du Stock.
             # Aucun e-mail Securite n'est prevu dans le workflow DSS actuel.
             rec._dss_notify_workflow(
@@ -360,7 +361,20 @@ class DssRequestNotification(models.Model):
                 "Approbation Stock",
                 # L'approbation Stock est communiquee au demandeur.
                 rec._dss_requester_emails(),
+                # Transmet les motifs des modifications de quantités par article.
+                motifs_ecart,
             )
+
+    def _dss_quantity_change_motifs(self):
+        """Retourne les motifs d'écart renseignés, regroupés par article."""
+        self.ensure_one()
+        motifs = []
+        for line in self.line_ids:
+            if line.motif_ecart:
+                motifs.append(
+                    u"%s : %s" % (line.product_id.name, line.motif_ecart)
+                )
+        return u"<br/>".join(motifs)
 
     @api.multi
     def _dss_notify_return_to_requester(self):

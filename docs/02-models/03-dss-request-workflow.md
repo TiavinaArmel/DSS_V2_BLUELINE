@@ -6,11 +6,19 @@
 |---|---|---|---|
 | `action_soumettre` | Aucun contrôle d'état explicite | `valide_chef` | Valide les champs requis et les lignes, renseigne demandeur/date, poste un message et prépare une notification. |
 | `action_valider_chef` | Exige `valide_chef` | `valide_magasin` | Enregistre signataire/date Chef, poste un message et prépare une notification. |
-| `action_valider_magasin` | Exige `valide_magasin` | `approuve` après génération stock | Enregistre signataire/date Stock, appelle le routeur stock, génère le BL, poste des messages et prépare une notification. |
+| `action_valider_magasin` | Exige `valide_magasin` | `approuve` après génération stock | Prépare les quantités selon le passage ou non par le wizard, calcule `has_ecart`, enregistre signataire/date Stock, appelle le routeur stock, génère le BL, poste des messages et prépare une notification. |
 | `action_rejeter` | Aucun contrôle d'état explicite | `rejete` | Conserve l'état précédent pour le routage, poste le motif s'il existe et prépare une notification si l'état précédent est reconnu. |
 | `action_renvoyer_demandeur` | Exige groupe Chef et état `rejete` | `brouillon` | Poste le nom du demandeur et prépare un courriel de renvoi. |
 
 Les actions métier et leur ordre réel sont implémentés dans [`dss_request_workflow.py`](../../models/dss_request_workflow.py). Les contrôles d'accès visuels et les contrôles serveur ne sont pas équivalents.
+
+## 2 bis. Règle de validation des quantités
+
+La méthode `_prepare_quantities_before_stock_validation()` applique la règle suivante avant de générer les mouvements :
+
+- si `is_qty_modified` vaut `False`, `qty_sortie` reçoit `qty_demandee` et `qty_retour` reçoit `0.0` ;
+- si `is_qty_modified` vaut `True`, les valeurs confirmées par le wizard sont conservées ;
+- `has_ecart` vaut vrai si `qty_sortie + qty_retour` diffère de `qty_demandee` avec `float_compare(..., precision_digits=2)`.
 
 ## 2. Validations de soumission
 

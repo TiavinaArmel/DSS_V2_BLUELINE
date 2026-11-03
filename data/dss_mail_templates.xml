@@ -124,7 +124,7 @@
                         </table>
                     </td>
                 </tr>
-                % if ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester'):
+                % if ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester', 'stock_approval') and ctx.get('dss_motif'):
                 <tr>
                     <td style="padding:0 30px 22px 30px;">
                         <table role="presentation" width="100%" cellpadding="0"
@@ -135,7 +135,11 @@
                                 <td style="padding:16px 18px;">
                                     <p style="margin:0 0 8px 0;font-size:13px;
                                               font-weight:bold;color:#8b5b12;">
+                                        % if ctx.get('dss_event_key') == 'stock_approval':
+                                        Motif de modification des quantités
+                                        % else:
                                         Motif / commentaire
+                                        % endif
                                     </p>
                                     <p style="margin:0;font-size:14px;
                                               line-height:23px;color:#604c32;

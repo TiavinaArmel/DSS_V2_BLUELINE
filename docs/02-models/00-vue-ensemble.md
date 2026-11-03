@@ -6,7 +6,7 @@
 |---|---|---|---|
 | `dss.request` | [`dss_request.py`](../../models/dss_request.py) | Modèle persistant | En-tête, champs métier, états et numérotation d'une demande. |
 | `dss.request.line` | [`dss_request_line.py`](../../models/dss_request_line.py) | Modèle persistant | Article et quantités d'une demande. |
-| `dss.request` (extension workflow) | [`dss_request_workflow.py`](../../models/dss_request_workflow.py) | `_inherit` | Soumission, validations, rejet, renvoi et ouverture des wizards. |
+| `dss.request` (extension workflow) | [`dss_request_workflow.py`](../../models/dss_request_workflow.py) | `_inherit` | Soumission, validations, préparation des quantités, calcul des écarts, rejet, renvoi et ouverture des wizards. |
 | `dss.request` (extension stock) | [`dss_request_stock.py`](../../models/dss_request_stock.py) | `_inherit` | Génération des pickings et mouvements. |
 | `dss.request` (extension BL) | [`dss_request_bon_livraison.py`](../../models/dss_request_bon_livraison.py) | `_inherit` | Génération, rattachement et impression du PDF. |
 | `dss.request` (extension notification) | [`dss_notification.py`](../../models/dss_notification.py) | `_inherit` | Routage des courriels métier. |

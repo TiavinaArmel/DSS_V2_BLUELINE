@@ -84,6 +84,28 @@ Vérifier d'abord si un `dss.notification.log` et un `mail.mail` existent, puis 
 
 ## 4. Problèmes de chargement ou d'action
 
+### `UnicodeDecodeError` dans le wizard de quantités
+
+| Élément | Diagnostic |
+|---|---|
+| Symptôme | Erreur serveur Odoo dans `dss_qty_sortie_wizard.py`, méthode `action_valider()`, avec `UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3`. |
+| Cause | Odoo 10 utilise Python 2. Une chaîne `str` était interpolée avec une valeur Unicode provenant d'Odoo, par exemple `product_id.name` ou `env.user.name`. Python tentait une conversion ASCII implicite. |
+| Solution | Préfixer par `u` les chaînes utilisées pour construire les messages, les libellés d'écart et les séparateurs `join()` dans `action_valider()`. Conserver l'en-tête `# -*- coding: utf-8 -*-`. |
+| Vérification | Compiler le fichier Python, redémarrer Odoo, mettre à niveau `dss_v2`, puis valider un wizard avec des accents dans le produit, l'utilisateur ou le motif. |
+
+Exemple de correction :
+
+```python
+changements.append(
+    u"\u2022 %s : %s" % (
+        line.product_id.name,
+        u", ".join(parties),
+    )
+)
+```
+
+Ne pas corriger ce problème en supprimant les accents des données métier : la cause est l'absence de chaîne Unicode explicite dans le code Python 2.
+
 | Symptôme possible | Élément source à contrôler |
 |---|---|
 | Boutons Valider/Rejeter Chef ou Magasin absents | Le header DSS a été simplifié : les boutons sont des éléments directs du `<header>` et portent chacun leur attribut `groups`. Mettre à niveau le module sur la base concernée, puis vérifier le groupe de l'utilisateur et l'état de la demande (`valide_chef` pour Chef, `valide_magasin` pour Magasin). Si le problème persiste, inspecter la vue formulaire combinée et les personnalisations de la base. |

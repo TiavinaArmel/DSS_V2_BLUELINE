@@ -1,5 +1,7 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+from odoo.tools.float_utils import float_compare
 
 """
 Ce fichier permet au magasin d'ajuster les quantités avant la validation finale.
@@ -64,6 +66,7 @@ class DssQtySortieWizard(models.TransientModel):
                             "qty_demandee": line.qty_demandee,
                             "qty_sortie": line.qty_sortie,
                             "qty_retour": line.qty_retour,
+                            "motif_ecart": line.motif_ecart,
                         },
                     )
                     # (0, 0, {...}) = créer une nouvelle ligne One2many
@@ -89,22 +92,38 @@ class DssQtySortieWizard(models.TransientModel):
             nouvelle_sortie = line.qty_sortie
             if ancienne_sortie != nouvelle_sortie:
                 parties.append(
-                    "Qte Sortie %s \u2192 %s" % (ancienne_sortie, nouvelle_sortie)
+                    u"Qte Sortie %s \u2192 %s" % (ancienne_sortie, nouvelle_sortie)
                 )
             # Comparaison entre l'ancienne et la nouvelle Quantité de retour
             ancienne_retour = line.request_line_id.qty_retour
             nouvelle_retour = line.qty_retour
             if ancienne_retour != nouvelle_retour:
                 parties.append(
-                    "Qte Retour %s \u2192 %s" % (ancienne_retour, nouvelle_retour)
+                    u"Qte Retour %s \u2192 %s" % (ancienne_retour, nouvelle_retour)
                 )
+
+            # Toute sortie différente de la demande initiale doit être
+            # justifiée avant l'écriture dans la ligne DSS.
+            sortie_differente = float_compare(
+                nouvelle_sortie,
+                line.qty_demandee,
+                precision_digits=2,
+            ) != 0
+            if sortie_differente and not line.motif_ecart:
+                raise ValidationError(
+                    u"Le motif de l'écart est obligatoire pour l'article %s."
+                    % line.product_id.name
+                )
+
+            if line.motif_ecart != line.request_line_id.motif_ecart:
+                parties.append(u"Motif de l'écart modifié")
             # Si des changements ont été détectés
             if parties:  # parties n'est pas vide → il y a des changements
                 changements.append(
-                    "\u2022 %s : %s"
+                    u"\\u2022 %s : %s"
                     % (
                         line.product_id.name,
-                        ", ".join(parties),
+                        u", ".join(parties),
                     )
                 )  # On ajoute un message décrivant le changement
                 # dans la liste changements[]
@@ -112,17 +131,22 @@ class DssQtySortieWizard(models.TransientModel):
                     {
                         "qty_sortie": nouvelle_sortie,
                         "qty_retour": nouvelle_retour,
+                        "motif_ecart": line.motif_ecart,
                     }
                 )
                 # On écrit les nouvelles valeurs dans la VRAIE ligne de la DSS
 
+        # La validation de ce wizard constitue l'intervention explicite du
+        # magasinier, même si les valeurs saisies restent identiques.
+        self.request_id.is_qty_modified = True
+
         if changements:
             # Si la liste des changements n'est pas vide
             message = (
-                "Le Responsable Stock %s a modifi\u00e9 les quantit\u00e9s.<br/><br/>%s"
+                u"Le Responsable Stock %s a modifi\u00e9 les quantit\u00e9s.<br/><br/>%s"
                 % (
                     self.env.user.name,
-                    "<br/>".join(changements),
+                    u"<br/>".join(changements),
                 )
             )
             self.request_id.message_post(body=message)
@@ -163,3 +187,7 @@ class DssQtySortieWizardLine(models.TransientModel):
 
     # Quantité de retour (modifiable par le Magasin).
     qty_retour = fields.Float(string="Qte Retour")
+
+    # Motif propre à la ligne lorsque la quantité sortie diffère de la
+    # quantité demandée.
+    motif_ecart = fields.Text(string="Motif de l'écart")

@@ -107,6 +107,15 @@ class DssRequest(models.Model):
     # True dans ce fichier, probablement utilisé ailleurs (wizards) ou
     # prévu pour une évolution future
     has_ecart = fields.Boolean(string="Ecart detecte", readonly=True)
+    # Indique que le magasinier a confirmé le wizard de modification des
+    # quantités. Il distingue une valeur zéro volontaire d'une valeur non
+    # encore initialisée avant la validation Stock.
+    is_qty_modified = fields.Boolean(
+        string="Quantites modifiees",
+        default=False,
+        readonly=True,
+        copy=False,
+    )
     # champ de texte contenant le motif du rejet de la demande, rempli via
     # le wizard DssRejetWizard tout en bas de ce fichier
     motif_rejet = fields.Text(string="Motif de rejet")

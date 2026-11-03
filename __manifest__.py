@@ -63,5 +63,6 @@
     "tests": [
         "tests/test_dss_notifications.py",
         "tests/test_dss_stock_location.py",
+        "tests/test_dss_quantities.py",
     ],
 }
