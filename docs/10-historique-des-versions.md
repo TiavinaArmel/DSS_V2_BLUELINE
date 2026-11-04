@@ -27,6 +27,8 @@ Un correctif complémentaire a été appliqué au wizard de quantités après l'
 
 La notification `stock_approval` transmet également le motif de modification des quantités par article dans l'e-mail envoyé après la validation Stock. Le contenu est construit depuis `motif_ecart` et reste absent lorsqu'aucune ligne n'a été modifiée.
 
+Le comportement multi-lignes a ensuite été corrigé : le motif n'est requis que pour une ligne effectivement modifiée, les autres lignes reçoivent automatiquement leur quantité demandée en sortie et les motifs transmis par e-mail sont rendus sous forme de liste HTML non ordonnée.
+
 ## 4. Convention de versioning
 
 Le manifeste expose un numéro de version, mais les sources auditées ne documentent pas de règle de versioning complète ni de changelog historique. Ajouter une entrée datée et sourcée lors d'une évolution future permettrait d'établir cet historique sans le reconstruire par supposition.

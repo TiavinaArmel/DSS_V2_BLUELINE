@@ -89,3 +89,55 @@ class TestDssQuantities(common.TransactionCase):
         request._prepare_quantities_before_stock_validation()
 
         self.assertFalse(request.has_ecart)
+
+    def test_unmodified_lines_use_requested_quantity_without_motif(self):
+        """Une seule ligne modifiée ne force pas de motif sur les autres lignes."""
+        request = self.Request.create({})
+        second_product = self.Product.create({
+            "name": "DSS Quantity Test Product 2",
+            "type": "product",
+        })
+        first = self.Line.create({
+            "request_id": request.id,
+            "product_id": self.product.id,
+            "qty_demandee": 10.0,
+        })
+        second = self.Line.create({
+            "request_id": request.id,
+            "product_id": second_product.id,
+            "qty_demandee": 5.0,
+        })
+        wizard = self.env["dss.qty.sortie.wizard"].create({
+            "request_id": request.id,
+            "line_ids": [
+                (0, 0, {
+                    "request_line_id": first.id,
+                    "product_id": self.product.id,
+                    "qty_demandee": 10.0,
+                    "qty_sortie": 7.0,
+                    "qty_retour": 0.0,
+                    "qty_sortie_initiale": 0.0,
+                    "qty_retour_initiale": 0.0,
+                    "motif_ecart": "Stock insuffisant",
+                }),
+                (0, 0, {
+                    "request_line_id": second.id,
+                    "product_id": second_product.id,
+                    "qty_demandee": 5.0,
+                    "qty_sortie": 0.0,
+                    "qty_retour": 0.0,
+                    "qty_sortie_initiale": 0.0,
+                    "qty_retour_initiale": 0.0,
+                }),
+            ],
+        })
+
+        wizard.action_valider()
+
+        self.assertEqual(first.qty_sortie, 7.0)
+        self.assertEqual(first.motif_ecart, "Stock insuffisant")
+        self.assertEqual(second.qty_sortie, 5.0)
+        self.assertFalse(second.motif_ecart)
+
+        request._prepare_quantities_before_stock_validation()
+        self.assertTrue(request.has_ecart)

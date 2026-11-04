@@ -12,7 +12,7 @@ Les messages métier du chatter sont créés par `message_post()` sur `dss.reque
 | `chef_validation` | Groupe Magasin actif et demandeur | Non |
 | `chef_rejection` | Demandeur | Oui |
 | `stock_rejection` | Demandeur et groupe Chef actif | Oui |
-| `stock_approval` | Demandeur | Oui, si une ligne possède `motif_ecart` |
+| `stock_approval` | Demandeur | Oui, si une ligne possède `motif_ecart`; rendu dans une liste HTML `<ul><li>` |
 | `return_to_requester` | Demandeur | Oui |
 | `closure` | Demandeur et groupe Magasin actif | Non |
 
@@ -27,6 +27,8 @@ Pour que les destinataires voient le logo, `web.base.url` doit contenir l'adress
 Le code fixe `model=False`, `res_id=False` et `auto_delete=False`, puis crée le mail sans appeler `send()`; il dépend donc de la file de courriels Odoo pour l'envoi réel.
 
 Le modèle `dss.notification.log` garde la demande, la clé d'événement, le mail et les destinataires. Sa contrainte unique limite chaque paire demande/événement à une entrée. Une notification déjà journalisée ne sera pas recréée par un nouvel appel de même clé.
+
+Pour `stock_approval`, les motifs de modification sont regroupés par article dans une liste HTML non ordonnée. Le bloc n'utilise pas `<br/>`, afin d'éviter l'affichage de balises dans le courriel.
 
 ## 4. Configuration SMTP et diagnostic
 

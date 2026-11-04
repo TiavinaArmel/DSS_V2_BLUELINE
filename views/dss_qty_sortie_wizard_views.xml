@@ -17,6 +17,9 @@
                         <field name="qty_sortie"/>
                         <field name="qty_retour"/>
                         <field name="motif_ecart"/>
+                        <field name="qty_sortie_initiale" invisible="1"/>
+                        <field name="qty_retour_initiale" invisible="1"/>
+                        <field name="motif_ecart_initial" invisible="1"/>
                     </tree>
                 </field>
                 <footer>

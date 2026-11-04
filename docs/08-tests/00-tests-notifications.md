@@ -17,7 +17,7 @@ Le manifeste déclare `tests/test_dss_notifications.py`, `tests/test_dss_stock_l
 | `test_rejection_keeps_motif_in_notification_context` | Le motif fourni apparaît dans le corps rendu du mail de rejet. |
 | `test_return_to_requester_email_contains_rejection_motif` | Destinataire demandeur et motif inclus dans le courriel de renvoi. |
 | `test_security_is_not_notified_without_a_real_dss_security_transition` | L'action d'approbation Stock ne crée pas de clé d'événement `security`. |
-| `test_stock_approval_email_contains_quantity_change_motif` | L'e-mail de validation Stock contient le motif d'écart et le nom de l'article concernés. |
+| `test_stock_approval_email_contains_quantity_change_motif` | L'e-mail de validation Stock contient le motif d'écart et le nom de l'article dans une liste `<ul><li>`, sans `<br/>` dans le bloc des motifs. |
 | `test_rejection_mapping_is_explicit` | Vérifie seulement l'état brouillon par défaut et l'absence de motif initial. |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.

@@ -121,6 +121,14 @@ Les boutons d'action Chef et Magasin étaient enveloppés dans des éléments `<
 
 Solution appliquée dans `views/dss_request_views.xml` : suppression des deux `<span>` et déplacement de la restriction `groups` sur chaque bouton qu'ils contenaient. L'ordre des boutons, les libellés, les conditions `attrs` et les classes CSS ont été conservés. Après mise à niveau du module, contrôler également que l'utilisateur possède le groupe approprié et que la demande est à l'étape attendue.
 
+### DSS multi-lignes : motif demandé sur une ligne non modifiée
+
+Si le wizard demande un motif pour tous les articles, vérifier que les valeurs initiales de chaque ligne sont mémorisées. Le motif doit être obligatoire uniquement si la ligne courante diffère de ses valeurs initiales. Les lignes non modifiées doivent recevoir automatiquement `qty_sortie = qty_demandee` et `qty_retour = 0.0`.
+
+### E-mail : balises `<br/>` visibles
+
+Si l'e-mail affiche littéralement `<br/>`, le résumé des motifs est transmis comme texte. La solution est de générer une liste HTML `<ul><li>` dans `_dss_quantity_change_motifs()` et de vérifier le rendu après mise à niveau du module.
+
 ## 5. Fiche de mémorisation
 
 | Repère | À retenir |

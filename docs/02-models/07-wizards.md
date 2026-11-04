@@ -27,10 +27,12 @@ Le serveur Odoo 10 fonctionne avec Python 2. Les messages construits dans `actio
 | Wizard | Valeurs modifiables dans l'assistant | Effets à la confirmation |
 |---|---|---|
 | Rejet | `motif` requis | Copie dans `motif_rejet`, puis appelle `action_rejeter()`. |
-| Quantités | `qty_sortie`, `qty_retour`, `motif_ecart` | Exige un motif par article si la sortie diffère de la demande, conserve `qty_demandee`, écrit les quantités et marque la demande comme modifiée. |
+| Quantités | `qty_sortie`, `qty_retour`, `motif_ecart` | Compare chaque ligne à ses valeurs initiales, exige un motif uniquement pour une ligne réellement modifiée, initialise les autres lignes avec `qty_demandee` et conserve `qty_demandee`. |
 | Clôture | `qty_installee`, `qty_retour` | Écrit les lignes, conserve la règle d'écart fondée sur demande/sortie/retour, passe à `cloture`, poste un résumé et notifie. |
 | Confirmation Chef | Aucune donnée métier saisie | Appelle `action_valider_chef()`. |
 | Confirmation Stock | Aucune donnée métier saisie | Appelle `action_valider_magasin()`. |
+
+Chaque ligne du wizard mémorise ses valeurs initiales (`qty_sortie_initiale`, `qty_retour_initiale`, `motif_ecart_initial`). Une ligne non modifiée reçoit automatiquement `qty_sortie = qty_demandee` et `qty_retour = 0.0`.
 
 ## 4. Cycle de vie d'un wizard
 

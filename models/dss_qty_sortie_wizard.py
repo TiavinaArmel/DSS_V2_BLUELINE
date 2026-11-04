@@ -67,6 +67,9 @@ class DssQtySortieWizard(models.TransientModel):
                             "qty_sortie": line.qty_sortie,
                             "qty_retour": line.qty_retour,
                             "motif_ecart": line.motif_ecart,
+                            "qty_sortie_initiale": line.qty_sortie,
+                            "qty_retour_initiale": line.qty_retour,
+                            "motif_ecart_initial": line.motif_ecart,
                         },
                     )
                     # (0, 0, {...}) = créer une nouvelle ligne One2many
@@ -85,6 +88,7 @@ class DssQtySortieWizard(models.TransientModel):
 
         self.ensure_one()  # S'assurer de ne traiter qu'un seul enregistrement
         changements = []  # Pour stocker la liste des changements détectés
+        lignes_modifiees = False
         for line in self.line_ids:
             parties = []
             # Comparaison entre l'ancienne et la nouvelle Quantité de sortie
@@ -102,6 +106,27 @@ class DssQtySortieWizard(models.TransientModel):
                     u"Qte Retour %s \u2192 %s" % (ancienne_retour, nouvelle_retour)
                 )
 
+            ligne_modifiee = (
+                float_compare(
+                    nouvelle_sortie,
+                    line.qty_sortie_initiale,
+                    precision_digits=2,
+                ) != 0
+                or float_compare(
+                    nouvelle_retour,
+                    line.qty_retour_initiale,
+                    precision_digits=2,
+                ) != 0
+                or line.motif_ecart != line.motif_ecart_initial
+            )
+
+            # Une ligne non touchée suit automatiquement la demande initiale.
+            if not ligne_modifiee:
+                nouvelle_sortie = line.qty_demandee
+                nouvelle_retour = 0.0
+            else:
+                lignes_modifiees = True
+
             # Toute sortie différente de la demande initiale doit être
             # justifiée avant l'écriture dans la ligne DSS.
             sortie_differente = float_compare(
@@ -109,7 +134,7 @@ class DssQtySortieWizard(models.TransientModel):
                 line.qty_demandee,
                 precision_digits=2,
             ) != 0
-            if sortie_differente and not line.motif_ecart:
+            if ligne_modifiee and sortie_differente and not line.motif_ecart:
                 raise ValidationError(
                     u"Le motif de l'écart est obligatoire pour l'article %s."
                     % line.product_id.name
@@ -117,6 +142,14 @@ class DssQtySortieWizard(models.TransientModel):
 
             if line.motif_ecart != line.request_line_id.motif_ecart:
                 parties.append(u"Motif de l'écart modifié")
+
+            line.request_line_id.write(
+                {
+                    "qty_sortie": nouvelle_sortie,
+                    "qty_retour": nouvelle_retour,
+                    "motif_ecart": line.motif_ecart,
+                }
+            )
             # Si des changements ont été détectés
             if parties:  # parties n'est pas vide → il y a des changements
                 changements.append(
@@ -127,18 +160,11 @@ class DssQtySortieWizard(models.TransientModel):
                     )
                 )  # On ajoute un message décrivant le changement
                 # dans la liste changements[]
-                line.request_line_id.write(
-                    {
-                        "qty_sortie": nouvelle_sortie,
-                        "qty_retour": nouvelle_retour,
-                        "motif_ecart": line.motif_ecart,
-                    }
-                )
                 # On écrit les nouvelles valeurs dans la VRAIE ligne de la DSS
 
         # La validation de ce wizard constitue l'intervention explicite du
         # magasinier, même si les valeurs saisies restent identiques.
-        self.request_id.is_qty_modified = True
+        self.request_id.is_qty_modified = lignes_modifiees
 
         if changements:
             # Si la liste des changements n'est pas vide
@@ -191,3 +217,6 @@ class DssQtySortieWizardLine(models.TransientModel):
     # Motif propre à la ligne lorsque la quantité sortie diffère de la
     # quantité demandée.
     motif_ecart = fields.Text(string="Motif de l'écart")
+    qty_sortie_initiale = fields.Float(string="Qte Sortie initiale")
+    qty_retour_initiale = fields.Float(string="Qte Retour initiale")
+    motif_ecart_initial = fields.Text(string="Motif initial")
