@@ -59,6 +59,51 @@
                                   color:#15365b;">
                             Bonjour,
                         </p>
+                        % if ctx.get('dss_event_key') == 'stock_approval':
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0"
+                               style="margin:18px 0;background-color:#eaf6ee;
+                                      border:1px solid #8ac79a;border-radius:6px;">
+                            <tr>
+                                <td style="padding:16px 18px;color:#216b35;
+                                           font-size:15px;line-height:22px;">
+                                    <strong>Étape suivante</strong><br/>
+                                    Le stock a été mis à jour. Vous pouvez maintenant
+                                    clôturer votre demande.
+                                </td>
+                            </tr>
+                        </table>
+                        % elif ctx.get('dss_event_key') == 'closure':
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0"
+                               style="margin:18px 0;background-color:#eef4fb;
+                                      border:1px solid #9bbce0;border-radius:6px;">
+                            <tr>
+                                <td style="padding:16px 18px;color:#15365b;
+                                           font-size:15px;line-height:22px;">
+                                    <strong>Demande clôturée</strong><br/>
+                                    La demande de sortie de stock est maintenant clôturée.
+                                </td>
+                            </tr>
+                        </table>
+                        % if ctx.get('dss_closure_type') == 'exception':
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0"
+                               style="margin:14px 0;background-color:#fff7e6;
+                                      border:1px solid #e8c46a;border-radius:6px;">
+                            <tr>
+                                <td style="padding:14px 18px;color:#604c32;
+                                           font-size:14px;line-height:21px;">
+                                    <strong>Clôture exceptionnelle</strong><br/>
+                                    Cette demande a été clôturée exceptionnellement par
+                                    ${ctx.get('dss_closure_actor', '')}.<br/>
+                                    <strong>Motif :</strong><br/>
+                                    ${ctx.get('dss_closure_reason', '') or 'Non renseigné'}
+                                </td>
+                            </tr>
+                        </table>
+                        % endif
+                        % endif
                         <p style="margin:0;font-size:15px;line-height:25px;
                                   color:#53657a;">
                             Une demande de sortie de stock a fait l'objet

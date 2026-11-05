@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Aucun département n'est créé automatiquement.
+        Les services et leurs responsables doivent être configurés dans Odoo.
+    -->
+</odoo>

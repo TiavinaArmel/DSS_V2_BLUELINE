@@ -19,7 +19,7 @@ Le renvoi est affiché au Chef quand l'état vaut `rejete`. Le code vérifie ég
 
 ## 3. Clôture
 
-Le bouton Chef ouvre `dss.cloture.wizard` à l'état `approuve`. Le wizard préremplit une copie des lignes et permet de saisir `qty_installee` et `qty_retour`.
+Le demandeur d'origine ouvre `dss.cloture.wizard` à l'état `approuve` pour une clôture normale. Le Chef dispose d'une action de clôture exceptionnelle utilisant le même wizard et exigeant un motif. Le wizard préremplit une copie des lignes et permet de saisir `qty_installee` et `qty_retour`.
 
 | Opération lors de la confirmation | Détail |
 |---|---|
@@ -27,9 +27,9 @@ Le bouton Chef ouvre `dss.cloture.wizard` à l'état `approuve`. Le wizard prér
 | Écart | Compare `qty_installee` à `qty_sortie`; `has_ecart` devient vrai si une ligne diffère. |
 | État | Passe la demande à `cloture`. |
 | Chatter | Ajoute un récapitulatif et les écarts éventuels. |
-| Notification | Appelle `_dss_notify_closure()` pour le demandeur et le groupe Magasin. |
+| Notification | Appelle `_dss_notify_closure()` pour le Chef, le Magasin et le demandeur; le contexte conserve le type et le motif d'une clôture exceptionnelle. |
 
-Le wizard n'effectue pas de contrôle explicite de l'état avant de clôturer; le bouton de la vue limite l'accès normal à l'état approuvé.
+Le wizard vérifie côté serveur que la demande est encore à l'état `approuve` avant toute écriture. Les boutons XML ajoutent une protection d'interface, mais ne remplacent pas ce contrôle serveur.
 
 ## 4. Fiche de mémorisation
 

@@ -216,6 +216,38 @@ class TestDssNotifications(common.TransactionCase):
             )
         )
 
+    def test_stock_approval_email_explains_that_requester_can_close(self):
+        """Le mail Stock indique que la DSS peut maintenant être clôturée."""
+        request = self.Request.create({"name": "TEST-DSS-STOCK-APPROVAL"})
+        request._dss_notify_workflow(
+            "stock_approval",
+            "Approbation Stock",
+            ["stock-approval@example.invalid"],
+        )
+        log = self.NotificationLog.search(
+            [("request_id", "=", request.id), ("event_key", "=", "stock_approval")],
+            limit=1,
+        )
+        self.assertIn("Le stock a été mis à jour", log.mail_id.body_html)
+        self.assertIn("clôturer votre demande", log.mail_id.body_html)
+
+    def test_closure_email_confirms_request_is_closed(self):
+        """Le mail de clôture confirme la fin du workflow DSS."""
+        request = self.Request.create({"name": "TEST-DSS-CLOSURE"})
+        request._dss_notify_workflow(
+            "closure",
+            "Clôture",
+            ["closure@example.invalid"],
+        )
+        log = self.NotificationLog.search(
+            [("request_id", "=", request.id), ("event_key", "=", "closure")],
+            limit=1,
+        )
+        self.assertIn(
+            "La demande de sortie de stock est maintenant clôturée",
+            log.mail_id.body_html,
+        )
+
     def test_rejection_mapping_is_explicit(self):
         """Verifie l'etat initial et l'absence de motif sur une nouvelle demande."""
         # Cree une demande neuve sans fournir d'etat ni de motif.

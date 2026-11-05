@@ -20,6 +20,7 @@
 | `sens_mouvement` | `Char` | `compute`, `store=True`, `readonly=True` | Sens de stock dérivé du type d'intervention. |
 | `picking_id` | `Many2one(stock.picking)` | `readonly=True` | Lien vers le dernier picking affecté par les méthodes DSS. |
 | `has_ecart` | `Boolean` | `readonly=True` | Indicateur mis à jour par le wizard de clôture. |
+| `is_qty_modified` | `Boolean` | Défaut `False`, `readonly=True`, `copy=False` | Indicateur interne de modification des quantités. |
 | `motif_rejet` | `Text` | Aucun | Motif reporté depuis le wizard de rejet. |
 | `line_ids` | `One2many(dss.request.line)` | Relation inverse `request_id` | Lignes de la demande. |
 | `signataire_demandeur_id` | `Many2one(res.users)` | `readonly=True`, `copy=False` | Utilisateur ayant soumis la demande. |
@@ -37,6 +38,7 @@ Les champs métiers de soumission ne portent pas `required=True` dans le modèle
 |---|---|---|
 | `_compute_sens_mouvement` | `@api.depends('type_intervention')` | Associe chaque type au sens correspondant. |
 | `_onchange_type_intervention_lines` | `@api.onchange('type_intervention')` | Met à jour `qty_demandee_readonly` des lignes pour un retour matériel. |
+| `_onchange_location_id_qty_standard` | `@api.onchange('location_id')` | Recalcule la disponibilité des articles pour l'emplacement sélectionné. |
 | `create` | `@api.model` | Demande le prochain numéro à `ir.sequence` si `name` vaut `/`. |
 
 Les méthodes de transition sont documentées dans [le workflow](03-dss-request-workflow.md).

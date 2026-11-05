@@ -9,11 +9,13 @@
 | XML ID | Nom affiché | Usage déclaré ou visible |
 |---|---|---|
 | `dss_v2.group_dss_demandeur` | DSS / Demandeur | Accès au menu « Mes demandes ». |
-| `dss_v2.group_dss_chef` | DSS / Chef | Validations Chef, rejet au niveau Chef, renvoi et clôture. |
+| `dss_v2.group_dss_chef` | DSS / Chef | Validations Chef, rejet au niveau Chef, renvoi et clôture exceptionnelle. |
 | `dss_v2.group_dss_magasin` | DSS / Magasin | Validation Stock, rejet au niveau Stock, modification des quantités et impression du BL. |
 | `dss_v2.group_dss_securite` | DSS / Securite | Vue de demande en lecture seule et menu provisoire « À contrôler ». |
 
 Le groupe Sécurité n'a pas de transition dans le workflow principal `dss.request`; le libellé du groupe ne prouve donc pas qu'une étape d'approbation est implémentée.
+
+La clôture normale est réservée au demandeur d'origine de la DSS. Le groupe Chef conserve l'action de clôture exceptionnelle, qui exige un motif obligatoire et fait l'objet d'un contrôle serveur.
 
 ## 3. Attribution des groupes
 

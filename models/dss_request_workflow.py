@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import SUPERUSER_ID, models, fields, api
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -212,15 +212,47 @@ class DssRequestWorkflow(models.Model):
 
     @api.multi
     def action_open_wizard_cloture(self):
-        """Ouvre le formulaire de clôture lié à la demande courante."""
+        """Ouvre le wizard de clôture normale réservé au demandeur d'origine."""
         self.ensure_one()
+        # Le contrôle Python protège l'action même si elle est appelée hors du bouton XML.
+        demandeur = self.signataire_demandeur_id or self.create_uid
+        if self.env.uid != SUPERUSER_ID and self.env.user != demandeur:
+            raise AccessError("Seul le demandeur d'origine peut clôturer cette DSS.")
+        if self.state != "approuve":
+            raise ValidationError("Seule une DSS approuvée peut être clôturée.")
         return {
             "type": "ir.actions.act_window",
             "name": "Cloturer la demande",
             "res_model": "dss.cloture.wizard",
             "view_mode": "form",
             "target": "new",
-            "context": {"default_request_id": self.id},
+            "context": {
+                "default_request_id": self.id,
+                "default_is_exception": False,
+            },
+        }
+
+    @api.multi
+    def action_open_wizard_cloture_exception(self):
+        """Ouvre le wizard de clôture exceptionnelle réservé au groupe Chef."""
+        self.ensure_one()
+        # Le groupe est vérifié côté serveur, pas uniquement dans la vue XML.
+        if not self.env.user.has_group("dss_v2.group_dss_chef"):
+            raise AccessError(
+                "Seul un utilisateur du groupe DSS / Chef peut effectuer une clôture exceptionnelle."
+            )
+        if self.state != "approuve":
+            raise ValidationError("Seule une DSS approuvée peut être clôturée.")
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Clôture exceptionnelle",
+            "res_model": "dss.cloture.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_request_id": self.id,
+                "default_is_exception": True,
+            },
         }
 
     @api.multi

@@ -8,6 +8,12 @@
             <form string="Cloturer la demande">
                 <!-- Référence cachée vers la demande transmise au wizard par son contexte. -->
                 <field name="request_id" invisible="1"/>
+                <!-- Indique le type de clôture ; sa valeur provient du contexte du bouton. -->
+                <field name="is_exception" invisible="1"/>
+                <!-- Le motif est obligatoire uniquement pour une clôture exceptionnelle. -->
+                <field name="motif_exception"
+                    attrs="{'required': [('is_exception', '=', True)],
+                            'invisible': [('is_exception', '=', False)]}"/>
                 <!-- Tableau des lignes rattachées au wizard ; editable="bottom" permet leur édition. -->
                 <field name="line_ids">
                     <tree editable="bottom">
