@@ -9,7 +9,8 @@
     # - web   : assets et rapports QWeb
     # - stock : mouvements de stock (Inventory)
     # - mail  : chatter et notifications internes
-    "depends": ["web", "stock", "mail"],
+    # - hr    : services, employés et responsables des demandeurs
+    "depends": ["web", "stock", "mail", "hr"],
 
     # Auteur du module
     "author": "Tiavina Armel",
@@ -63,5 +64,6 @@
     "tests": [
         "tests/test_dss_notifications.py",
         "tests/test_dss_stock_location.py",
+        "tests/test_dss_service_department.py",
     ],
 }

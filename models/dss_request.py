@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import (
-    models,
-    fields,
-    api,
-)  # importation de 3 outils : models, fields, api provenant du core d'odoo
-# lisible et compréhensible par l'utilisateur (pas un traceback technique)
+from odoo import SUPERUSER_ID, api, fields, models
+from odoo.exceptions import AccessError, ValidationError
 
 
 class DssRequest(models.Model):
@@ -17,6 +13,17 @@ class DssRequest(models.Model):
     # standard mail.thread d'Odoo : le chatter, les notifications, le suivi
     # des modifications. C'est ce qui permet d'utiliser message_post()
     _inherit = ["mail.thread"]
+
+    service_demandeur_id = fields.Many2one(
+        "hr.department",
+        string="Service Demandeur",
+        readonly=True,
+        default=lambda model: model._default_service_demandeur(),
+    )
+    is_current_user_chef = fields.Boolean(
+        compute="_compute_is_current_user_chef",
+        store=False,
+    )
 
     # le champ du numéro de la demande (EX: DSS-00001)
     # readonly=True = lecture seule : l'utilisateur ne peut PAS modifier ce
@@ -136,6 +143,25 @@ class DssRequest(models.Model):
         string="Date validation Stock", readonly=True
     )
 
+    @api.model
+    def _default_service_demandeur(self):
+        """Retourne le service du premier employé actif de l'utilisateur."""
+        employees = self.env.user.employee_ids.filtered(
+            lambda employee: employee.active
+        ).sorted(key=lambda employee: employee.id)
+        return employees[:1].department_id.id or False
+
+    @api.depends("service_demandeur_id.manager_id.user_id")
+    def _compute_is_current_user_chef(self):
+        """Indique si l'utilisateur courant dirige le service de la DSS."""
+        for rec in self:
+            manager_user = (
+                rec.service_demandeur_id.manager_id.user_id
+                if rec.service_demandeur_id and rec.service_demandeur_id.manager_id
+                else False
+            )
+            rec.is_current_user_chef = manager_user == self.env.user
+
     @api.depends("type_intervention")
     def _compute_sens_mouvement(self):
         # dictionnaire Python qui associe chaque type d'intervention
@@ -184,9 +210,39 @@ class DssRequest(models.Model):
           (en pratique, ce cas n'arrive jamais depuis l'interface,
           puisque le champ est readonly dans la vue).
         """
+        vals = dict(vals)
+
+        if self.env.uid == SUPERUSER_ID:
+            target_user_id = self.env.context.get("dss_user_id", self.env.uid)
+            target_user = (
+                self.env["res.users"].sudo().browse(target_user_id).exists()
+            )
+            if not target_user:
+                raise ValidationError(
+                    "L'utilisateur cible de la demande DSS est introuvable."
+                )
+        else:
+            target_user = self.env.user
+
+        employees = target_user.employee_ids.filtered(
+            lambda employee: employee.active
+        ).sorted(key=lambda employee: employee.id)
+        vals["service_demandeur_id"] = (
+            employees[:1].department_id.id if employees else False
+        )
+
         # si aucun nom n'est fourni ("/" = valeur par défaut)
         if vals.get("name", "/") == "/":
             # on génère un numéro via la séquence dédiée aux demandes DSS
             vals["name"] = self.env["ir.sequence"].next_by_code("dss.request") or "/"
         # on laisse ensuite Odoo effectuer la création standard
         return super(DssRequest, self).create(vals)
+
+    @api.multi
+    def write(self, vals):
+        """Interdit aux utilisateurs ordinaires de changer le service RH."""
+        if "service_demandeur_id" in vals and self.env.uid != SUPERUSER_ID:
+            raise AccessError(
+                "Vous n'avez pas le droit de modifier le service demandeur."
+            )
+        return super(DssRequest, self).write(vals)

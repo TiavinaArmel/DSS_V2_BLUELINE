@@ -55,6 +55,22 @@ class DssRequestWorkflow(models.Model):
         """
         # @api.multi autorise l'appel sur plusieurs demandes ; chacune est contrôlée dans cette boucle.
         for rec in self:
+            if not rec.service_demandeur_id:
+                raise ValidationError(
+                    "Votre profil RH ne contient aucun service. "
+                    "Veuillez contacter les RH."
+                )
+            if not rec.service_demandeur_id.manager_id:
+                raise ValidationError(
+                    "Le service %s n'a pas de chef configuré, impossible de soumettre."
+                    % rec.service_demandeur_id.name
+                )
+            if not rec.service_demandeur_id.manager_id.user_id:
+                raise ValidationError(
+                    "Le chef du service %s n'a pas de compte utilisateur lié."
+                    % rec.service_demandeur_id.name
+                )
+
             # Chaque champ obligatoire est vérifié avant de changer l'état du dossier.
             if not rec.bci:
                 raise ValidationError("Le champ BCI est obligatoire avant de soumettre.")
@@ -91,6 +107,15 @@ class DssRequestWorkflow(models.Model):
             # Refuse la transition si l'état actuel ne correspond pas à l'étape attendue.
             if rec.state != "valide_chef":
                 raise ValidationError("La demande doit etre en Validation Chef.")
+            if not rec.service_demandeur_id:
+                raise AccessError(
+                    "Aucun service RH n'est défini pour cette demande."
+                )
+            chef_service = rec.service_demandeur_id.manager_id.user_id
+            if not chef_service or self.env.user != chef_service:
+                raise AccessError(
+                    "Seul le chef actuel du service demandeur peut valider cette DSS."
+                )
             # Mémorise le nouvel état, le signataire et la date de validation.
             rec.state = "valide_magasin"
             rec.signataire_chef_id = self.env.user

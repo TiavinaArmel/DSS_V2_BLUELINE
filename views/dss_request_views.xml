@@ -12,8 +12,9 @@
                         attrs="{'invisible': [('state', '!=', 'brouillon')]}" class="oe_highlight"/>
                     <!-- Les groupes sont portés directement par les boutons du header. -->
                     <button name="action_open_wizard_chef" type="object" string="Valider Chef"
-                        groups="dss_v2.group_dss_chef"
-                        attrs="{'invisible': [('state', '!=', 'valide_chef')]}" class="oe_highlight"/>
+                        attrs="{'invisible': ['|', ('state', '!=', 'valide_chef'),
+                                               ('is_current_user_chef', '=', False)]}"
+                        class="oe_highlight"/>
                     <button name="action_open_wizard_rejeter" type="object" string="Rejeter"
                         groups="dss_v2.group_dss_chef"
                         attrs="{'invisible': [('state', '!=', 'valide_chef')]}"/>
@@ -54,6 +55,8 @@
                                 attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
                             <field name="partner_id"
                                 attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
+                            <field name="service_demandeur_id" readonly="1"/>
+                            <field name="is_current_user_chef" invisible="1"/>
                             <field name="lieu_intervention"
                                 attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
                             <field name="date_intervention"

@@ -14,6 +14,8 @@
 | `partner_id` | `Many2one(res.partner)` | Aucun `required=True` | Client de l'intervention. |
 | `lieu_intervention` | `Char` | Aucun `required=True` | Lieu saisi pour l'intervention. |
 | `date_intervention` | `Date` | Défaut `fields.Date.today` | Date prévue/renseignée pour l'intervention. |
+| `service_demandeur_id` | `Many2one(hr.department)` | Défaut depuis le premier employé actif; lecture seule | Service RH associé au demandeur; forcé par `create()` et non modifiable par un utilisateur non-superuser. |
+| `is_current_user_chef` | `Boolean` | Calculé, non stocké | Indicateur d'affichage; vrai lorsque l'utilisateur courant est le responsable actuel du service. L'autorisation est revérifiée par le workflow. |
 | `location_id` | `Many2one(stock.location)` | Domaine `usage = internal` | Emplacement source. |
 | `location_dest_id` | `Many2one(stock.location)` | Domaine `usage = internal` | Destination interne, notamment pour `appro_distant`. |
 | `type_intervention` | `Selection` | Six valeurs | Catégorie métier qui détermine le sens calculé. |
@@ -38,6 +40,8 @@ Les champs métiers de soumission ne portent pas `required=True` dans le modèle
 | `_compute_sens_mouvement` | `@api.depends('type_intervention')` | Associe chaque type au sens correspondant. |
 | `_onchange_type_intervention_lines` | `@api.onchange('type_intervention')` | Met à jour `qty_demandee_readonly` des lignes pour un retour matériel. |
 | `create` | `@api.model` | Demande le prochain numéro à `ir.sequence` si `name` vaut `/`. |
+| `_default_service_demandeur` | `@api.model` | Retourne le département du premier employé actif lié à l'utilisateur courant, trié par ID. |
+| `write` | `@api.multi` | Refuse les modifications de `service_demandeur_id` par un utilisateur autre que le superuser. |
 
 Les méthodes de transition sont documentées dans [le workflow](03-dss-request-workflow.md).
 

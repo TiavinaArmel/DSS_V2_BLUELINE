@@ -5,7 +5,7 @@
 | Méthode | État contrôlé | État affecté | Effets constatés |
 |---|---|---|---|
 | `action_soumettre` | Aucun contrôle d'état explicite | `valide_chef` | Valide les champs requis et les lignes, renseigne demandeur/date, poste un message et prépare une notification. |
-| `action_valider_chef` | Exige `valide_chef` | `valide_magasin` | Enregistre signataire/date Chef, poste un message et prépare une notification. |
+| `action_valider_chef` | Exige `valide_chef` et l'utilisateur doit être le responsable RH actuel du service | `valide_magasin` | Enregistre signataire/date Chef, poste un message et prépare une notification. |
 | `action_valider_magasin` | Exige `valide_magasin` | `approuve` après génération stock | Enregistre signataire/date Stock, appelle le routeur stock, génère le BL, poste des messages et prépare une notification. |
 | `action_rejeter` | Aucun contrôle d'état explicite | `rejete` | Conserve l'état précédent pour le routage, poste le motif s'il existe et prépare une notification si l'état précédent est reconnu. |
 | `action_renvoyer_demandeur` | Exige groupe Chef et état `rejete` | `brouillon` | Poste le nom du demandeur et prépare un courriel de renvoi. |
@@ -24,6 +24,7 @@ Les actions métier et leur ordre réel sont implémentés dans [`dss_request_wo
 | `location_id` | Doit être renseigné. |
 | `location_dest_id` | Requis si `type_intervention == 'appro_distant'`. |
 | `line_ids` | Au moins une ligne est requise. |
+| `service_demandeur_id` | Doit être renseigné; le service doit avoir un responsable avec un compte utilisateur Odoo. |
 
 Chaque échec lève `ValidationError` avant l'enregistrement de la soumission. Le code ne vérifie pas explicitement que l'état initial est `brouillon`.
 

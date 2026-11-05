@@ -4,4 +4,11 @@
     <menuitem id="menu_dss_root" name="DSS" sequence="20"/>
     <!-- Sous-menu qui ouvre l'action de recherche et de gestion des demandes. -->
     <menuitem id="menu_dss_request" name="Demandes" parent="menu_dss_root" action="action_dss_request"/>
+    <!-- Accès direct à la configuration RH des services, réservé aux utilisateurs RH. -->
+    <menuitem id="menu_dss_services"
+        name="Services"
+        parent="menu_dss_root"
+        action="hr.open_module_tree_department"
+        groups="hr.group_hr_user"
+        sequence="90"/>
 </odoo>
