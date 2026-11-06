@@ -1,35 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="action_dss_services" model="ir.actions.act_window">
-        <field name="name">Services</field>
-        <field name="res_model">hr.department</field>
-        <field name="view_type">form</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <record id="action_dss_services_tree_view" model="ir.actions.act_window.view">
-        <field name="sequence" eval="1"/>
-        <field name="view_mode">tree</field>
-        <field name="view_id" ref="view_dss_department_tree"/>
-        <field name="act_window_id" ref="action_dss_services"/>
-    </record>
-
-    <record id="action_dss_services_form_view" model="ir.actions.act_window.view">
-        <field name="sequence" eval="2"/>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="view_dss_department_form"/>
-        <field name="act_window_id" ref="action_dss_services"/>
-    </record>
-
     <!-- Menu racine qui regroupe les fonctions du module DSS dans l'application Odoo. -->
     <menuitem id="menu_dss_root" name="DSS" sequence="20"/>
     <!-- Sous-menu qui ouvre l'action de recherche et de gestion des demandes. -->
     <menuitem id="menu_dss_request" name="Demandes" parent="menu_dss_root" action="action_dss_request"/>
-    <!-- Accès direct à la configuration RH des services, réservé aux utilisateurs RH. -->
+    <!-- La configuration des services DSS est réservée au groupe Chef DSS. -->
     <menuitem id="menu_dss_services"
         name="Services"
         parent="menu_dss_root"
         action="action_dss_services"
-        groups="hr.group_hr_user"
+        groups="dss_v2.group_dss_chef"
         sequence="90"/>
 </odoo>

@@ -15,9 +15,8 @@ class DssRequest(models.Model):
     _inherit = ["mail.thread"]
 
     service_demandeur_id = fields.Many2one(
-        "hr.department",
+        "dss.service",
         string="Service Demandeur",
-        readonly=True,
         default=lambda model: model._default_service_demandeur(),
     )
     is_current_user_chef = fields.Boolean(
@@ -145,11 +144,16 @@ class DssRequest(models.Model):
 
     @api.model
     def _default_service_demandeur(self):
-        """Retourne le service du premier employé actif de l'utilisateur."""
-        employees = self.env.user.employee_ids.filtered(
-            lambda employee: employee.active
-        ).sorted(key=lambda employee: employee.id)
-        return employees[:1].department_id.id or False
+        """Préremplit le service seulement si un seul correspond à l'utilisateur."""
+        services = self.env["dss.service"].sudo().search(
+            [
+                ("active", "=", True),
+                ("dss_demandeurs_ids", "in", self.env.user.id),
+            ],
+            order="id",
+            limit=2,
+        )
+        return services.id if len(services) == 1 else False
 
     @api.depends("service_demandeur_id.dss_chef_id")
     def _compute_is_current_user_chef(self):
@@ -229,12 +233,18 @@ class DssRequest(models.Model):
         else:
             target_user = self.env.user
 
-        employees = target_user.employee_ids.filtered(
-            lambda employee: employee.active
-        ).sorted(key=lambda employee: employee.id)
-        vals["service_demandeur_id"] = (
-            employees[:1].department_id.id if employees else False
-        )
+        if "service_demandeur_id" not in vals:
+            services = self.env["dss.service"].sudo().search(
+                [
+                    ("active", "=", True),
+                    ("dss_demandeurs_ids", "in", target_user.id),
+                ],
+                order="id",
+                limit=2,
+            )
+            vals["service_demandeur_id"] = (
+                services.id if len(services) == 1 else False
+            )
 
         # si aucun nom n'est fourni ("/" = valeur par défaut)
         if vals.get("name", "/") == "/":
@@ -245,9 +255,11 @@ class DssRequest(models.Model):
 
     @api.multi
     def write(self, vals):
-        """Interdit aux utilisateurs ordinaires de changer le service RH."""
-        if "service_demandeur_id" in vals and self.env.uid != SUPERUSER_ID:
+        """Autorise le choix du service uniquement tant que la DSS est en brouillon."""
+        if "service_demandeur_id" in vals and any(
+            request.state != "brouillon" for request in self
+        ):
             raise AccessError(
-                "Vous n'avez pas le droit de modifier le service demandeur."
+                u"Le service demandeur ne peut être modifié qu'au brouillon."
             )
         return super(DssRequest, self).write(vals)

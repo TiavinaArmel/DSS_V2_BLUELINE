@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Tests du routage DSS par service RH et Chef DSS."""
+"""Tests des services DSS et des droits du workflow."""
 
 from odoo import api
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import common
 
 
-class TestDssServiceDepartment(common.TransactionCase):
-    """Vérifie l'affectation RH, les droits du Chef DSS et les notifications."""
+class TestDssServiceWorkflow(common.TransactionCase):
+    """Vérifie les services DSS, les contrôles d'accès et les notifications."""
 
     def setUp(self):
-        super(TestDssServiceDepartment, self).setUp()
+        super(TestDssServiceWorkflow, self).setUp()
         self.Request = self.env["dss.request"]
-        self.Employee = self.env["hr.employee"]
-        self.Department = self.env["hr.department"]
+        self.Service = self.env["dss.service"]
         self.NotificationLog = self.env["dss.notification.log"]
 
         self.requester = self._create_user(
@@ -22,7 +21,7 @@ class TestDssServiceDepartment(common.TransactionCase):
             [self.ref("dss_v2.group_dss_demandeur")],
         )
         self.chef = self._create_user(
-            "DSS Department Chief",
+            "DSS Service Chief",
             "dss.chef.%s@example.invalid" % self.id(),
             [self.ref("dss_v2.group_dss_chef")],
         )
@@ -39,15 +38,13 @@ class TestDssServiceDepartment(common.TransactionCase):
             "dss.store.%s@example.invalid" % self.id(),
             [self.ref("dss_v2.group_dss_magasin")],
         )
-        self.department = self.Department.create({"name": "DSS Test Department"})
-        self.requester_employee = self.Employee.create(
+        self.service = self.Service.create(
             {
-                "name": self.requester.name,
-                "user_id": self.requester.id,
-                "department_id": self.department.id,
+                "name": "DSS Test Service",
+                "dss_chef_id": self.chef.id,
+                "dss_demandeurs_ids": [(6, 0, [self.requester.id])],
             }
         )
-        self.department.write({"dss_chef_id": self.chef.id})
 
     def _create_user(self, name, email, additional_groups=None):
         """Crée un utilisateur interne de test avec une adresse distincte."""
@@ -78,49 +75,61 @@ class TestDssServiceDepartment(common.TransactionCase):
         user = user or self.requester
         return self.Request.with_env(self._env_for(user)).create(values or {})
 
-    def test_request_service_defaults_from_active_employee(self):
-        """Le service vient de la fiche employé du demandeur."""
+    def test_request_service_defaults_when_user_matches_one_service(self):
+        """Le service est prérempli quand un seul service autorise le demandeur."""
         request = self._create_request()
 
-        self.assertEqual(request.service_demandeur_id, self.department)
+        self.assertEqual(request.service_demandeur_id, self.service)
 
-    def test_request_service_uses_lowest_id_active_employee(self):
-        """Les utilisateurs multi-employés reçoivent le service du premier ID."""
-        other_department = self.Department.create(
-            {"name": "DSS Secondary Department"}
-        )
-        self.Employee.create(
+    def test_request_service_is_empty_when_user_matches_multiple_services(self):
+        """Le service reste vide si plusieurs services autorisent le demandeur."""
+        self.Service.create(
             {
-                "name": "DSS Secondary Employee",
-                "user_id": self.requester.id,
-                "department_id": other_department.id,
+                "name": "DSS Secondary Service",
+                "dss_chef_id": self.chef.id,
+                "dss_demandeurs_ids": [(6, 0, [self.requester.id])],
             }
         )
 
         request = self._create_request()
 
-        self.assertEqual(request.service_demandeur_id, self.department)
+        self.assertFalse(request.service_demandeur_id)
 
-    def test_create_ignores_service_supplied_by_caller(self):
-        """Même une valeur fournie par l'appelant est remplacée par le service RH."""
-        another_department = self.Department.create(
-            {"name": "DSS Other Department"}
-        )
-        request = self._create_request(
-            values={"service_demandeur_id": another_department.id}
+    def test_request_service_is_empty_when_user_matches_no_service(self):
+        """Le service reste vide si aucun service n'autorise le demandeur."""
+        user_without_service = self._create_user(
+            "DSS No Service User",
+            "dss.no.service.%s@example.invalid" % self.id(),
         )
 
-        self.assertEqual(request.service_demandeur_id, self.department)
+        request = self._create_request(user_without_service)
 
-    def test_regular_user_cannot_change_request_service(self):
-        """Le service d'une DSS ne peut pas être modifié après sa création."""
+        self.assertFalse(request.service_demandeur_id)
+
+    def test_request_service_ignores_inactive_service(self):
+        """Un service inactif ne peut pas être choisi par défaut."""
+        self.service.write({"active": False})
+
         request = self._create_request()
-        another_department = self.Department.create(
-            {"name": "DSS Other Department"}
+
+        self.assertFalse(request.service_demandeur_id)
+
+    def test_request_service_can_change_only_in_draft(self):
+        """Le demandeur peut choisir le service au brouillon, mais pas ensuite."""
+        request = self._create_request()
+        other_service = self.Service.create(
+            {
+                "name": "DSS Other Service",
+                "dss_chef_id": self.chef.id,
+                "dss_demandeurs_ids": [(6, 0, [self.requester.id])],
+            }
         )
 
+        request.write({"service_demandeur_id": other_service.id})
+        self.assertEqual(request.service_demandeur_id, other_service)
+        request.write({"state": "valide_chef"})
         with self.assertRaises(AccessError):
-            request.write({"service_demandeur_id": another_department.id})
+            request.write({"service_demandeur_id": self.service.id})
 
     def test_superuser_can_create_for_target_user_from_context(self):
         """Le contexte dss_user_id est appliqué uniquement aux créations superuser."""
@@ -128,26 +137,64 @@ class TestDssServiceDepartment(common.TransactionCase):
             dss_user_id=self.requester.id
         ).create({})
 
-        self.assertEqual(request.service_demandeur_id, self.department)
+        self.assertEqual(request.service_demandeur_id, self.service)
 
     def test_superuser_rejects_nonexistent_target_user(self):
         """Une création superuser refuse un utilisateur cible inexistant."""
         with self.assertRaises(ValidationError):
             self.Request.sudo().with_context(dss_user_id=999999999).create({})
 
-    def test_submission_requires_rh_department(self):
-        """La soumission d'un demandeur sans service RH est refusée."""
-        user_without_department = self._create_user(
-            "DSS No Department", "dss.no.department.%s@example.invalid" % self.id()
+    def test_submission_requires_selected_service(self):
+        """La soumission est refusée si aucun service n'a été sélectionné."""
+        user_without_service = self._create_user(
+            "DSS No Service User",
+            "dss.no.service.%s@example.invalid" % self.id(),
         )
-        request = self._create_request(user_without_department)
+        request = self._create_request(user_without_service)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaisesRegexp(
+            ValidationError, u"Veuillez sélectionner un service demandeur"
+        ):
+            request.action_soumettre()
+
+    def test_submission_rejects_service_without_authorized_users(self):
+        """La soumission est refusée si le service n'a aucun demandeur configuré."""
+        service_without_users = self.Service.create(
+            {
+                "name": "DSS Service Without Requesters",
+                "dss_chef_id": self.chef.id,
+            }
+        )
+        request = self._create_request(
+            values={"service_demandeur_id": service_without_users.id}
+        )
+
+        with self.assertRaisesRegexp(
+            ValidationError, u"aucun demandeur autorisé configuré"
+        ):
+            request.action_soumettre()
+
+    def test_submission_rejects_user_not_authorized_for_selected_service(self):
+        """La soumission est refusée si le demandeur n'est pas autorisé."""
+        other_service = self.Service.create(
+            {
+                "name": "DSS Other Service",
+                "dss_chef_id": self.chef.id,
+                "dss_demandeurs_ids": [(6, 0, [self.outsider.id])],
+            }
+        )
+        request = self._create_request(
+            values={"service_demandeur_id": other_service.id}
+        )
+
+        with self.assertRaisesRegexp(
+            AccessError, u"pas autorisé à effectuer des demandes"
+        ):
             request.action_soumettre()
 
     def test_submission_requires_dss_chief(self):
         """La soumission exige un Chef DSS configuré sur le service."""
-        self.department.write({"dss_chef_id": False})
+        self.service.write({"dss_chef_id": False})
         request = self._create_request()
 
         with self.assertRaises(ValidationError):
@@ -155,13 +202,13 @@ class TestDssServiceDepartment(common.TransactionCase):
 
     def test_submission_rejects_inactive_or_non_chef_user(self):
         """Le Chef DSS doit être actif et appartenir au groupe Chef."""
-        self.department.write({"dss_chef_id": self.outsider.id})
+        self.service.write({"dss_chef_id": self.outsider.id})
         request = self._create_request()
 
         with self.assertRaises(ValidationError):
             request.action_soumettre()
 
-        self.department.write({"dss_chef_id": self.chef.id})
+        self.service.write({"dss_chef_id": self.chef.id})
         self.chef.write({"active": False})
         with self.assertRaises(ValidationError):
             request.action_soumettre()

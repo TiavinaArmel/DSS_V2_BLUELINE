@@ -4,7 +4,7 @@
 from . import stock_picking  # héritage de stock.picking
 from . import product_template  # héritage de product.template
 from . import product_product  # filtre de recherche des articles en stock
-from . import hr_department  # demandeurs autorisés par service
+from . import dss_service  # services du workflow DSS
 from . import dss_request  # modèles principaux DSS
 from . import dss_request_line  # lignes des demandes DSS
 from . import dss_request_stock  # génération des mouvements de stock

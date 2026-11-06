@@ -57,13 +57,14 @@ class DssRequestWorkflow(models.Model):
         for rec in self:
             if not rec.service_demandeur_id:
                 raise ValidationError(
-                    "Votre profil RH ne contient aucun service. "
-                    "Veuillez contacter les RH."
+                    u"Veuillez sélectionner un service demandeur."
                 )
-            if (
-                rec.service_demandeur_id.dss_demandeurs_ids
-                and self.env.user not in rec.service_demandeur_id.dss_demandeurs_ids
-            ):
+            if not rec.service_demandeur_id.dss_demandeurs_ids:
+                raise ValidationError(
+                    u"Ce service n'a aucun demandeur autorisé configuré. "
+                    u"Contactez l'administrateur."
+                )
+            if self.env.user not in rec.service_demandeur_id.dss_demandeurs_ids:
                 raise AccessError(
                     u"Vous n'êtes pas autorisé à effectuer des demandes pour ce service."
                 )
@@ -121,7 +122,7 @@ class DssRequestWorkflow(models.Model):
                 raise ValidationError("La demande doit etre en Validation Chef.")
             if not rec.service_demandeur_id:
                 raise AccessError(
-                    u"Aucun service RH n'est défini pour cette demande."
+                    u"Aucun service DSS n'est défini pour cette demande."
                 )
             chef_service = rec.service_demandeur_id.dss_chef_id
             if (

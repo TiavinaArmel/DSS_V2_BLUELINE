@@ -25,7 +25,7 @@ Les actions métier et leur ordre réel sont implémentés dans [`dss_request_wo
 | `location_id` | Doit être renseigné. |
 | `location_dest_id` | Requis si `type_intervention == 'appro_distant'`. |
 | `line_ids` | Au moins une ligne est requise. |
-| `service_demandeur_id` | Doit être renseigné; son Chef DSS doit être actif et appartenir au groupe DSS / Chef. |
+| `service_demandeur_id` | Doit être renseigné; ses demandeurs autorisés doivent être configurés et inclure l'utilisateur courant; son Chef DSS doit être actif et appartenir au groupe DSS / Chef. |
 
 Chaque échec lève `ValidationError` avant l'enregistrement de la soumission. Le code ne vérifie pas explicitement que l'état initial est `brouillon`.
 
