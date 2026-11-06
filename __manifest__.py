@@ -42,6 +42,8 @@
         "views/dss_request_search_views.xml",
         # Vues principales de la DSS
         "views/dss_request_views.xml",
+        # Vues DSS isolées des services RH
+        "views/dss_hr_department_views.xml",
         # Assets backend du Chatter DSS
         "views/assets_backend.xml",
 
