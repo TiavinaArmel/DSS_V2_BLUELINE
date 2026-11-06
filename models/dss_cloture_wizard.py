@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import AccessError, ValidationError
 
 """
 Ce fichier définit le wizard de clôture d'une DSS.
@@ -34,6 +35,13 @@ class DssClotureWizard(models.TransientModel):
     # DSS concernée (pré-remplie par le contexte, non modifiable).
     request_id = fields.Many2one(
         'dss.request', string='Demande DSS', required=True, readonly=True)
+
+    # Indique que le Chef DSS clôture une demande à titre exceptionnel.
+    is_exception = fields.Boolean(
+        string='Clôture exceptionnelle',
+        default=False,
+        readonly=True,
+    )
 
     # Lignes du wizard : une COPIE des lignes de la DSS.
     # One2many vers dss.cloture.wizard.line via wizard_id.
@@ -84,6 +92,21 @@ class DssClotureWizard(models.TransientModel):
         #   6. ferme la popup.
         self.ensure_one()
 
+        request = self.request_id
+        is_requester = self.env.user == request.signataire_demandeur_id
+        is_chef_exception = (
+            self.is_exception
+            and self.env.user.has_group("dss_v2.group_dss_chef")
+        )
+        if not is_requester and not is_chef_exception:
+            raise AccessError(
+                u"Seul le demandeur d'origine ou un Chef DSS en clôture exceptionnelle peut clôturer cette demande."
+            )
+        if request.state != 'approuve':
+            raise ValidationError(
+                u"Seule une demande approuvée peut être clôturée."
+            )
+
         ecarts = []   # Liste des écarts détectés
         recap = []    # Liste du récapitulatif des quantités
 
@@ -116,14 +139,20 @@ class DssClotureWizard(models.TransientModel):
         #   - bool(ecarts) = False si aucun écart
         # C'est ICI que le mystère du champ has_ecart est résolu :
         # il est enfin mis à jour par le wizard de clôture.
-        self.request_id.has_ecart = bool(ecarts)
+        request.has_ecart = bool(ecarts)
 
         # Fait passer la DSS à l'état 'cloture'.
-        self.request_id.state = 'cloture'
+        request.state = 'cloture'
 
         # Construit le message pour le chatter.
-        message = u'<b>%s</b> a cloture la demande.<br/>%s' % (
-            self.env.user.name, u'<br/>'.join(recap))
+        action_label = (
+            u"a clôturé exceptionnellement la demande"
+            if is_chef_exception
+            else u"a clôturé la demande"
+        )
+        message = u'<b>%s</b> %s.<br/>%s' % (
+            self.env.user.name, action_label,
+            u'<br/>'.join(recap))
         if ecarts:
             message += (
                 u'<br/><br/><b>Ecarts detectes :</b><br/>'
@@ -131,8 +160,8 @@ class DssClotureWizard(models.TransientModel):
             )
 
         # Poste le message dans le chatter.
-        self.request_id.message_post(body=message)
-        self.request_id._dss_notify_closure()
+        request.message_post(body=message)
+        request._dss_notify_closure()
 
         # Ferme la popup.
         return {'type': 'ir.actions.act_window_close'}

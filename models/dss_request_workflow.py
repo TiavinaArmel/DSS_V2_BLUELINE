@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import SUPERUSER_ID, models, fields, api
 from odoo.exceptions import AccessError, ValidationError
 
 
@@ -67,14 +67,19 @@ class DssRequestWorkflow(models.Model):
                 raise AccessError(
                     u"Vous n'êtes pas autorisé à effectuer des demandes pour ce service."
                 )
-            if not rec.service_demandeur_id.manager_id:
+            if not rec.service_demandeur_id.dss_chef_id:
                 raise ValidationError(
-                    u"Le service %s n'a pas de chef configuré, impossible de soumettre."
+                    u"Le service %s n'a pas de Chef DSS configuré, impossible de soumettre."
                     % rec.service_demandeur_id.name
                 )
-            if not rec.service_demandeur_id.manager_id.user_id:
+            if (
+                not rec.service_demandeur_id.dss_chef_id.active
+                or not rec.service_demandeur_id.dss_chef_id.has_group(
+                    "dss_v2.group_dss_chef"
+                )
+            ):
                 raise ValidationError(
-                    u"Le chef du service %s n'a pas de compte utilisateur lié."
+                    u"Le Chef DSS du service %s doit être actif et appartenir au groupe DSS / Chef."
                     % rec.service_demandeur_id.name
                 )
 
@@ -118,10 +123,15 @@ class DssRequestWorkflow(models.Model):
                 raise AccessError(
                     u"Aucun service RH n'est défini pour cette demande."
                 )
-            chef_service = rec.service_demandeur_id.manager_id.user_id
-            if not chef_service or self.env.user != chef_service:
+            chef_service = rec.service_demandeur_id.dss_chef_id
+            if (
+                not chef_service
+                or not chef_service.active
+                or not chef_service.has_group("dss_v2.group_dss_chef")
+                or self.env.user != chef_service
+            ):
                 raise AccessError(
-                    "Seul le chef actuel du service demandeur peut valider cette DSS."
+                    u"Seul le Chef DSS actif et assigné à ce service peut valider cette demande."
                 )
             # Mémorise le nouvel état, le signataire et la date de validation.
             rec.state = "valide_magasin"
@@ -175,6 +185,7 @@ class DssRequestWorkflow(models.Model):
     def action_rejeter(self):
         """Rejette la demande et ajoute le motif au chatter s'il a été saisi."""
         for rec in self:
+            rec._check_rejet_access()
             previous_state = rec.state
             rec.state = "rejete"
             # Le motif est facultatif ; les deux branches produisent un message adapté.
@@ -190,10 +201,36 @@ class DssRequestWorkflow(models.Model):
             rec._dss_notify_rejection(previous_state)
 
     @api.multi
+    def _check_rejet_access(self):
+        """Vérifie le droit de rejet selon l'étape du workflow."""
+        self.ensure_one()
+        if self.state == "valide_chef":
+            if (
+                self.env.uid != SUPERUSER_ID
+                and self.env.user != self.service_demandeur_id.dss_chef_id
+            ):
+                raise AccessError(
+                    u"Seul le Chef DSS assigné à ce service peut rejeter cette demande."
+                )
+        elif self.state == "valide_magasin":
+            if (
+                self.env.uid != SUPERUSER_ID
+                and not self.env.user.has_group("dss_v2.group_dss_magasin")
+            ):
+                raise AccessError(
+                    u"Seul un utilisateur du groupe DSS / Magasin peut rejeter cette demande."
+                )
+        else:
+            raise AccessError(
+                u"La demande ne peut pas être rejetée dans cet état."
+            )
+
+    @api.multi
     def action_open_wizard_rejeter(self):
         """Ouvre le wizard temporaire utilisé pour saisir le motif de rejet."""
         # Une action fenêtre Odoo doit ici être liée à une seule demande.
         self.ensure_one()
+        self._check_rejet_access()
         # Le dictionnaire retourné décrit au client Web le formulaire modal à ouvrir.
         return {
             "type": "ir.actions.act_window",
@@ -246,13 +283,29 @@ class DssRequestWorkflow(models.Model):
     def action_open_wizard_cloture(self):
         """Ouvre le formulaire de clôture lié à la demande courante."""
         self.ensure_one()
+        if self.state != "approuve":
+            raise AccessError(
+                u"Seule une demande approuvée peut être clôturée."
+            )
+        is_requester = self.env.user == self.signataire_demandeur_id
+        is_chef_exception = (
+            not is_requester
+            and self.env.user.has_group("dss_v2.group_dss_chef")
+        )
+        if not is_requester and not is_chef_exception:
+            raise AccessError(
+                u"Seul le demandeur d'origine ou un Chef DSS en clôture exceptionnelle peut clôturer cette demande."
+            )
         return {
             "type": "ir.actions.act_window",
             "name": "Cloturer la demande",
             "res_model": "dss.cloture.wizard",
             "view_mode": "form",
             "target": "new",
-            "context": {"default_request_id": self.id},
+            "context": {
+                "default_request_id": self.id,
+                "default_is_exception": is_chef_exception,
+            },
         }
 
     @api.multi

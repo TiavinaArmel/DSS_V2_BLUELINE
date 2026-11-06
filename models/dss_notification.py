@@ -288,8 +288,8 @@ class DssRequestNotification(models.Model):
     def _dss_notify_submission(self):
         # Permet de traiter une ou plusieurs demandes dans un meme appel.
         for rec in self:
-            # A la soumission, notifie uniquement le chef RH du service demandeur.
-            chef_user = rec.service_demandeur_id.manager_id.user_id
+            # A la soumission, notifie le Chef DSS configuré pour le service.
+            chef_user = rec.service_demandeur_id.dss_chef_id
             chef_email = rec._dss_user_email(chef_user) if chef_user else ""
             rec._dss_notify_workflow(
                 # Utilise une cle stable pour reperer une notification de soumission.

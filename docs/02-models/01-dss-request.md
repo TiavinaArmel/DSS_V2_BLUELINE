@@ -15,7 +15,7 @@
 | `lieu_intervention` | `Char` | Aucun `required=True` | Lieu saisi pour l'intervention. |
 | `date_intervention` | `Date` | Défaut `fields.Date.today` | Date prévue/renseignée pour l'intervention. |
 | `service_demandeur_id` | `Many2one(hr.department)` | Défaut depuis le premier employé actif; lecture seule | Service RH associé au demandeur; forcé par `create()` et non modifiable par un utilisateur non-superuser. |
-| `is_current_user_chef` | `Boolean` | Calculé, non stocké | Indicateur d'affichage; vrai lorsque l'utilisateur courant est le responsable actuel du service. L'autorisation est revérifiée par le workflow. |
+| `is_current_user_chef` | `Boolean` | Calculé, non stocké | Indicateur d'affichage; vrai lorsque l'utilisateur courant est le Chef DSS configuré sur le service. L'autorisation est revérifiée par le workflow. |
 | `location_id` | `Many2one(stock.location)` | Domaine `usage = internal` | Emplacement source. |
 | `location_dest_id` | `Many2one(stock.location)` | Domaine `usage = internal` | Destination interne, notamment pour `appro_distant`. |
 | `type_intervention` | `Selection` | Six valeurs | Catégorie métier qui détermine le sens calculé. |

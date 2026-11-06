@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests du routage DSS par service RH et chef de département."""
+"""Tests du routage DSS par service RH et Chef DSS."""
 
 from odoo import api
 from odoo.exceptions import AccessError, ValidationError
@@ -7,7 +7,7 @@ from odoo.tests import common
 
 
 class TestDssServiceDepartment(common.TransactionCase):
-    """Vérifie l'affectation RH, les droits du chef et les notifications."""
+    """Vérifie l'affectation RH, les droits du Chef DSS et les notifications."""
 
     def setUp(self):
         super(TestDssServiceDepartment, self).setUp()
@@ -17,13 +17,27 @@ class TestDssServiceDepartment(common.TransactionCase):
         self.NotificationLog = self.env["dss.notification.log"]
 
         self.requester = self._create_user(
-            "DSS Requester", "dss.requester.%s@example.invalid" % self.id()
+            "DSS Requester",
+            "dss.requester.%s@example.invalid" % self.id(),
+            [self.ref("dss_v2.group_dss_demandeur")],
         )
         self.chef = self._create_user(
-            "DSS Department Chief", "dss.chef.%s@example.invalid" % self.id()
+            "DSS Department Chief",
+            "dss.chef.%s@example.invalid" % self.id(),
+            [self.ref("dss_v2.group_dss_chef")],
         )
         self.outsider = self._create_user(
             "DSS Outsider", "dss.outsider.%s@example.invalid" % self.id()
+        )
+        self.other_chef = self._create_user(
+            "DSS Other Chief",
+            "dss.other.chef.%s@example.invalid" % self.id(),
+            [self.ref("dss_v2.group_dss_chef")],
+        )
+        self.magasinier = self._create_user(
+            "DSS Store User",
+            "dss.store.%s@example.invalid" % self.id(),
+            [self.ref("dss_v2.group_dss_magasin")],
         )
         self.department = self.Department.create({"name": "DSS Test Department"})
         self.requester_employee = self.Employee.create(
@@ -33,16 +47,9 @@ class TestDssServiceDepartment(common.TransactionCase):
                 "department_id": self.department.id,
             }
         )
-        self.chef_employee = self.Employee.create(
-            {
-                "name": self.chef.name,
-                "user_id": self.chef.id,
-                "department_id": self.department.id,
-            }
-        )
-        self.department.write({"manager_id": self.chef_employee.id})
+        self.department.write({"dss_chef_id": self.chef.id})
 
-    def _create_user(self, name, email):
+    def _create_user(self, name, email, additional_groups=None):
         """Crée un utilisateur interne de test avec une adresse distincte."""
         partner = self.env["res.partner"].create(
             {"name": name, "email": email}
@@ -53,7 +60,11 @@ class TestDssServiceDepartment(common.TransactionCase):
                 "login": email,
                 "partner_id": partner.id,
                 "groups_id": [
-                    (6, 0, [self.ref("base.group_user")]),
+                    (
+                        6,
+                        0,
+                        [self.ref("base.group_user")] + (additional_groups or []),
+                    ),
                 ],
             }
         )
@@ -134,28 +145,29 @@ class TestDssServiceDepartment(common.TransactionCase):
         with self.assertRaises(ValidationError):
             request.action_soumettre()
 
-    def test_submission_requires_department_manager_and_user(self):
-        """La soumission exige un chef avec un compte Odoo associé."""
-        self.department.write({"manager_id": False})
+    def test_submission_requires_dss_chief(self):
+        """La soumission exige un Chef DSS configuré sur le service."""
+        self.department.write({"dss_chef_id": False})
         request = self._create_request()
 
         with self.assertRaises(ValidationError):
             request.action_soumettre()
 
-        manager_without_user = self.Employee.create(
-            {
-                "name": "DSS Manager Without User",
-                "department_id": self.department.id,
-            }
-        )
-        self.department.write({"manager_id": manager_without_user.id})
+    def test_submission_rejects_inactive_or_non_chef_user(self):
+        """Le Chef DSS doit être actif et appartenir au groupe Chef."""
+        self.department.write({"dss_chef_id": self.outsider.id})
         request = self._create_request()
 
         with self.assertRaises(ValidationError):
             request.action_soumettre()
 
-    def test_only_current_department_manager_can_validate(self):
-        """Le chef actuel peut valider, les autres utilisateurs sont refusés."""
+        self.department.write({"dss_chef_id": self.chef.id})
+        self.chef.write({"active": False})
+        with self.assertRaises(ValidationError):
+            request.action_soumettre()
+
+    def test_only_configured_dss_chief_can_validate(self):
+        """Seul le Chef DSS configuré peut valider."""
         request = self._create_request(values={"state": "valide_chef"})
 
         with self.assertRaises(AccessError):
@@ -165,8 +177,8 @@ class TestDssServiceDepartment(common.TransactionCase):
         self.assertEqual(request.state, "valide_magasin")
         self.assertEqual(request.signataire_chef_id, self.chef)
 
-    def test_submission_email_is_sent_to_department_manager(self):
-        """La soumission cible l'adresse résolue du chef du service."""
+    def test_submission_email_is_sent_to_dss_chief(self):
+        """La soumission cible l'adresse résolue du Chef DSS."""
         partner = self.env["res.partner"].create(
             {"name": "DSS Test Customer"}
         )
@@ -201,3 +213,117 @@ class TestDssServiceDepartment(common.TransactionCase):
         )
         self.assertTrue(log)
         self.assertEqual(log.recipient_emails, self.chef.partner_id.email)
+
+    def test_only_assigned_chief_can_reject_at_chief_stage(self):
+        """Au stade Chef, seul le Chef DSS assigné peut ouvrir ou confirmer le rejet."""
+        request = self._create_request(values={"state": "valide_chef"})
+
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.other_chef)).action_open_wizard_rejeter()
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.other_chef)).action_rejeter()
+
+        request.with_env(self._env_for(self.chef)).action_rejeter()
+        self.assertEqual(request.state, "rejete")
+
+    def test_only_store_group_can_reject_at_store_stage(self):
+        """Au stade Stock, le rejet est réservé au groupe Magasin."""
+        request = self._create_request(values={"state": "valide_magasin"})
+
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.outsider)).action_rejeter()
+
+        request.with_env(self._env_for(self.magasinier)).action_rejeter()
+        self.assertEqual(request.state, "rejete")
+
+    def test_rejection_is_refused_outside_allowed_stages(self):
+        """Une demande ne peut pas être rejetée depuis un autre état."""
+        request = self._create_request(values={"state": "brouillon"})
+
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.chef)).action_open_wizard_rejeter()
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.chef)).action_rejeter()
+
+    def _create_closure_wizard(self, request, user, is_exception=False):
+        """Crée le wizard de clôture avec l'environnement de l'utilisateur."""
+        env = self._env_for(user)
+        return env["dss.cloture.wizard"].with_context(
+            default_is_exception=is_exception
+        ).create({"request_id": request.id})
+
+    def test_requester_can_close_approved_request(self):
+        """Le demandeur d'origine peut clôturer sa demande approuvée."""
+        request = self._create_request(
+            values={
+                "state": "approuve",
+                "signataire_demandeur_id": self.requester.id,
+            }
+        )
+        wizard = self._create_closure_wizard(request, self.requester)
+
+        wizard.action_confirmer()
+
+        self.assertEqual(request.state, "cloture")
+
+    def test_closure_wizard_marks_chef_exception(self):
+        """L'ouverture du wizard marque explicitement la clôture du Chef."""
+        request = self._create_request(
+            values={
+                "state": "approuve",
+                "signataire_demandeur_id": self.requester.id,
+            }
+        )
+
+        requester_action = request.action_open_wizard_cloture()
+        chef_action = request.with_env(self._env_for(self.chef)).action_open_wizard_cloture()
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.outsider)).action_open_wizard_cloture()
+
+        self.assertFalse(requester_action["context"]["default_is_exception"])
+        self.assertTrue(chef_action["context"]["default_is_exception"])
+
+    def test_chef_can_close_only_as_exception(self):
+        """Un Chef peut clôturer comme exception, pas comme demandeur ordinaire."""
+        request = self._create_request(
+            values={
+                "state": "approuve",
+                "signataire_demandeur_id": self.requester.id,
+            }
+        )
+        regular_wizard = self._create_closure_wizard(request, self.chef)
+
+        with self.assertRaises(AccessError):
+            regular_wizard.action_confirmer()
+
+        exception_wizard = self._create_closure_wizard(
+            request, self.chef, is_exception=True
+        )
+        exception_wizard.action_confirmer()
+
+        self.assertEqual(request.state, "cloture")
+
+    def test_unrelated_user_cannot_close_request(self):
+        """Un utilisateur qui n'est ni demandeur ni Chef ne peut clôturer."""
+        request = self._create_request(
+            values={
+                "state": "approuve",
+                "signataire_demandeur_id": self.requester.id,
+            }
+        )
+
+        with self.assertRaises(AccessError):
+            request.with_env(self._env_for(self.outsider)).action_open_wizard_cloture()
+
+    def test_closure_requires_approved_state(self):
+        """Même un utilisateur autorisé ne peut clôturer un autre état."""
+        request = self._create_request(
+            values={
+                "state": "valide_chef",
+                "signataire_demandeur_id": self.requester.id,
+            }
+        )
+        wizard = self._create_closure_wizard(request, self.requester)
+
+        with self.assertRaises(ValidationError):
+            wizard.action_confirmer()

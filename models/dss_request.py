@@ -151,16 +151,21 @@ class DssRequest(models.Model):
         ).sorted(key=lambda employee: employee.id)
         return employees[:1].department_id.id or False
 
-    @api.depends("service_demandeur_id.manager_id.user_id")
+    @api.depends("service_demandeur_id.dss_chef_id")
     def _compute_is_current_user_chef(self):
         """Indique si l'utilisateur courant dirige le service de la DSS."""
         for rec in self:
-            manager_user = (
-                rec.service_demandeur_id.manager_id.user_id
-                if rec.service_demandeur_id and rec.service_demandeur_id.manager_id
+            chef_user = (
+                rec.service_demandeur_id.dss_chef_id
+                if rec.service_demandeur_id
                 else False
             )
-            rec.is_current_user_chef = manager_user == self.env.user
+            rec.is_current_user_chef = bool(
+                chef_user
+                and chef_user.active
+                and chef_user.has_group("dss_v2.group_dss_chef")
+                and chef_user == self.env.user
+            )
 
     @api.depends("type_intervention")
     def _compute_sens_mouvement(self):

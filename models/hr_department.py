@@ -10,3 +10,7 @@ class HrDepartment(models.Model):
         "res.users",
         string="Demandeurs autorisés",
     )
+    dss_chef_id = fields.Many2one(
+        "res.users",
+        string="Chef DSS",
+    )
