@@ -28,6 +28,15 @@ class DssRequest(models.Model):
         store=False,
     )
 
+    # La contrainte SQL protège aussi contre les doublons créés en parallèle.
+    _sql_constraints = [
+        (
+            "dss_request_bci_unique",
+            "unique(bci)",
+            u"Le BCI doit être unique. Une demande DSS existe déjà avec ce BCI.",
+        ),
+    ]
+
     name = fields.Char(
         string="Numero DSS",
         copy=False,
@@ -200,6 +209,8 @@ class DssRequest(models.Model):
           puisque le champ est readonly dans la vue).
         """
         vals = dict(vals)
+        if "bci" in vals:
+            vals["bci"] = (vals["bci"] or "").strip() or False
 
         if self.env.uid == SUPERUSER_ID:
             target_user_id = self.env.context.get("dss_user_id", self.env.uid)
@@ -238,6 +249,9 @@ class DssRequest(models.Model):
     @api.multi
     def write(self, vals):
         """Réserve le service aux admins et trace les corrections après soumission."""
+        vals = dict(vals)
+        if "bci" in vals:
+            vals["bci"] = (vals["bci"] or "").strip() or False
         is_admin = (
             self.env.uid == SUPERUSER_ID
             or self.env.user.has_group("base.group_system")
@@ -317,3 +331,19 @@ class DssRequest(models.Model):
                 )
             )
         return result
+
+    @api.constrains("bci")
+    def _check_unique_bci(self):
+        """Refuse qu'un BCI non vide soit utilisé par une autre demande DSS."""
+        for rec in self:
+            if not rec.bci:
+                continue
+            duplicate = self.search(
+                [("bci", "=", rec.bci), ("id", "!=", rec.id)],
+                limit=1,
+            )
+            if duplicate:
+                raise ValidationError(
+                    u"Le BCI %s est déjà utilisé par une autre demande DSS."
+                    % rec.bci
+                )
