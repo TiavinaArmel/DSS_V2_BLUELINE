@@ -13,7 +13,11 @@
         <field name="email_from">${user.email or ''}</field>
         <!-- Styles intégrés au HTML pour une meilleure compatibilité avec les clients e-mail. -->
         <!-- CDATA empêche XML d'interpréter les balises HTML comme des balises de configuration Odoo. -->
+        <!-- Le contenu HTML présente l'action, la demande, les changements éventuels et un lien vers Odoo. -->
         <field name="body_html"><![CDATA[
+## Ce contenu HTML est traite par Mako avant d'etre envoye comme courriel.
+## ${...} insere une valeur Python ; les lignes % if et % for pilotent les blocs conditionnels et repetes.
+## role="presentation" et les tableaux imbriques favorisent un rendu stable dans les logiciels de messagerie.
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
        border="0" style="margin:0;padding:0;background-color:#f3f6fa;">
     <tr>
@@ -32,7 +36,10 @@
                             <tr>
                                 <td style="font-size:23px;font-weight:bold;
                                            color:#ffffff;letter-spacing:1px;">
+                                    ## ctx contient les donnees supplementaires transmises par le code Python.
+                                    ## Affiche le logo fourni, ou le nom de la societe si aucune URL n'est disponible.
                                     % if ctx.get('dss_logo_url'):
+                                    ## La valeur du contexte est inseree dans l'adresse de l'image.
                                     <img src="${ctx.get('dss_logo_url')}"
                                          alt="GulfSat Madagascar"
                                          width="180"
@@ -97,7 +104,7 @@
                                     <strong>Clôture exceptionnelle</strong><br/>
                                     Cette demande a été clôturée exceptionnellement par
                                     ${ctx.get('dss_closure_actor', '')}.<br/>
-                                    <strong>Motif :</strong><br/>
+                                    <strong>Motif de la clôture exceptionnelle :</strong><br/>
                                     ${ctx.get('dss_closure_reason', '') or 'Non renseigné'}
                                 </td>
                             </tr>
@@ -106,10 +113,26 @@
                         % endif
                         <p style="margin:0;font-size:15px;line-height:25px;
                                   color:#53657a;">
+                            ## dss_event_key determine le message adapte a l'etape du workflow.
+                            ## Les branches elif et else choisissent un seul texte a afficher.
+                            % if ctx.get('dss_event_key') == 'stock_approval':
+                            Votre demande a été validée par le magasin. Vous pouvez maintenant la consulter et la clôturer.
+                            % elif ctx.get('dss_event_key') == 'closure':
+                                ## Le contexte distingue une cloture exceptionnelle d'une cloture normale.
+                                % if ctx.get('dss_closure_is_exception'):
+                            La demande a été clôturée exceptionnellement par le Chef DSS.
+                                % else:
+                            La demande a été officiellement clôturée par le demandeur.
+                                % endif
+                            % elif ctx.get('dss_event_key') == 'stock_rejection':
+                            ## get(clé, defaut) evite une valeur manquante si aucun motif n'a ete transmis.
+                            La demande a été rejetée par le magasin. Motif : ${ctx.get('dss_motif', '') or 'Non renseigné'}.
+                            % else:
                             Une demande de sortie de stock a fait l'objet
                             d'une nouvelle action dans le système DSS.
                             Retrouvez ci-dessous le récapitulatif de
                             la notification.
+                            % endif
                         </p>
                     </td>
                 </tr>
@@ -130,6 +153,7 @@
                                     <p style="margin:0;font-size:21px;
                                               line-height:29px;font-weight:bold;
                                               color:#1769aa;word-break:break-word;">
+                                        ## object est la demande DSS pour laquelle le modele de courriel est genere.
                                         ${object.name}
                                     </p>
                                     <table role="presentation" width="100%"
@@ -146,6 +170,7 @@
                                                        border-top:1px solid #e0e9f4;
                                                        font-size:13px;font-weight:bold;
                                                        color:#24364b;">
+                                                ## Lit l'intitule d'action du contexte, avec un texte de repli.
                                                 ${ctx.get('dss_action_label', 'Notification')}
                                             </td>
                                         </tr>
@@ -153,13 +178,44 @@
                                             <td style="padding:10px 0;
                                                        border-top:1px solid #e0e9f4;
                                                        font-size:13px;color:#71839a;">
-                                                Statut actuel
+                                                Demandeur
+                                            </td>
+                                            <td align="right"
+                                                style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;font-weight:bold;
+                                                       color:#24364b;">
+                                                ## or affiche le nom du demandeur ou le texte indique s'il est absent.
+                                                ${object.demandeur_id.name or 'Non renseigné'}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;color:#71839a;">
+                                                Service
+                                            </td>
+                                            <td align="right"
+                                                style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;font-weight:bold;
+                                                       color:#24364b;">
+                                                ## Affiche le service associe, avec un texte de remplacement si besoin.
+                                                ${object.service_demandeur_id.name or 'Non renseigné'}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 0;
+                                                       border-top:1px solid #e0e9f4;
+                                                       font-size:13px;color:#71839a;">
+                                                Statut
                                             </td>
                                             <td align="right"
                                                 style="padding:10px 0;
                                                        border-top:1px solid #e0e9f4;
                                                        font-size:13px;font-weight:bold;
                                                        color:#15365b;">
+                                                ## Prend le statut du contexte, ou celui de l'enregistrement comme valeur de repli.
                                                 ${ctx.get('dss_status', object.state)}
                                             </td>
                                         </tr>
@@ -205,18 +261,25 @@
                                 <td style="padding:16px 18px;">
                                     <p style="margin:0 0 8px 0;font-size:13px;
                                               font-weight:bold;color:#8b5b12;">
+                                        ## Le libelle du motif depend de l'evenement qui a declenche le message.
+                                        % if ctx.get('dss_event_key') == 'closure':
+                                        Motif de la clôture exceptionnelle
+                                        % else:
                                         Motif / commentaire
+                                        % endif
                                     </p>
                                     <p style="margin:0;font-size:14px;
                                               line-height:23px;color:#604c32;
                                               word-break:break-word;">
-                                        ${ctx.get('dss_motif', '') or 'Non renseigne'}
+                                        ## Affiche le motif transmis ou un texte de remplacement s'il est vide.
+                                        ${ctx.get('dss_motif', '') or ctx.get('dss_closure_reason', '') or 'Non renseigne'}
                                     </p>
                                 </td>
                             </tr>
                         </table>
                     </td>
                 </tr>
+                ## Termine le bloc conditionnel reserve au motif de rejet ou de cloture exceptionnelle.
                 % endif
                 <tr>
                     <td align="center" style="padding:4px 30px 12px 30px;">
@@ -225,6 +288,7 @@
                             <tr>
                                 <td align="center" bgcolor="#1769aa"
                                     style="border-radius:6px;">
+                                    ## Le contexte fournit l'URL directe de la demande a ouvrir dans Odoo.
                                     <a href="${ctx.get('dss_workflow_url', '')}"
                                        style="display:inline-block;padding:15px 28px;
                                               font-size:14px;font-weight:bold;
@@ -278,6 +342,7 @@
     </tr>
 </table>
         ]]></field>
+        <!-- Conserve la notification dans Odoo après son envoi pour permettre son suivi. -->
         <!-- eval interprète False comme un booléen ; le courriel reste conservé après son envoi. -->
         <field name="auto_delete" eval="False"/>
     </record>

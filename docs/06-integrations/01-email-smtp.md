@@ -8,7 +8,7 @@ Les messages métier du chatter sont créés par `message_post()` sur `dss.reque
 
 | Événement | Destinataires du code | Motif rendu |
 |---|---|---|
-| `submission` | Groupe Chef actif | Non |
+| `submission` | Chef DSS assigné au service | Non |
 | `chef_validation` | Groupe Magasin actif et demandeur | Non |
 | `chef_rejection` | Demandeur | Oui |
 | `stock_rejection` | Demandeur et groupe Chef actif | Oui |
@@ -16,11 +16,11 @@ Les messages métier du chatter sont créés par `message_post()` sur `dss.reque
 | `return_to_requester` | Demandeur | Oui |
 | `closure` | Groupe Chef, groupe Magasin actif et demandeur | Non; le contexte peut préciser une clôture exceptionnelle, son acteur et son motif |
 
-La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `user.email`. Les adresses vides et doublons sont exclues. Le destinataire demandeur est le propriétaire `demandeur_id`; `signataire_demandeur_id` identifie l'acteur qui a effectivement soumis la DSS.
+La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `user.email`. Les adresses vides et doublons sont exclues. Le Chef est recherché via `service_demandeur_id.dss_chef_id` lorsqu'un événement le cible directement. Le destinataire demandeur est le propriétaire `demandeur_id`; `signataire_demandeur_id` identifie l'acteur qui a effectivement soumis la DSS.
 
 ## 3. Template et file d'envoi
 
-Le template XML compose le sujet, l'action, l'état, le lien vers la demande et l'en-tête du courriel. Le lien de la demande inclut le nom de la base qui a créé le courriel afin que le navigateur ouvre le bon registre Odoo, où le modèle `dss.request` est installé. Le destinataire doit tout de même s'authentifier et disposer des droits nécessaires. Pour `stock_approval`, le courriel affiche les motifs de modification des quantités regroupés par article lorsque `motif_ecart` est renseigné. Les messages de rejet et de renvoi continuent d'afficher leur motif métier. Le logo est affiché depuis la route Odoo `/web/binary/company_logo`; son URL est construite avec `web.base.url`, le nom de la base et l'identifiant de la société de l'utilisateur qui déclenche la notification. Si `web.base.url` n'est pas configuré, le template affiche le nom de l'entreprise à la place du logo.
+Le template XML affiche le demandeur (`demandeur_id`), le service (`service_demandeur_id`) et le statut courant. L'approbation Stock invite le demandeur à consulter et clôturer sa demande, et liste en puces les lignes modifiées avec produit, quantités demandée/sortie et motif. Une clôture exceptionnelle affiche son acteur et son motif; les événements de rejet et de renvoi conservent leur motif métier. Le lien de la demande inclut le nom de la base afin que le navigateur ouvre le bon registre Odoo; le destinataire doit s'authentifier et disposer des droits nécessaires. Le logo est affiché via `/web/binary/company_logo`, à partir de `web.base.url`; sans cette valeur, le template affiche le nom de l'entreprise.
 
 Pour que les destinataires voient le logo, `web.base.url` doit contenir l'adresse du serveur joignable par eux, idéalement en HTTPS; une valeur `localhost` ne fonctionne que sur la machine locale. La route de l'image doit également être accessible depuis leur client de messagerie, qui peut par ailleurs bloquer les images distantes par défaut.
 

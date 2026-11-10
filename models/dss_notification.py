@@ -6,7 +6,6 @@ from xml.sax.saxutils import escape as html_escape
 
 # Importe les outils Odoo pour les modeles, les champs et les API.
 from odoo import api, fields, models
-from xml.sax.saxutils import escape as html_escape
 
 # Cree un journal Python nomme pour ce fichier.
 _logger = logging.getLogger(__name__)
@@ -217,12 +216,25 @@ class DssRequestNotification(models.Model):
                     # Passe le lien direct vers la demande au modele.
                     dss_workflow_url=self._dss_workflow_url(),
                     # Donne au template les détails de la clôture lorsqu'ils existent.
-                    dss_closure_type=self.env.context.get('dss_closure_type', ''),
+                    dss_closure_type=(
+                        self.env.context.get("dss_closure_type")
+                        or (
+                            "exception"
+                            if self.env.context.get("dss_closure_is_exception")
+                            else ""
+                        )
+                    ),
                     dss_closure_actor=html_escape(
                         self.env.context.get('dss_closure_actor', '') or ''
                     ),
                     dss_closure_reason=html_escape(
-                        self.env.context.get('dss_closure_reason', '') or ''
+                        self.env.context.get("dss_closure_reason")
+                        or self.env.context.get("dss_closure_motif_exception")
+                        or ""
+                    ),
+                    dss_closure_is_exception=(
+                        self.env.context.get("dss_closure_is_exception")
+                        or self.env.context.get("dss_closure_type") == "exception"
                     ),
                     # Passe l'URL du logo construite avec la base URL configurée.
                     dss_logo_url=self._dss_company_logo_url(),
@@ -403,10 +415,18 @@ class DssRequestNotification(models.Model):
         motifs = []
         for line in self.line_ids:
             if line.motif_ecart:
+                details = u"quantité demandée %s, quantité sortie %s. Motif : %s" % (
+                    line.qty_demandee,
+                    line.qty_sortie,
+                    html_escape(
+                        line.motif_ecart,
+                        {"\"": "&quot;", "'": "&#x27;"},
+                    ),
+                )
                 motifs.append(
                     (
                         html_escape(line.product_id.name or ""),
-                        html_escape(line.motif_ecart, {"\"": "&quot;", "'": "&#x27;"}),
+                        details,
                     )
                 )
         return motifs

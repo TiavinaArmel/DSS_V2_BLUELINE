@@ -20,6 +20,53 @@ class TestDssNotifications(common.TransactionCase):
         # Recupere le modele qui journalise les e-mails DSS crees.
         self.NotificationLog = self.env["dss.notification.log"]
 
+    def _create_user(self, name, email, group_xmlid=None):
+        partner = self.env["res.partner"].create(
+            {"name": name, "email": email}
+        )
+        group_ids = [self.ref("base.group_user")]
+        if group_xmlid:
+            group_ids.append(self.ref(group_xmlid))
+        return self.env["res.users"].sudo().create(
+            {
+                "name": name,
+                "login": email,
+                "partner_id": partner.id,
+                "groups_id": [(6, 0, group_ids)],
+            }
+        )
+
+    def _create_routed_request(self, suffix):
+        requester_email = "dss.requester.%s@example.invalid" % suffix
+        chef_email = "dss.chef.%s@example.invalid" % suffix
+        magasin_email = "dss.magasin.%s@example.invalid" % suffix
+        requester = self._create_user(
+            "DSS Requester %s" % suffix,
+            requester_email,
+            "dss_v2.group_dss_demandeur",
+        )
+        chef = self._create_user(
+            "DSS Chef %s" % suffix,
+            chef_email,
+            "dss_v2.group_dss_chef",
+        )
+        self._create_user(
+            "DSS Magasin %s" % suffix,
+            magasin_email,
+            "dss_v2.group_dss_magasin",
+        )
+        service = self.env["dss.service"].sudo().create(
+            {
+                "name": "DSS Service %s" % suffix,
+                "dss_chef_id": chef.id,
+                "dss_demandeurs_ids": [(6, 0, [requester.id])],
+            }
+        )
+        request = self.Request.sudo().with_context(
+            dss_user_id=requester.id
+        ).create({"name": "TEST-DSS-%s" % suffix})
+        return request, requester_email, chef_email, magasin_email
+
     def test_group_email_resolution_ignores_missing_email(self):
         """Verifie que le groupe Chef existe et que ses adresses sont uniques."""
         # Recherche le groupe Chef par son identifiant XML unique.
@@ -178,6 +225,157 @@ class TestDssNotifications(common.TransactionCase):
         ).mail_id
         # Verifie que le texte du motif se trouve dans le corps HTML du mail.
         self.assertIn("Stock indisponible", mail.body_html)
+
+    def test_stock_approval_notifies_requester_with_closure_instruction(self):
+        request, requester_email, chef_email, _magasin_email = (
+            self._create_routed_request("STOCK-APPROVAL")
+        )
+        request.sudo().write({"state": "approuve"})
+
+        request._dss_notify_stock_approval()
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "stock_approval"),
+            ],
+            limit=1,
+        )
+        body = " ".join(log.mail_id.body_html.split())
+        recipients = set(log.recipient_emails.split(","))
+        self.assertIn(requester_email, recipients)
+        self.assertIn(chef_email, recipients)
+        self.assertIn(
+            "Votre demande a été validée par le magasin. "
+            "Vous pouvez maintenant la consulter et la clôturer.",
+            body,
+        )
+        self.assertIn(request.demandeur_id.name, body)
+        self.assertIn(request.service_demandeur_id.name, body)
+        self.assertIn("Statut", body)
+
+    def test_stock_approval_email_lists_changed_lines_and_reasons(self):
+        request, requester_email, chef_email, _magasin_email = (
+            self._create_routed_request("STOCK-APPROVAL-CHANGES")
+        )
+        product = self.env["product.product"].sudo().create(
+            {"name": "Produit ajusté"}
+        )
+        self.env["dss.request.line"].sudo().create(
+            {
+                "request_id": request.id,
+                "product_id": product.id,
+                "qty_demandee": 5.0,
+                "qty_sortie": 3.0,
+                "motif_ecart": "Stock disponible limité",
+            }
+        )
+        request.sudo().write({"state": "approuve"})
+
+        request._dss_notify_stock_approval()
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "stock_approval"),
+            ],
+            limit=1,
+        )
+        body = " ".join(log.mail_id.body_html.split())
+        recipients = set(log.recipient_emails.split(","))
+        self.assertIn(requester_email, recipients)
+        self.assertIn(chef_email, recipients)
+        self.assertIn("<ul>", body)
+        self.assertIn("<li>", body)
+        self.assertNotIn("&lt;ul&gt;", body)
+        self.assertIn("Produit ajusté", body)
+        self.assertIn("quantité demandée 5.0, quantité sortie 3.0", body)
+        self.assertIn("Motif : Stock disponible limité", body)
+
+    def test_stock_rejection_notifies_requester_and_assigned_chef(self):
+        request, requester_email, chef_email, _magasin_email = (
+            self._create_routed_request("STOCK-REJECTION")
+        )
+        request.sudo().write(
+            {"state": "rejete", "motif_rejet": "Stock indisponible"}
+        )
+
+        request._dss_notify_rejection("valide_magasin")
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "stock_rejection"),
+            ],
+            limit=1,
+        )
+        body = " ".join(log.mail_id.body_html.split())
+        self.assertEqual(
+            set(log.recipient_emails.split(",")),
+            set([requester_email, chef_email]),
+        )
+        self.assertIn(
+            "La demande a été rejetée par le magasin. "
+            "Motif : Stock indisponible.",
+            body,
+        )
+        self.assertIn(request.demandeur_id.name, body)
+        self.assertIn(request.service_demandeur_id.name, body)
+        self.assertIn("Statut", body)
+
+    def test_closure_notifies_assigned_chef_magasin_and_requester(self):
+        request, requester_email, chef_email, magasin_email = (
+            self._create_routed_request("CLOSURE")
+        )
+        request.sudo().write({"state": "cloture"})
+
+        request._dss_notify_closure()
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "closure"),
+            ],
+            limit=1,
+        )
+        body = " ".join(log.mail_id.body_html.split())
+        recipients = set(log.recipient_emails.split(","))
+        self.assertIn(requester_email, recipients)
+        self.assertIn(chef_email, recipients)
+        self.assertIn(magasin_email, recipients)
+        self.assertIn(
+            "La demande a été officiellement clôturée par le demandeur.",
+            body,
+        )
+        self.assertIn(request.demandeur_id.name, body)
+        self.assertIn(request.service_demandeur_id.name, body)
+        self.assertIn("Statut", body)
+
+    def test_exceptional_closure_email_contains_its_reason(self):
+        request, _requester_email, _chef_email, _magasin_email = (
+            self._create_routed_request("EXCEPTION-CLOSURE")
+        )
+        request.sudo().write({"state": "cloture"})
+
+        request.with_context(
+            dss_closure_is_exception=True,
+            dss_closure_motif_exception="Le demandeur est absent",
+        )._dss_notify_closure()
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "closure"),
+            ],
+            limit=1,
+        )
+        body = " ".join(log.mail_id.body_html.split())
+        self.assertIn(
+            "La demande a été clôturée exceptionnellement par le Chef DSS.",
+            body,
+        )
+        self.assertIn("Motif de la clôture exceptionnelle", body)
+        self.assertIn("Le demandeur est absent", body)
 
     def test_return_to_requester_email_contains_rejection_motif(self):
         """Verifie que le renvoi au demandeur reprend le motif du rejet."""

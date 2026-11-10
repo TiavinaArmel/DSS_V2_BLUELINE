@@ -198,8 +198,10 @@ class DssClotureWizard(models.TransientModel):
         request.message_post(body=message)
         request.with_context(
             dss_closure_type='exception' if self.is_exception else 'normal',
+            dss_closure_is_exception=self.is_exception,
             dss_closure_actor=self.env.user.name or '',
             dss_closure_reason=self.motif_exception or '',
+            dss_closure_motif_exception=self.motif_exception or '',
         )._dss_notify_closure()
 
         # Ferme la popup.
