@@ -16,7 +16,7 @@ Les messages métier du chatter sont créés par `message_post()` sur `dss.reque
 | `return_to_requester` | Demandeur | Oui |
 | `closure` | Demandeur et groupe Magasin actif | Non |
 
-La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `user.email`. Les adresses vides et doublons sont exclus. Le demandeur est identifié par `signataire_demandeur_id`, avec `create_uid` en repli.
+La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `user.email`. Les adresses vides et doublons sont exclues. Le destinataire demandeur est le propriétaire `demandeur_id`; `signataire_demandeur_id` identifie l'acteur qui a effectivement soumis la DSS.
 
 ## 3. Template et file d'envoi
 

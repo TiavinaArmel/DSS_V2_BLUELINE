@@ -5,9 +5,10 @@
 | Méthode | État contrôlé | État affecté | Effets constatés |
 |---|---|---|---|
 | `action_soumettre` | Aucun contrôle d'état explicite | `valide_chef` | Valide les champs requis et les lignes, renseigne demandeur/date, poste un message et prépare une notification. |
-| `action_valider_chef` | Exige `valide_chef` | `valide_magasin` | Enregistre signataire/date Chef, poste un message et prépare une notification. |
+| `action_valider_chef` | Exige `valide_chef` et l'utilisateur doit être le Chef DSS configuré sur le service | `valide_magasin` | Enregistre signataire/date Chef, poste un message et prépare une notification. |
 | `action_valider_magasin` | Exige `valide_magasin` | `approuve` après génération stock | Enregistre signataire/date Stock, appelle le routeur stock, génère le BL, poste des messages et prépare une notification. |
-| `action_rejeter` | Aucun contrôle d'état explicite | `rejete` | Conserve l'état précédent pour le routage, poste le motif s'il existe et prépare une notification si l'état précédent est reconnu. |
+| `action_rejeter` | Chef DSS assigné à l'étape Chef, groupe Magasin à l'étape Stock; autres états refusés | `rejete` | Contrôle l'acteur côté serveur, conserve l'état précédent pour le routage, poste le motif et prépare une notification. |
+| `action_confirmer` du wizard de clôture | Demandeur signataire ou Chef DSS en mode exceptionnel; état `approuve` obligatoire | `cloture` | Contrôle l'acteur et l'état avant d'écrire les quantités, puis journalise et notifie la clôture. |
 | `action_renvoyer_demandeur` | Exige groupe Chef et état `rejete` | `brouillon` | Poste le nom du demandeur et prépare un courriel de renvoi. |
 
 Les actions métier et leur ordre réel sont implémentés dans [`dss_request_workflow.py`](../../models/dss_request_workflow.py). Les contrôles d'accès visuels et les contrôles serveur ne sont pas équivalents.
@@ -24,6 +25,7 @@ Les actions métier et leur ordre réel sont implémentés dans [`dss_request_wo
 | `location_id` | Doit être renseigné. |
 | `location_dest_id` | Requis si `type_intervention == 'appro_distant'`. |
 | `line_ids` | Au moins une ligne est requise. |
+| `demandeur_id` / `service_demandeur_id` | Le propriétaire doit être renseigné et figurer dans les demandeurs autorisés du service; le Chef DSS doit être actif et appartenir au groupe DSS / Chef. Seul le propriétaire ou le superuser peut soumettre. |
 
 Chaque échec lève `ValidationError` avant l'enregistrement de la soumission. Le code ne vérifie pas explicitement que l'état initial est `brouillon`.
 

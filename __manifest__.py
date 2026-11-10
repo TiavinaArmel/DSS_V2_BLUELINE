@@ -3,7 +3,7 @@
     "name": "DSS V2 - Demande de Sortie de Stock",
 
     # Version du module DSS
-    "version": "2.4",
+    "version": "2.6",
 
     # Dépendances Odoo :
     # - web   : assets et rapports QWeb
@@ -41,6 +41,8 @@
         "views/dss_request_search_views.xml",
         # Vues principales de la DSS
         "views/dss_request_views.xml",
+        # Vues de configuration des services DSS
+        "views/dss_service_views.xml",
         # Assets backend du Chatter DSS
         "views/assets_backend.xml",
 
@@ -63,5 +65,6 @@
     "tests": [
         "tests/test_dss_notifications.py",
         "tests/test_dss_stock_location.py",
+        "tests/test_dss_service.py",
     ],
 }

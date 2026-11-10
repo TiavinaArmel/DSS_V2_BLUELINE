@@ -13,7 +13,7 @@
         <field name="name">Mes demandes</field>
         <field name="res_model">dss.request</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">['|', ('signataire_demandeur_id', '=', uid), ('create_uid', '=', uid)]</field>
+        <field name="domain">['|', ('demandeur_id', '=', uid), ('create_uid', '=', uid)]</field>
     </record>
 
     <menuitem id="menu_dss_mes_demandes"

@@ -6,7 +6,7 @@
 |---|---|---|---|
 | DSS | Racine | Aucun groupe indiqué | Menu racine. |
 | Demandes | DSS | Aucun groupe indiqué | Action générique `action_dss_request`, vues `tree,form`. |
-| Mes demandes | DSS | Demandeur | Domaine OR : `signataire_demandeur_id = uid` ou `create_uid = uid`. |
+| Mes demandes | DSS | Demandeur | Domaine OR : `demandeur_id = uid` ou `create_uid = uid`. |
 | À valider | DSS | Chef | Active par défaut le filtre `chef_filter_a_valider`. |
 | À valider Stock | DSS | Magasin | Active par défaut le filtre `magasin_filter_a_valider_stock`. |
 | À remettre | DSS | Magasin | Active par défaut le filtre `magasin_filter_approuvees_a_remettre`. |

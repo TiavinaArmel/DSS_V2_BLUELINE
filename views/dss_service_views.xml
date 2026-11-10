@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Liste des services DSS et de leurs responsables. -->
+    <record id="view_dss_service_tree" model="ir.ui.view">
+        <field name="name">dss.service.tree</field>
+        <field name="model">dss.service</field>
+        <field name="arch" type="xml">
+            <tree string="Services DSS">
+                <field name="name"/>
+                <field name="dss_chef_id"/>
+                <field name="dss_demandeurs_ids" widget="many2many_tags"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Formulaire de configuration d'un service DSS. -->
+    <record id="view_dss_service_form" model="ir.ui.view">
+        <field name="name">dss.service.form</field>
+        <field name="model">dss.service</field>
+        <field name="arch" type="xml">
+            <form string="Service DSS">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="dss_chef_id"
+                            domain="[('groups_id', 'in', [%(dss_v2.group_dss_chef)d]), ('active', '=', True)]"/>
+                        <field name="dss_demandeurs_ids" widget="many2many_tags"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action et vues utilisées par le menu Services du module DSS. -->
+    <record id="action_dss_services" model="ir.actions.act_window">
+        <field name="name">Services</field>
+        <field name="res_model">dss.service</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_dss_services_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_dss_service_tree"/>
+        <field name="act_window_id" ref="action_dss_services"/>
+    </record>
+
+    <record id="action_dss_services_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_dss_service_form"/>
+        <field name="act_window_id" ref="action_dss_services"/>
+    </record>
+</odoo>

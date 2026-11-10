@@ -14,6 +14,9 @@
 | `partner_id` | `Many2one(res.partner)` | Aucun `required=True` | Client de l'intervention. |
 | `lieu_intervention` | `Char` | Aucun `required=True` | Lieu saisi pour l'intervention. |
 | `date_intervention` | `Date` | Défaut `fields.Date.today` | Date prévue/renseignée pour l'intervention. |
+| `demandeur_id` | `Many2one(res.users)` | `required=True`, `readonly=True`, `copy=False` | Propriétaire de la DSS, déterminé à la création depuis l'utilisateur cible ou `dss_user_id`. |
+| `service_demandeur_id` | `Many2one(dss.service)` | Défaut depuis le service actif du demandeur; `readonly` dans la vue | Service DSS affecté automatiquement; les corrections par un administrateur après soumission sont tracées dans le chatter. |
+| `is_current_user_chef` | `Boolean` | Calculé, non stocké | Indicateur d'affichage; vrai lorsque l'utilisateur courant est le Chef DSS configuré sur le service. L'autorisation est revérifiée par le workflow. |
 | `location_id` | `Many2one(stock.location)` | Domaine `usage = internal` | Emplacement source. |
 | `location_dest_id` | `Many2one(stock.location)` | Domaine `usage = internal` | Destination interne, notamment pour `appro_distant`. |
 | `type_intervention` | `Selection` | Six valeurs | Catégorie métier qui détermine le sens calculé. |
@@ -22,7 +25,7 @@
 | `has_ecart` | `Boolean` | `readonly=True` | Indicateur mis à jour par le wizard de clôture. |
 | `motif_rejet` | `Text` | Aucun | Motif reporté depuis le wizard de rejet. |
 | `line_ids` | `One2many(dss.request.line)` | Relation inverse `request_id` | Lignes de la demande. |
-| `signataire_demandeur_id` | `Many2one(res.users)` | `readonly=True`, `copy=False` | Utilisateur ayant soumis la demande. |
+| `signataire_demandeur_id` | `Many2one(res.users)` | `readonly=True`, `copy=False` | Acteur ayant soumis la demande; distinct du propriétaire `demandeur_id`. |
 | `date_soumission` | `Datetime` | `readonly=True`, `copy=False` | Horodatage de soumission. |
 | `signataire_chef_id` | `Many2one(res.users)` | `readonly=True` | Utilisateur ayant validé l'étape Chef. |
 | `date_validation_chef` | `Datetime` | `readonly=True` | Horodatage de validation Chef. |
@@ -37,7 +40,9 @@ Les champs métiers de soumission ne portent pas `required=True` dans le modèle
 |---|---|---|
 | `_compute_sens_mouvement` | `@api.depends('type_intervention')` | Associe chaque type au sens correspondant. |
 | `_onchange_type_intervention_lines` | `@api.onchange('type_intervention')` | Met à jour `qty_demandee_readonly` des lignes pour un retour matériel. |
-| `create` | `@api.model` | Demande le prochain numéro à `ir.sequence` si `name` vaut `/`. |
+| `create` | `@api.model` | Détermine le demandeur cible, affecte son service actif et génère le numéro DSS si `name` vaut `/`. |
+| `_default_service_demandeur` | `@api.model` | Préremplit le service actif du demandeur, s'il en a un. |
+| `write` | `@api.multi` | Réserve la modification du service au superuser/administrateur et trace les changements après soumission. |
 
 Les méthodes de transition sont documentées dans [le workflow](03-dss-request-workflow.md).
 

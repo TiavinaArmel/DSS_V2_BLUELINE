@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from odoo import (
-    models,
-    fields,
-    api,
-)  # importation de 3 outils : models, fields, api provenant du core d'odoo
-# lisible et compréhensible par l'utilisateur (pas un traceback technique)
+from odoo import SUPERUSER_ID, api, fields, models
+from odoo.exceptions import AccessError, ValidationError
+from odoo.tools import html_escape
 
 
 class DssRequest(models.Model):
@@ -17,6 +14,24 @@ class DssRequest(models.Model):
     # standard mail.thread d'Odoo : le chatter, les notifications, le suivi
     # des modifications. C'est ce qui permet d'utiliser message_post()
     _inherit = ["mail.thread"]
+
+    service_demandeur_id = fields.Many2one(
+        "dss.service",
+        string="Service Demandeur",
+        default=lambda model: model._default_service_demandeur(),
+    )
+    demandeur_id = fields.Many2one(
+        "res.users",
+        string="Demandeur",
+        required=True,
+        readonly=True,
+        copy=False,
+        default=lambda model: model.env.user,
+    )
+    is_current_user_chef = fields.Boolean(
+        compute="_compute_is_current_user_chef",
+        store=False,
+    )
 
     # le champ du numéro de la demande (EX: DSS-00001)
     # readonly=True = lecture seule : l'utilisateur ne peut PAS modifier ce
@@ -136,6 +151,35 @@ class DssRequest(models.Model):
         string="Date validation Stock", readonly=True
     )
 
+    @api.model
+    def _default_service_demandeur(self):
+        """Retourne le service actif de l'utilisateur lorsqu'il en a un."""
+        services = self.env["dss.service"].sudo().search(
+            [
+                ("active", "=", True),
+                ("dss_demandeurs_ids", "in", self.env.user.id),
+            ],
+            order="id",
+            limit=1,
+        )
+        return services.id or False
+
+    @api.depends("service_demandeur_id.dss_chef_id")
+    def _compute_is_current_user_chef(self):
+        """Indique si l'utilisateur courant dirige le service de la DSS."""
+        for rec in self:
+            chef_user = (
+                rec.service_demandeur_id.dss_chef_id
+                if rec.service_demandeur_id
+                else False
+            )
+            rec.is_current_user_chef = bool(
+                chef_user
+                and chef_user.active
+                and chef_user.has_group("dss_v2.group_dss_chef")
+                and chef_user == self.env.user
+            )
+
     @api.depends("type_intervention")
     def _compute_sens_mouvement(self):
         # dictionnaire Python qui associe chaque type d'intervention
@@ -184,9 +228,122 @@ class DssRequest(models.Model):
           (en pratique, ce cas n'arrive jamais depuis l'interface,
           puisque le champ est readonly dans la vue).
         """
+        vals = dict(vals)
+
+        if self.env.uid == SUPERUSER_ID:
+            target_user_id = self.env.context.get("dss_user_id", self.env.uid)
+            target_user = (
+                self.env["res.users"].sudo().browse(target_user_id).exists()
+            )
+            if not target_user:
+                raise ValidationError(
+                    "L'utilisateur cible de la demande DSS est introuvable."
+                )
+        else:
+            target_user = self.env.user
+
+        # Le propriétaire et son service sont déterminés côté serveur.
+        vals["demandeur_id"] = target_user.id
+        vals["service_demandeur_id"] = (
+            self.env["dss.service"].sudo()
+            .search(
+                [
+                    ("active", "=", True),
+                    ("dss_demandeurs_ids", "in", target_user.id),
+                ],
+                order="id",
+                limit=1,
+            )
+            .id
+            or False
+        )
+
         # si aucun nom n'est fourni ("/" = valeur par défaut)
         if vals.get("name", "/") == "/":
             # on génère un numéro via la séquence dédiée aux demandes DSS
             vals["name"] = self.env["ir.sequence"].next_by_code("dss.request") or "/"
         # on laisse ensuite Odoo effectuer la création standard
         return super(DssRequest, self).create(vals)
+
+    @api.multi
+    def write(self, vals):
+        """Réserve le service aux admins et trace les corrections après soumission."""
+        is_admin = (
+            self.env.uid == SUPERUSER_ID
+            or self.env.user.has_group("base.group_system")
+        )
+        service_changes = []
+        requester_changes = []
+        if "demandeur_id" in vals:
+            if not is_admin:
+                raise AccessError(
+                    u"Seul un administrateur peut modifier le demandeur de la DSS."
+                )
+            new_requester = (
+                self.env["res.users"]
+                .sudo()
+                .browse(vals["demandeur_id"])
+                .exists()
+                if vals["demandeur_id"]
+                else self.env["res.users"]
+            )
+            new_requester_name = new_requester.name if new_requester else u"Aucun"
+            for request in self:
+                if request.demandeur_id.id != vals["demandeur_id"]:
+                    requester_changes.append(
+                        (
+                            request,
+                            request.demandeur_id.name
+                            if request.demandeur_id
+                            else u"Aucun",
+                            new_requester_name,
+                        )
+                    )
+
+        if "service_demandeur_id" in vals:
+            if not is_admin:
+                raise AccessError(
+                    u"Seul un administrateur peut modifier le service demandeur."
+                )
+
+            new_service = (
+                self.env["dss.service"]
+                .sudo()
+                .browse(vals["service_demandeur_id"])
+                .exists()
+                if vals["service_demandeur_id"]
+                else self.env["dss.service"]
+            )
+            new_service_name = new_service.name if new_service else u"Aucun"
+            for request in self:
+                if (
+                    request.state != "brouillon"
+                    and request.service_demandeur_id.id
+                    != vals["service_demandeur_id"]
+                ):
+                    old_service_name = (
+                        request.service_demandeur_id.name
+                        if request.service_demandeur_id
+                        else u"Aucun"
+                    )
+                    service_changes.append(
+                        (request, old_service_name, new_service_name)
+                    )
+
+        result = super(DssRequest, self).write(vals)
+        for request, old_name, new_name in service_changes:
+            request.message_post(
+                body=(
+                    u"L'administrateur a modifié le service demandeur : "
+                    u"%s -> %s."
+                    % (html_escape(old_name), html_escape(new_name))
+                )
+            )
+        for request, old_name, new_name in requester_changes:
+            request.message_post(
+                body=(
+                    u"L'administrateur a modifié le demandeur : %s -> %s."
+                    % (html_escape(old_name), html_escape(new_name))
+                )
+            )
+        return result

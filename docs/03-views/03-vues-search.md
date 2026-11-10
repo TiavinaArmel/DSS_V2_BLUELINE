@@ -36,7 +36,7 @@ Les filtres temporels utilisent `context_today()` et `relativedelta`; `uid` repr
 | Tous | État | `state` |
 | Tous | Type d'intervention | `type_intervention` |
 | Tous | Client | `partner_id` |
-| Chef | Demandeur | `signataire_demandeur_id` |
+| Chef | Soumis par | `signataire_demandeur_id` |
 | Chef | Valideur Chef | `signataire_chef_id` |
 | Chef | Date d'intervention (par semaine) | `date_intervention:week` |
 | Magasin | Emplacement | `location_id` |

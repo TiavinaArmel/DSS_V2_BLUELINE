@@ -86,15 +86,10 @@ class DssRequestNotification(models.Model):
         return emails
 
     def _dss_requester_emails(self):
-        """Retourne l'adresse du signataire, ou celle du createur de la DSS."""
+        """Retourne l'adresse du propriétaire de la demande DSS."""
         # Cette methode ne traite qu'une seule demande a la fois.
         self.ensure_one()
-        # Utilise le signataire de soumission lorsqu'il est renseigne.
-        user = self.signataire_demandeur_id
-        # Teste si le signataire est absent ou non renseigne.
-        if not user:
-            # Sinon, prend l'utilisateur qui a cree la demande.
-            user = self.create_uid
+        user = self.demandeur_id
         # Retourne une liste vide si aucune adresse n'est disponible.
         email = self._dss_user_email(user) if user else ""
         # Le routeur d'e-mails attend une liste, meme pour un seul demandeur.
@@ -288,14 +283,16 @@ class DssRequestNotification(models.Model):
     def _dss_notify_submission(self):
         # Permet de traiter une ou plusieurs demandes dans un meme appel.
         for rec in self:
-            # A la soumission, notifie les utilisateurs du groupe Chef.
+            # A la soumission, notifie le Chef DSS configuré pour le service.
+            chef_user = rec.service_demandeur_id.dss_chef_id
+            chef_email = rec._dss_user_email(chef_user) if chef_user else ""
             rec._dss_notify_workflow(
                 # Utilise une cle stable pour reperer une notification de soumission.
                 "submission",
                 # Libelle transmis au sujet et au corps du courriel.
                 "Soumission",
-                # Recupere les adresses des utilisateurs du groupe Chef.
-                rec._dss_group_emails("dss_v2.group_dss_chef"),
+                # Le routeur journalise et ignore l'envoi si l'adresse est absente.
+                [chef_email] if chef_email else [],
             )
 
     @api.multi

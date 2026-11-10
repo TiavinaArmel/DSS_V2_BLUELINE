@@ -26,7 +26,7 @@
 |---|---|---|
 | BCI | Bon de Commande Interne, référence administrative saisie sur la demande. | Champ `bci` de `dss.request`. |
 | BL | Bon de Livraison généré en PDF à partir d'une demande DSS. | Rapport QWeb `dss_v2.report_bon_livraison_document`. |
-| Demandeur | Utilisateur enregistré comme ayant soumis la demande. | Champ `signataire_demandeur_id`. |
+| Demandeur | Utilisateur propriétaire de la DSS, distinct de la personne qui clique sur Soumettre. | Champ `demandeur_id`; l'acteur de soumission est `signataire_demandeur_id`. |
 | DSS | Demande de Sortie de Stock, dossier métier du module. | Modèle `dss.request`. |
 | Écart | Différence détectée à la clôture entre quantité sortie et quantité installée. | Le wizard met `has_ecart` à vrai si au moins une ligne diffère. |
 | Emplacement destination | Emplacement interne cible, requis pour le type `appro_distant`. | Champ `location_dest_id`. |

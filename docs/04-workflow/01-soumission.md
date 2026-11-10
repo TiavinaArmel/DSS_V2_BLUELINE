@@ -23,7 +23,8 @@ Les champs ne sont pas tous déclarés `required=True` dans le modèle; ces cont
 
 ```text
 Contrôles réussis
-  |-- signataire_demandeur_id = utilisateur courant
+  |-- demandeur_id = propriétaire défini à la création
+  |-- signataire_demandeur_id = utilisateur courant qui soumet
   |-- date_soumission = fields.Datetime.now()
   |-- state = valide_chef
   |-- message chatter avec le détail des articles et quantités renseignées
