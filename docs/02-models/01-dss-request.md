@@ -22,8 +22,8 @@
 | `type_intervention` | `Selection` | Six valeurs | Catégorie métier qui détermine le sens calculé. |
 | `sens_mouvement` | `Char` | `compute`, `store=True`, `readonly=True` | Sens de stock dérivé du type d'intervention. |
 | `picking_id` | `Many2one(stock.picking)` | `readonly=True` | Lien vers le dernier picking affecté par les méthodes DSS. |
-| `has_ecart` | `Boolean` | `readonly=True` | Indicateur mis à jour par le wizard de clôture. |
-| `is_qty_modified` | `Boolean` | Défaut `False`, `readonly=True`, `copy=False` | Indicateur interne de modification des quantités. |
+| `has_ecart` | `Boolean` | `readonly=True` | Indicateur calculé à la validation Stock et à la clôture lorsque `qty_sortie + qty_retour` diffère de `qty_demandee` à deux décimales près. |
+| `is_qty_modified` | `Boolean` | Défaut `False`, `readonly=True`, `copy=False` | Indique que le wizard de modification des quantités a été confirmé. |
 | `motif_rejet` | `Text` | Aucun | Motif reporté depuis le wizard de rejet. |
 | `line_ids` | `One2many(dss.request.line)` | Relation inverse `request_id` | Lignes de la demande. |
 | `signataire_demandeur_id` | `Many2one(res.users)` | `readonly=True`, `copy=False` | Acteur ayant soumis la demande; distinct du propriétaire `demandeur_id`. |
@@ -47,6 +47,8 @@ Les champs métiers de soumission ne portent pas `required=True` dans le modèle
 | `_onchange_location_id_qty_standard` | `@api.onchange('location_id')` | Recalcule la disponibilité des articles pour l'emplacement sélectionné. |
 
 Les méthodes de transition sont documentées dans [le workflow](03-dss-request-workflow.md).
+
+La validation Stock utilise `is_qty_modified` pour distinguer une validation directe d'une validation confirmée par le wizard de quantités. En validation directe, `qty_sortie` reprend `qty_demandee` et `qty_retour` est remis à zéro.
 
 ## 4. Machine à états
 

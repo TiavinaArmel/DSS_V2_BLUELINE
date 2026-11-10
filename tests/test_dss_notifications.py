@@ -248,6 +248,60 @@ class TestDssNotifications(common.TransactionCase):
             log.mail_id.body_html,
         )
 
+    def test_stock_approval_email_contains_quantity_change_motif(self):
+        """La validation Stock transmet le motif d'écart par article."""
+        request = self.Request.create({"name": "TEST-DSS-STOCK-MOTIF"})
+        product = self.env["product.product"].create({
+            "name": "Article câble accentué",
+            "type": "product",
+        })
+        self.env["dss.request.line"].create({
+            "request_id": request.id,
+            "product_id": product.id,
+            "qty_demandee": 10.0,
+            "qty_sortie": 7.0,
+            "motif_ecart": "Stock indisponible à l'emplacement demandé",
+        })
+        self.env.user.partner_id.write({"email": "requester@example.invalid"})
+
+        request._dss_notify_stock_approval()
+
+        log = self.NotificationLog.search([
+            ("request_id", "=", request.id),
+            ("event_key", "=", "stock_approval"),
+        ], limit=1)
+        self.assertTrue(log)
+        self.assertIn("Stock indisponible", log.mail_id.body_html)
+        self.assertIn("Article câble accentué", log.mail_id.body_html)
+        self.assertIn("<ul", log.mail_id.body_html)
+        self.assertIn("<li", log.mail_id.body_html)
+
+    def test_stock_approval_email_escapes_quantity_change_html(self):
+        """Les noms et motifs ne peuvent pas injecter de balises HTML."""
+        request = self.Request.create({"name": "TEST-DSS-STOCK-HTML"})
+        product = self.env["product.product"].create({
+            "name": "Article <script>",
+            "type": "product",
+        })
+        self.env["dss.request.line"].create({
+            "request_id": request.id,
+            "product_id": product.id,
+            "qty_demandee": 10.0,
+            "qty_sortie": 7.0,
+            "motif_ecart": "Motif <script>alert(1)</script>",
+        })
+        self.env.user.partner_id.write({"email": "requester@example.invalid"})
+
+        request._dss_notify_stock_approval()
+
+        log = self.NotificationLog.search([
+            ("request_id", "=", request.id),
+            ("event_key", "=", "stock_approval"),
+        ], limit=1)
+        self.assertTrue(log)
+        self.assertIn("&lt;script&gt;", log.mail_id.body_html)
+        self.assertNotIn("<script>", log.mail_id.body_html)
+
     def test_rejection_mapping_is_explicit(self):
         """Verifie l'etat initial et l'absence de motif sur une nouvelle demande."""
         # Cree une demande neuve sans fournir d'etat ni de motif.

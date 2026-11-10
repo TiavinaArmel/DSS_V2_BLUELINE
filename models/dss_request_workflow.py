@@ -2,12 +2,32 @@
 
 from odoo import SUPERUSER_ID, models, fields, api
 from odoo.exceptions import AccessError, ValidationError
+from odoo.tools.float_utils import float_compare
 
 
 class DssRequestWorkflow(models.Model):
     """Regroupe les actions qui font avancer une demande DSS dans son workflow."""
 
     _inherit = "dss.request"
+
+    def _prepare_quantities_before_stock_validation(self):
+        """Applique la règle métier avant la génération des mouvements."""
+        self.ensure_one()
+        if not self.is_qty_modified:
+            for line in self.line_ids:
+                line.write({
+                    "qty_sortie": line.qty_demandee,
+                    "qty_retour": 0.0,
+                })
+
+        self.has_ecart = any(
+            float_compare(
+                line.qty_sortie + line.qty_retour,
+                line.qty_demandee,
+                precision_digits=2,
+            ) != 0
+            for line in self.line_ids
+        )
 
     def _detail_articles_html(self):
         """Construit le résumé HTML des quantités de chaque article pour le chatter."""
@@ -159,6 +179,10 @@ class DssRequestWorkflow(models.Model):
 
             rec.signataire_magasin_id = self.env.user
             rec.date_validation_magasin = fields.Datetime.now()
+
+            # Prépare les quantités et calcule l'écart avant le mouvement.
+            rec._prepare_quantities_before_stock_validation()
+
             # Le sens du mouvement sélectionne le traitement de sortie, entrée ou transfert.
             if rec.sens_mouvement == "Sortie":
                 rec._generer_mouvement_sortie()

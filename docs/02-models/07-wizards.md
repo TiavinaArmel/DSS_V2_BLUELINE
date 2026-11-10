@@ -18,13 +18,21 @@
 
 Les wizards de quantité et de clôture utilisent `default_get()` pour lire `default_request_id`, avec `active_id` en repli, puis construisent des lignes One2many temporaires. La confirmation écrit ensuite les valeurs autorisées sur les lignes DSS réelles. Les wizards Chef et Stock ne portent pas la logique métier de transition; ils délèguent à l'action du modèle principal.
 
+Pour le wizard de quantités, le motif est porté par `dss.qty.sortie.wizard.line` afin de permettre un motif différent pour chaque article. Le champ est recopié depuis `dss.request.line` à l'ouverture.
+
+### Compatibilité Unicode avec Odoo 10
+
+Le serveur Odoo 10 fonctionne avec Python 2. Les messages construits dans `action_valider()` utilisent donc des chaînes Unicode préfixées par `u` lorsqu'ils incorporent des valeurs Odoo comme `product_id.name` ou `env.user.name`. Cette précaution évite une conversion ASCII implicite et l'erreur `UnicodeDecodeError` lorsqu'un article, un utilisateur ou un motif contient des caractères accentués.
+
 | Wizard | Valeurs modifiables dans l'assistant | Effets à la confirmation |
 |---|---|---|
 | Rejet | `motif` requis | Copie dans `motif_rejet`, puis appelle `action_rejeter()`. |
-| Quantités | `qty_sortie`, `qty_retour` | Écrit uniquement les lignes modifiées et poste un résumé si un changement existe. |
-| Clôture | `qty_installee`, `qty_retour`, `is_exception`, `motif_exception` | Le demandeur clôture normalement; le Chef peut clôturer exceptionnellement avec motif. Le wizard compare installé/sorti, met `has_ecart`, passe à `cloture`, poste un résumé et notifie. |
+| Quantités | `qty_sortie`, `qty_retour`, `motif_ecart` | Compare chaque ligne à ses valeurs initiales, exige un motif uniquement pour une ligne réellement modifiée, initialise les autres lignes avec `qty_demandee` et conserve `qty_demandee`. |
+| Clôture | `qty_installee`, `qty_retour`, `is_exception`, `motif_exception` | Le demandeur clôture normalement; le Chef peut clôturer exceptionnellement avec motif. Le wizard écrit les quantités, calcule l'écart selon demande/sortie/retour, passe à `cloture`, poste un résumé et notifie. |
 | Confirmation Chef | Aucune donnée métier saisie | Appelle `action_valider_chef()`. |
 | Confirmation Stock | Aucune donnée métier saisie | Appelle `action_valider_magasin()`. |
+
+Chaque ligne du wizard mémorise ses valeurs initiales (`qty_sortie_initiale`, `qty_retour_initiale`, `motif_ecart_initial`). Une ligne non modifiée reçoit automatiquement `qty_sortie = qty_demandee` et `qty_retour = 0.0`.
 
 ## 4. Cycle de vie d'un wizard
 

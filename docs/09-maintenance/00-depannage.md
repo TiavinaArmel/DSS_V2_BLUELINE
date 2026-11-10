@@ -84,6 +84,28 @@ Vérifier d'abord si un `dss.notification.log` et un `mail.mail` existent, puis 
 
 ## 4. Problèmes de chargement ou d'action
 
+### `UnicodeDecodeError` dans le wizard de quantités
+
+| Élément | Diagnostic |
+|---|---|
+| Symptôme | Erreur serveur Odoo dans `dss_qty_sortie_wizard.py`, méthode `action_valider()`, avec `UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3`. |
+| Cause | Odoo 10 utilise Python 2. Une chaîne `str` était interpolée avec une valeur Unicode provenant d'Odoo, par exemple `product_id.name` ou `env.user.name`. Python tentait une conversion ASCII implicite. |
+| Solution | Préfixer par `u` les chaînes utilisées pour construire les messages, les libellés d'écart et les séparateurs `join()` dans `action_valider()`. Conserver l'en-tête `# -*- coding: utf-8 -*-`. |
+| Vérification | Compiler le fichier Python, redémarrer Odoo, mettre à niveau `dss_v2`, puis valider un wizard avec des accents dans le produit, l'utilisateur ou le motif. |
+
+Exemple de correction :
+
+```python
+changements.append(
+    u"\u2022 %s : %s" % (
+        line.product_id.name,
+        u", ".join(parties),
+    )
+)
+```
+
+Ne pas corriger ce problème en supprimant les accents des données métier : la cause est l'absence de chaîne Unicode explicite dans le code Python 2.
+
 | Symptôme possible | Élément source à contrôler |
 |---|---|
 | Boutons Valider/Rejeter Chef ou Magasin absents | Le header DSS a été simplifié : les boutons sont des éléments directs du `<header>` et portent chacun leur attribut `groups`. Mettre à niveau le module sur la base concernée, puis vérifier le groupe de l'utilisateur et l'état de la demande (`valide_chef` pour Chef, `valide_magasin` pour Magasin). Si le problème persiste, inspecter la vue formulaire combinée et les personnalisations de la base. |
@@ -98,6 +120,14 @@ Vérifier d'abord si un `dss.notification.log` et un `mail.mail` existent, puis 
 Les boutons d'action Chef et Magasin étaient enveloppés dans des éléments `<span groups="…">` dans le header. Cette structure a été considérée comme une cause possible de leur absence, car certaines versions ou personnalisations de l'en-tête peuvent attendre des éléments directs tels que `<button>` et `<field>`. Sans trace d'erreur du serveur ou inspection de la vue combinée sur la base concernée, cette cause reste une hypothèse de compatibilité, et non un diagnostic confirmé.
 
 Solution appliquée dans `views/dss_request_views.xml` : suppression des deux `<span>` et déplacement de la restriction `groups` sur chaque bouton qu'ils contenaient. L'ordre des boutons, les libellés, les conditions `attrs` et les classes CSS ont été conservés. Après mise à niveau du module, contrôler également que l'utilisateur possède le groupe approprié et que la demande est à l'étape attendue.
+
+### DSS multi-lignes : motif demandé sur une ligne non modifiée
+
+Si le wizard demande un motif pour tous les articles, vérifier que les valeurs initiales de chaque ligne sont mémorisées. Le motif doit être obligatoire uniquement si la ligne courante diffère de ses valeurs initiales. Les lignes non modifiées doivent recevoir automatiquement `qty_sortie = qty_demandee` et `qty_retour = 0.0`.
+
+### E-mail : balises `<br/>` visibles
+
+Si l'e-mail affiche littéralement `<br/>`, le résumé des motifs est transmis comme texte. La solution est de générer une liste HTML `<ul><li>` dans `_dss_quantity_change_motifs()` et de vérifier le rendu après mise à niveau du module.
 
 ## 5. Fiche de mémorisation
 

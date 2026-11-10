@@ -2,7 +2,7 @@
 
 ## 1. Fichier et périmètre
 
-Le manifeste déclare `tests/test_dss_notifications.py`. Ce fichier utilise `odoo.tests.common.TransactionCase` et vérifie le routage, le journal et le rendu des courriels. Les tests n'envoient pas de message à un serveur SMTP; les adresses utilisées sont sous le domaine réservé `.invalid`.
+Le manifeste déclare `tests/test_dss_notifications.py`, `tests/test_dss_stock_location.py` et `tests/test_dss_quantities.py`. Les tests utilisent `odoo.tests.common.TransactionCase`. Les tests de notifications vérifient le routage, le journal et le rendu des courriels; les tests de quantités vérifient la validation directe, la modification par wizard, le motif obligatoire, la conservation de `qty_demandee` et la précision à deux décimales.
 
 ## 2. Cas couverts
 
@@ -17,6 +17,7 @@ Le manifeste déclare `tests/test_dss_notifications.py`. Ce fichier utilise `odo
 | `test_rejection_keeps_motif_in_notification_context` | Le motif fourni apparaît dans le corps rendu du mail de rejet. |
 | `test_return_to_requester_email_contains_rejection_motif` | Destinataire demandeur et motif inclus dans le courriel de renvoi. |
 | `test_security_is_not_notified_without_a_real_dss_security_transition` | L'action d'approbation Stock ne crée pas de clé d'événement `security`. |
+| `test_stock_approval_email_contains_quantity_change_motif` | L'e-mail de validation Stock contient le motif d'écart et le nom de l'article dans une liste `<ul><li>`, sans `<br/>` dans le bloc des motifs. |
 | `test_rejection_mapping_is_explicit` | Vérifie seulement l'état brouillon par défaut et l'absence de motif initial. |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.
@@ -30,6 +31,12 @@ python odoo-bin -c odoo.conf -d BASE_DE_TEST -u dss_v2 --test-enable --stop-afte
 ```
 
 L'audit documentaire n'a pas exécuté Odoo ni cette commande; le résultat des tests n'est donc pas certifié ici.
+
+Pour l'évolution du 3 novembre 2026, la compilation Python et l'analyse syntaxique XML ont été vérifiées. Le test runner Odoo n'a pas été exécuté dans l'environnement de développement utilisé, car aucun `odoo-bin` ou `odoo.py` n'y a été trouvé.
+
+## 3 bis. Incident Unicode du wizard de quantités
+
+Un `UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3` a été observé dans `dss_qty_sortie_wizard.py`, dans `action_valider()`, lors de la construction d'un message contenant le nom d'un article ou d'un utilisateur. La cause était l'interpolation d'une valeur Unicode dans une chaîne `str` Python 2. La correction consiste à utiliser des chaînes Unicode `u"..."` pour les messages et les séparateurs construits par cette méthode. Le scénario à rejouer sur Odoo 10 doit inclure un article, un utilisateur et un motif comportant des accents.
 
 ## 4. Fiche de mémorisation
 

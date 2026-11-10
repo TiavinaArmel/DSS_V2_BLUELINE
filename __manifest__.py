@@ -68,5 +68,6 @@
         "tests/test_dss_stock_location.py",
         "tests/test_dss_service.py",
         "tests/test_dss_closure.py",
+        "tests/test_dss_quantities.py",
     ],
 }

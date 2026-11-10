@@ -6,6 +6,7 @@ from xml.sax.saxutils import escape as html_escape
 
 # Importe les outils Odoo pour les modeles, les champs et les API.
 from odoo import api, fields, models
+from xml.sax.saxutils import escape as html_escape
 
 # Cree un journal Python nomme pour ce fichier.
 _logger = logging.getLogger(__name__)
@@ -131,7 +132,14 @@ class DssRequestNotification(models.Model):
             self.env.user.company_id.id,
         )
 
-    def _dss_notify_once(self, event_key, action_label, recipient_emails, motif=""):
+    def _dss_notify_once(
+        self,
+        event_key,
+        action_label,
+        recipient_emails,
+        motif="",
+        quantity_motifs=None,
+    ):
         """Met un e-mail en file apres une transition metier reussie.
 
         L'envoi reel sera effectue ensuite par la file de courriels Odoo.
@@ -202,6 +210,8 @@ class DssRequestNotification(models.Model):
                     dss_event_key=event_key,
                     # Passe le motif, ou une chaine vide s'il n'y en a pas.
                     dss_motif=motif or "",
+                    # Passe les motifs de quantités sous forme de données structurées.
+                    dss_quantity_motifs=quantity_motifs or [],
                     # Passe l'etat courant de la demande au modele.
                     dss_status=self.state,
                     # Passe le lien direct vers la demande au modele.
@@ -271,7 +281,14 @@ class DssRequestNotification(models.Model):
             # Signale l'echec de notification au code appelant.
             return False
 
-    def _dss_notify_workflow(self, event_key, action_label, recipient_emails, motif=""):
+    def _dss_notify_workflow(
+        self,
+        event_key,
+        action_label,
+        recipient_emails,
+        motif="",
+        quantity_motifs=None,
+    ):
         """Ajoute le contexte du workflow puis prepare l'e-mail correspondant."""
         # S'assure que l'appel porte sur une seule demande DSS.
         self.ensure_one()
@@ -288,7 +305,13 @@ class DssRequestNotification(models.Model):
             # Ajoute le lien web de la demande au contexte.
             dss_workflow_url=self._dss_workflow_url(),
             # Appelle la methode qui verifie les doublons et cree le courriel.
-        )._dss_notify_once(event_key, action_label, recipient_emails, motif)
+        )._dss_notify_once(
+            event_key,
+            action_label,
+            recipient_emails,
+            motif,
+            quantity_motifs,
+        )
 
     @api.multi
     def _dss_notify_submission(self):
@@ -359,6 +382,7 @@ class DssRequestNotification(models.Model):
     def _dss_notify_stock_approval(self):
         # Parcourt chaque demande dont l'approbation Stock vient d'aboutir.
         for rec in self:
+            motifs_ecart = rec._dss_quantity_change_motifs()
             # Notifie le demandeur apres la validation finale du Stock.
             # Aucun e-mail Securite n'est prevu dans le workflow DSS actuel.
             rec._dss_notify_workflow(
@@ -369,7 +393,23 @@ class DssRequestNotification(models.Model):
                 # Le demandeur et le Chef doivent savoir que la DSS peut être clôturée.
                 rec._dss_requester_emails()
                 + rec._dss_group_emails("dss_v2.group_dss_chef"),
+                # Transmet les motifs des modifications de quantités par article.
+                quantity_motifs=motifs_ecart,
             )
+
+    def _dss_quantity_change_motifs(self):
+        """Retourne les motifs d'écart renseignés, regroupés par article."""
+        self.ensure_one()
+        motifs = []
+        for line in self.line_ids:
+            if line.motif_ecart:
+                motifs.append(
+                    (
+                        html_escape(line.product_id.name or ""),
+                        html_escape(line.motif_ecart, {"\"": "&quot;", "'": "&#x27;"}),
+                    )
+                )
+        return motifs
 
     @api.multi
     def _dss_notify_return_to_requester(self):

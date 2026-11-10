@@ -2,6 +2,7 @@
 from odoo import SUPERUSER_ID, models, fields, api
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tools import html_escape
+from odoo.tools.float_utils import float_compare
 
 """
 Ce fichier définit le wizard de clôture d'une DSS.
@@ -146,15 +147,21 @@ class DssClotureWizard(models.TransientModel):
                     line.qty_retour)
             )
 
-            # Détection d'écart :
-            # si la quantité INSTALLÉE est différente de la quantité SORTIE,
-            # c'est un écart.
-            if line.qty_installee != line.qty_sortie:
+            # L'indicateur d'écart reste défini par la règle métier des
+            # quantités demandées, sorties et retournées.
+            if float_compare(
+                line.request_line_id.qty_sortie + line.request_line_id.qty_retour,
+                line.request_line_id.qty_demandee,
+                precision_digits=2,
+            ) != 0:
                 ecarts.append(
-                        u'%s : sorti %s, installe %s' % (
+                    u'%s : demande %s, sorti %s, installe %s, retour %s' % (
                         html_escape(line.product_id.name or ''),
-                        line.qty_sortie,
-                        line.qty_installee)
+                        line.request_line_id.qty_demandee,
+                        line.request_line_id.qty_sortie,
+                        line.qty_installee,
+                        line.request_line_id.qty_retour,
+                    )
                 )
 
         # Remplit le champ has_ecart sur la DSS :

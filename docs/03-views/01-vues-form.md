@@ -28,7 +28,7 @@ Les actions Chef et Magasin sont des boutons directs du `<header>`; aucun `<span
 |---|---|
 | Général | BCI, client, lieu, date, emplacement source, destination et type d'intervention. |
 | Destination | Invisible hors `appro_distant`, marquée obligatoire pour `appro_distant`. |
-| Sens et écart | `sens_mouvement` et `has_ecart` en lecture seule. |
+| Sens et écart | `sens_mouvement`, `has_ecart` et `motif_ecart` sont affichés sans modification depuis la fiche principale. |
 | Articles | `line_ids` devient readonly hors brouillon; article reçoit `dss_location_id` depuis `parent.location_id`. |
 | Quantité demandée | Lecture seule selon `qty_demandee_readonly`. |
 | Quantité sortie | Vue héritée : readonly si `is_magasin_user` est faux; le groupe Magasin est calculé côté Python. |

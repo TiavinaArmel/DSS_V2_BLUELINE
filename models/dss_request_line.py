@@ -47,6 +47,9 @@ class DssRequestLine(
     # champ décimal, dédié à la quantité de matériel qui retourne en stock
     # (en cas de retour)
     qty_retour = fields.Float(string="Qte Retour")
+    # Motif saisi lorsque les quantités validées ne correspondent pas à la
+    # quantité initialement demandée.
+    motif_ecart = fields.Text(string="Motif de l'écart")
     # simple champ de texte libre, pour une remarque sur la ligne de DSS
     observation = fields.Char(string="Observation")
     # champ booléen qui sert uniquement à piloter l'affichage du champ
