@@ -9,7 +9,7 @@
     # - web   : assets et rapports QWeb
     # - stock : mouvements de stock (Inventory)
     # - mail  : chatter et notifications internes
-    "depends": ["web", "stock", "mail"],
+    "depends": ["web", "stock", "mail", "hr"],
 
     # Auteur du module
     "author": "Tiavina Armel",
@@ -31,6 +31,7 @@
         #Format DSS/XX/XX/XXXX
         "data/dss_sequence.xml",
         "data/dss_mail_templates.xml",
+        "data/dss_department_data.xml",
 
         # Vues des assistants (wizards)
         "views/dss_qty_sortie_wizard_views.xml",     # quantité à sortir
@@ -66,5 +67,6 @@
         "tests/test_dss_notifications.py",
         "tests/test_dss_stock_location.py",
         "tests/test_dss_service.py",
+        "tests/test_dss_closure.py",
     ],
 }

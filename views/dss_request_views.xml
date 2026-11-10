@@ -20,8 +20,12 @@
                         attrs="{'invisible': ['|', ('state', '!=', 'valide_chef'),
                                                ('is_current_user_chef', '=', False)]}"/>
                     <button name="action_open_wizard_cloture" type="object" string="Cloturer"
-                        groups="dss_v2.group_dss_demandeur,dss_v2.group_dss_chef"
+                        groups="dss_v2.group_dss_demandeur"
                         attrs="{'invisible': [('state', '!=', 'approuve')]}" class="oe_highlight"/>
+                    <button name="action_open_wizard_cloture_exception" type="object"
+                        string="Clôture exceptionnelle"
+                        groups="dss_v2.group_dss_chef"
+                        attrs="{'invisible': [('state', '!=', 'approuve')]}"/>
                     <!-- Les actions de validation et de préparation du stock sont réservées au groupe Magasin. -->
                     <button name="action_open_wizard_stock" type="object" string="Valider Stock"
                         groups="dss_v2.group_dss_magasin"

@@ -2,6 +2,7 @@
 
 # Importe le module standard qui ecrit des informations dans les journaux Odoo.
 import logging
+from xml.sax.saxutils import escape as html_escape
 
 # Importe les outils Odoo pour les modeles, les champs et les API.
 from odoo import api, fields, models
@@ -197,7 +198,7 @@ class DssRequestNotification(models.Model):
                 values = template.with_context(
                     # Passe le nom de l'action affiche dans le sujet et le corps.
                     dss_action_label=action_label,
-                    # Passe la cle technique utilisee pour afficher ou non le motif.
+                    # Rend la clé technique disponible au template pour adapter le message.
                     dss_event_key=event_key,
                     # Passe le motif, ou une chaine vide s'il n'y en a pas.
                     dss_motif=motif or "",
@@ -205,6 +206,14 @@ class DssRequestNotification(models.Model):
                     dss_status=self.state,
                     # Passe le lien direct vers la demande au modele.
                     dss_workflow_url=self._dss_workflow_url(),
+                    # Donne au template les détails de la clôture lorsqu'ils existent.
+                    dss_closure_type=self.env.context.get('dss_closure_type', ''),
+                    dss_closure_actor=html_escape(
+                        self.env.context.get('dss_closure_actor', '') or ''
+                    ),
+                    dss_closure_reason=html_escape(
+                        self.env.context.get('dss_closure_reason', '') or ''
+                    ),
                     # Passe l'URL du logo construite avec la base URL configurée.
                     dss_logo_url=self._dss_company_logo_url(),
                 ).generate_email(
@@ -270,6 +279,8 @@ class DssRequestNotification(models.Model):
         self.with_context(
             # Ajoute l'intitule de l'action au contexte Odoo.
             dss_action_label=action_label,
+            # Conserve aussi la clé technique pour le rendu conditionnel du template.
+            dss_event_key=event_key,
             # Ajoute le motif au contexte, ou une chaine vide.
             dss_motif=motif or "",
             # Ajoute le statut au contexte pour l'affichage dans le courriel.
@@ -355,8 +366,9 @@ class DssRequestNotification(models.Model):
                 "stock_approval",
                 # Libelle affiche dans l'e-mail.
                 "Approbation Stock",
-                # L'approbation Stock est communiquee au demandeur.
-                rec._dss_requester_emails(),
+                # Le demandeur et le Chef doivent savoir que la DSS peut être clôturée.
+                rec._dss_requester_emails()
+                + rec._dss_group_emails("dss_v2.group_dss_chef"),
             )
 
     @api.multi
@@ -385,7 +397,8 @@ class DssRequestNotification(models.Model):
                 "closure",
                 # Libelle affiche dans l'e-mail.
                 "Cloture",
-                # Combine le demandeur et les utilisateurs du groupe Magasin.
-                rec._dss_requester_emails()
-                + rec._dss_group_emails("dss_v2.group_dss_magasin"),
+                # Informe le Chef et le Magasin ; le demandeur reste également informé.
+                rec._dss_group_emails("dss_v2.group_dss_chef")
+                + rec._dss_group_emails("dss_v2.group_dss_magasin")
+                + rec._dss_requester_emails(),
             )

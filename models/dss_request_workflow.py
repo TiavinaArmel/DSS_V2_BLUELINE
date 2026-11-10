@@ -286,20 +286,20 @@ class DssRequestWorkflow(models.Model):
 
     @api.multi
     def action_open_wizard_cloture(self):
-        """Ouvre le formulaire de clôture lié à la demande courante."""
+        """Ouvre le wizard de clôture normale réservé au demandeur d'origine."""
         self.ensure_one()
         if self.state != "approuve":
-            raise AccessError(
+            raise ValidationError(
                 u"Seule une demande approuvée peut être clôturée."
             )
-        is_requester = self.env.user == self.demandeur_id
-        is_chef_exception = (
-            not is_requester
-            and self.env.user.has_group("dss_v2.group_dss_chef")
+        demandeur = (
+            self.demandeur_id
+            or self.signataire_demandeur_id
+            or self.create_uid
         )
-        if not is_requester and not is_chef_exception:
+        if self.env.uid != SUPERUSER_ID and self.env.user != demandeur:
             raise AccessError(
-                u"Seul le demandeur d'origine ou un Chef DSS en clôture exceptionnelle peut clôturer cette demande."
+                "Seul le demandeur d'origine peut clôturer cette DSS."
             )
         return {
             "type": "ir.actions.act_window",
@@ -309,7 +309,30 @@ class DssRequestWorkflow(models.Model):
             "target": "new",
             "context": {
                 "default_request_id": self.id,
-                "default_is_exception": is_chef_exception,
+                "default_is_exception": False,
+            },
+        }
+
+    @api.multi
+    def action_open_wizard_cloture_exception(self):
+        """Ouvre le wizard de clôture exceptionnelle réservé au groupe Chef."""
+        self.ensure_one()
+        # Le groupe est vérifié côté serveur, pas uniquement dans la vue XML.
+        if not self.env.user.has_group("dss_v2.group_dss_chef"):
+            raise AccessError(
+                "Seul un utilisateur du groupe DSS / Chef peut effectuer une clôture exceptionnelle."
+            )
+        if self.state != "approuve":
+            raise ValidationError("Seule une DSS approuvée peut être clôturée.")
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Clôture exceptionnelle",
+            "res_model": "dss.cloture.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_request_id": self.id,
+                "default_is_exception": True,
             },
         }
 

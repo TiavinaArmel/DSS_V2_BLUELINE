@@ -47,6 +47,7 @@ Les actions de validation Chef et Stock contrôlent l'état attendu, mais leur m
 | `action_open_wizard_rejeter` | `dss.rejet.wizard` |
 | `action_open_modifier_qte_sortie` | `dss.qty.sortie.wizard` |
 | `action_open_wizard_cloture` | `dss.cloture.wizard` |
+| `action_open_wizard_cloture_exception` | `dss.cloture.wizard` |
 | `action_open_wizard_chef` | `dss.validation.chef.wizard` |
 | `action_open_wizard_stock` | `dss.validation.stock.wizard` |
 | `action_open_wizard_approuver` | `dss.validation.approuver.wizard` |

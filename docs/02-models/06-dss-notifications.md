@@ -28,6 +28,14 @@ Sans destinataire valide ou sans template, la méthode n'enfile pas de courriel.
 
 ## 5. Fiche de mémorisation
 
+## 6. Évolution du workflow de clôture
+
+- Après l'approbation Stock (`stock_approval`), le demandeur et le groupe Chef sont informés que la DSS peut être clôturée.
+- Après la clôture (`closure`), le Chef, le Magasin et le demandeur sont informés.
+- La clôture normale est réalisée par le demandeur d'origine.
+- Le Chef dispose d'une clôture exceptionnelle, ouverte par une action distincte et exigeant un motif.
+- Le template utilise `ctx.get('dss_event_key')` pour afficher un message adapté à chaque événement.
+
 | Repère | À retenir |
 |---|---|
 | Envoi | Le module crée un mail en file; le traitement réel dépend de la file Odoo et du SMTP configuré. |

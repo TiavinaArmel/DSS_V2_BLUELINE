@@ -14,7 +14,7 @@
 | `dss.request.line` (extension d'affichage) | [`dss_request_display.py`](../../models/dss_request_display.py) | `_inherit` | Champ calculé `is_magasin_user` utilisé par une vue. |
 | `dss.rejet.wizard` | [`dss_rejet_wizard.py`](../../models/dss_rejet_wizard.py) | `TransientModel` | Saisie obligatoire du motif avant rejet. |
 | `dss.qty.sortie.wizard` et `.line` | [`dss_qty_sortie_wizard.py`](../../models/dss_qty_sortie_wizard.py) | `TransientModel` | Copie temporaire pour ajuster sortie et retour. |
-| `dss.cloture.wizard` et `.line` | [`dss_cloture_wizard.py`](../../models/dss_cloture_wizard.py) | `TransientModel` | Saisie des quantités installées/retournées et clôture. |
+| `dss.cloture.wizard` et `.line` | [`dss_cloture_wizard.py`](../../models/dss_cloture_wizard.py) | `TransientModel` | Saisie des quantités installées/retournées, clôture normale par le demandeur ou clôture exceptionnelle justifiée par le Chef. |
 | `dss.validation.chef.wizard` et `dss.validation.stock.wizard` | [`dss_validation_wizard.py`](../../models/dss_validation_wizard.py) | `TransientModel` | Confirmation avant les validations Chef et Stock. |
 | `product.product` | [`product_product.py`](../../models/product_product.py) | Extension | Filtre les articles proposés si le contexte contient `dss_location_id`. |
 | `product.template` | [`product_template.py`](../../models/product_template.py) | Extension | Ajoute `dss_standard_qty`. |

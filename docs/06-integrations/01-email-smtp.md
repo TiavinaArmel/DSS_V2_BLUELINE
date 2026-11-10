@@ -13,8 +13,8 @@ Les messages métier du chatter sont créés par `message_post()` sur `dss.reque
 | `chef_rejection` | Demandeur | Oui |
 | `stock_rejection` | Demandeur et groupe Chef actif | Oui |
 | `stock_approval` | Demandeur | Non |
-| `return_to_requester` | Demandeur | Oui |
-| `closure` | Demandeur et groupe Magasin actif | Non |
+| `stock_approval` | Demandeur et groupe Chef actif | Non |
+| `closure` | Groupe Chef, groupe Magasin actif et demandeur | Non; le contexte peut préciser une clôture exceptionnelle, son acteur et son motif |
 
 La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `user.email`. Les adresses vides et doublons sont exclues. Le destinataire demandeur est le propriétaire `demandeur_id`; `signataire_demandeur_id` identifie l'acteur qui a effectivement soumis la DSS.
 

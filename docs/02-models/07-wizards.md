@@ -22,7 +22,7 @@ Les wizards de quantité et de clôture utilisent `default_get()` pour lire `def
 |---|---|---|
 | Rejet | `motif` requis | Copie dans `motif_rejet`, puis appelle `action_rejeter()`. |
 | Quantités | `qty_sortie`, `qty_retour` | Écrit uniquement les lignes modifiées et poste un résumé si un changement existe. |
-| Clôture | `qty_installee`, `qty_retour` | Écrit les lignes, compare installé/sorti, met `has_ecart`, passe à `cloture`, poste un résumé et notifie. |
+| Clôture | `qty_installee`, `qty_retour`, `is_exception`, `motif_exception` | Le demandeur clôture normalement; le Chef peut clôturer exceptionnellement avec motif. Le wizard compare installé/sorti, met `has_ecart`, passe à `cloture`, poste un résumé et notifie. |
 | Confirmation Chef | Aucune donnée métier saisie | Appelle `action_valider_chef()`. |
 | Confirmation Stock | Aucune donnée métier saisie | Appelle `action_valider_magasin()`. |
 
