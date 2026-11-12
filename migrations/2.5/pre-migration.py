@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """Transfère les anciens services RH vers le modèle DSS autonome."""
 
+import logging
+
+
+_logger = logging.getLogger(__name__)
+
 
 def _table_exists(cr, table_name):
     cr.execute("SELECT to_regclass(%s)", ("public.%s" % table_name,))
@@ -141,22 +146,47 @@ def _copy_services(cr):
         if set(("hr_department_id", "res_users_id")).issubset(
             relation_columns
         ):
-            for department_id, service_id in id_map.items():
+            skipped_affiliations = 0
+            for department_id, service_id in sorted(
+                id_map.items(), key=lambda item: (item[1], item[0])
+            ):
+                cr.execute(
+                    """
+                    SELECT COUNT(DISTINCT source.res_users_id)
+                      FROM hr_department_res_users_rel AS source
+                     WHERE source.hr_department_id = %s
+                       AND EXISTS (
+                           SELECT 1
+                             FROM dss_service_demandeur_rel AS existing
+                            WHERE existing.user_id = source.res_users_id
+                              AND existing.service_id != %s
+                       )
+                    """,
+                    (department_id, service_id),
+                )
+                skipped_affiliations += cr.fetchone()[0]
                 cr.execute(
                     """
                     INSERT INTO dss_service_demandeur_rel (service_id, user_id)
                     SELECT %s, res_users_id
-                      FROM hr_department_res_users_rel
-                     WHERE hr_department_id = %s
+                      FROM hr_department_res_users_rel AS source
+                     WHERE source.hr_department_id = %s
                        AND NOT EXISTS (
                            SELECT 1
                              FROM dss_service_demandeur_rel AS existing
-                            WHERE existing.service_id = %s
-                              AND existing.user_id =
-                                    hr_department_res_users_rel.res_users_id
+                            WHERE existing.user_id = source.res_users_id
                        )
                     """,
-                    (service_id, department_id, service_id),
+                    (service_id, department_id),
+                )
+            if skipped_affiliations:
+                _logger.warning(
+                    "DSS migration 2.5: skipped %s legacy department "
+                    "affiliations because each requester can belong to only "
+                    "one service. Existing assignments are kept; among new "
+                    "legacy assignments, the lowest service_id is considered "
+                    "first.",
+                    skipped_affiliations,
                 )
 
     # Une ancienne référence sans département correspondant ne peut pas être convertie.

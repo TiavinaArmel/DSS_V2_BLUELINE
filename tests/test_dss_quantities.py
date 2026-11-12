@@ -79,6 +79,36 @@ class TestDssQuantities(common.TransactionCase):
         self.assertEqual(line.motif_ecart, "Stock insuffisant")
         self.assertTrue(request.is_qty_modified)
 
+    def test_quantity_change_chatter_renders_bullet(self):
+        """Le chatter affiche le caractère puce et non sa séquence d'échappement."""
+        request, line = self._request_with_line()
+        wizard = self.env["dss.qty.sortie.wizard"].create({
+            "request_id": request.id,
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": self.product.id,
+                "qty_demandee": 10.0,
+                "qty_sortie": 7.0,
+                "qty_retour": 0.0,
+                "motif_ecart": "Stock insuffisant",
+            })],
+        })
+
+        wizard.action_valider()
+
+        audit_message = self.env["mail.message"].search(
+            [
+                ("model", "=", "dss.request"),
+                ("res_id", "=", request.id),
+                ("body", "ilike", "Le Responsable Stock"),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        self.assertTrue(audit_message)
+        self.assertIn(u"\u2022", audit_message.body)
+        self.assertNotIn(u"\\u2022", audit_message.body)
+
     def test_ecart_uses_two_decimal_precision(self):
         """Une différence inférieure au centième n'est pas un écart."""
         request, line = self._request_with_line()

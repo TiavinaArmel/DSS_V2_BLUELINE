@@ -153,7 +153,7 @@ class DssQtySortieWizard(models.TransientModel):
             # Si des changements ont été détectés
             if parties:  # parties n'est pas vide → il y a des changements
                 changements.append(
-                    u"\\u2022 %s : %s"
+                    u"\u2022 %s : %s"
                     % (
                         line.product_id.name,
                         u", ".join(parties),
