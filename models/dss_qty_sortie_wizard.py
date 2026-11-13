@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from odoo.tools import html_escape
 from odoo.tools.float_utils import float_compare
 
 """
@@ -152,14 +153,27 @@ class DssQtySortieWizard(models.TransientModel):
             )
             # Si des changements ont été détectés
             if parties:  # parties n'est pas vide → il y a des changements
-                changements.append(
-                    u"\u2022 %s : %s"
+                details = (
+                    u"Quantité demandée : %s, Quantité sortie : %s, "
+                    u"Motif de modification : %s"
                     % (
-                        line.product_id.name,
-                        u", ".join(parties),
+                        line.qty_demandee,
+                        nouvelle_sortie,
+                        html_escape(line.motif_ecart or u"Non renseigné").replace(
+                            "\n", "<br/>"
+                        ),
+                    )
+                )
+                if ancienne_retour != nouvelle_retour:
+                    details += u", Quantité retournée : %s" % nouvelle_retour
+                changements.append(
+                    u"\u2022 Article %s : %s"
+                    % (
+                        html_escape(line.product_id.name or u""),
+                        details,
                     )
                 )  # On ajoute un message décrivant le changement
-                # dans la liste changements[]
+                # dans la liste changements[] 
                 # On écrit les nouvelles valeurs dans la VRAIE ligne de la DSS
 
         # La validation de ce wizard constitue l'intervention explicite du
@@ -171,7 +185,7 @@ class DssQtySortieWizard(models.TransientModel):
             message = (
                 u"Le Responsable Stock %s a modifi\u00e9 les quantit\u00e9s.<br/><br/>%s"
                 % (
-                    self.env.user.name,
+                    html_escape(self.env.user.name or u""),
                     u"<br/>".join(changements),
                 )
             )

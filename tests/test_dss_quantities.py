@@ -108,6 +108,10 @@ class TestDssQuantities(common.TransactionCase):
         self.assertTrue(audit_message)
         self.assertIn(u"\u2022", audit_message.body)
         self.assertNotIn(u"\\u2022", audit_message.body)
+        self.assertIn(u"Article DSS Quantity Test Product", audit_message.body)
+        self.assertIn(u"Quantité demandée : 10.0", audit_message.body)
+        self.assertIn(u"Quantité sortie : 7.0", audit_message.body)
+        self.assertIn(u"Motif de modification : Stock insuffisant", audit_message.body)
 
     def test_ecart_uses_two_decimal_precision(self):
         """Une différence inférieure au centième n'est pas un écart."""
