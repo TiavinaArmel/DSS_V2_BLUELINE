@@ -83,6 +83,7 @@
                                 attrs="{'readonly': [('state', '!=', 'brouillon')]}"/>
                             <field name="sens_mouvement" readonly="1"/>
                             <field name="has_ecart" readonly="1"/>
+                            <field name="picking_retour_cloture_id" readonly="1"/>
                         </group>
                     </group>
                     <!-- notebook crée des onglets ; cette page contient les articles de la demande. -->
@@ -98,11 +99,14 @@
                                     <field name="qty_standard" readonly="1"/>
                                     <!-- Champ technique caché utilisé par attrs pour décider si la quantité est modifiable. -->
                                     <field name="qty_demandee_readonly" invisible="1"/>
+                                    <field name="is_sortie_only" invisible="1"/>
                                     <field name="qty_demandee"
                                         attrs="{'readonly': [('qty_demandee_readonly', '=', True)]}"/>
                                     <field name="qty_sortie"/>
-                                    <field name="qty_installee"/>
-                                    <field name="qty_retour"/>
+                                    <field name="qty_installee"
+                                        attrs="{'readonly': [('is_sortie_only', '=', True)]}"/>
+                                    <field name="qty_retour"
+                                        attrs="{'readonly': [('is_sortie_only', '=', True)]}"/>
                                     <field name="motif_ecart" readonly="1"/>
                                     <field name="observation"/>
                                 </tree>

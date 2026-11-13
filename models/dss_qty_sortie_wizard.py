@@ -66,10 +66,15 @@ class DssQtySortieWizard(models.TransientModel):
                             "product_id": line.product_id.id,
                             "qty_demandee": line.qty_demandee,
                             "qty_sortie": line.qty_sortie,
-                            "qty_retour": line.qty_retour,
+                            "qty_retour": (
+                                0.0 if line.is_sortie_only else line.qty_retour
+                            ),
+                            "is_sortie_only": line.is_sortie_only,
                             "motif_ecart": line.motif_ecart,
                             "qty_sortie_initiale": line.qty_sortie,
-                            "qty_retour_initiale": line.qty_retour,
+                            "qty_retour_initiale": (
+                                0.0 if line.is_sortie_only else line.qty_retour
+                            ),
                             "motif_ecart_initial": line.motif_ecart,
                         },
                     )
@@ -92,6 +97,7 @@ class DssQtySortieWizard(models.TransientModel):
         lignes_modifiees = False
         for line in self.line_ids:
             parties = []
+            is_sortie_only = line.request_line_id.is_sortie_only
             # Comparaison entre l'ancienne et la nouvelle Quantité de sortie
             ancienne_sortie = line.request_line_id.qty_sortie
             nouvelle_sortie = line.qty_sortie
@@ -101,7 +107,7 @@ class DssQtySortieWizard(models.TransientModel):
                 )
             # Comparaison entre l'ancienne et la nouvelle Quantité de retour
             ancienne_retour = line.request_line_id.qty_retour
-            nouvelle_retour = line.qty_retour
+            nouvelle_retour = 0.0 if is_sortie_only else line.qty_retour
             if ancienne_retour != nouvelle_retour:
                 parties.append(
                     u"Qte Retour %s \u2192 %s" % (ancienne_retour, nouvelle_retour)
@@ -234,3 +240,7 @@ class DssQtySortieWizardLine(models.TransientModel):
     qty_sortie_initiale = fields.Float(string="Qte Sortie initiale")
     qty_retour_initiale = fields.Float(string="Qte Retour initiale")
     motif_ecart_initial = fields.Text(string="Motif initial")
+    is_sortie_only = fields.Boolean(
+        related="request_line_id.is_sortie_only",
+        readonly=True,
+    )

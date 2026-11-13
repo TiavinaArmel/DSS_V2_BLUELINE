@@ -19,6 +19,9 @@ Il prend en charge le workflow complet d’une demande, depuis sa création jusq
 - Validation par le responsable et par le magasin ;
 - Rejet d’une demande avec indication du motif ;
 - Clôture d’une demande ;
+- Clôture normale par le demandeur ou exceptionnelle par le Chef avec motif obligatoire ;
+- Saisie d’une seule quantité installée/retournée par article lors de la clôture pour les sorties seules ;
+- Réintégration automatique des quantités retournées à l’emplacement source avec traçabilité dans le chatter et l’e-mail ;
 - Suivi de l’état d’avancement de la demande ;
 - Historique des échanges dans le chatter Odoo ;
 - Suivi des activités et notifications internes ;
@@ -40,6 +43,8 @@ rejete -> brouillon (renvoi par le groupe Chef)
 
 Le rejet passe par un wizard qui exige un motif. Le code ne définit pas d'état de sortie partielle.
 
+Pour les interventions « Nouvelle installation client » et « Installation interne », le wizard de clôture initialise l'installation à la quantité sortie. L'utilisateur choisit, article par article, de saisir la quantité installée ou retournée; l'autre est calculée. Les retours positifs sont remis en stock à l'emplacement source et tracés dans le chatter et l'e-mail.
+
 ## 4. Rôles utilisateurs
 
 - **Demandeur** : crée et consulte ses demandes ;
@@ -55,7 +60,7 @@ Les groupes et les droits d’accès sont configurés dans le dossier `security/
 |---|---|
 | Nom technique | `dss_v2` |
 | Nom affiché | DSS V2 - Demande de Sortie de Stock |
-| Version du module | 2.4 |
+| Version du module | 2.8 |
 | Version Odoo supportée actuellement | Odoo 10 Community |
 | Catégorie | Inventory |
 | Auteur | Tiavina Armel |
@@ -129,6 +134,7 @@ dss_v2/
 - Vérifier l’affichage des menus selon les rôles ;
 - Vérifier le respect des droits d’accès ;
 - Clôturer une demande terminée.
+- Pour une nouvelle installation ou une installation interne, vérifier les deux modes de saisie de clôture et le mouvement entrant pour chaque retour positif.
 
 ## 9. Documentation
 
@@ -175,6 +181,6 @@ Module développé pour la gestion des demandes de sortie de stock dans Odoo 10 
 
 | Repère | À retenir |
 |---|---|
-| Version | `2.4`, selon le manifeste. |
+| Version | `2.8`, selon le manifeste. |
 | Workflow | Chef puis Stock; le workflow principal n'a pas d'étape Sécurité. |
 | Documentation détaillée | [`docs/README.md`](docs/README.md). |

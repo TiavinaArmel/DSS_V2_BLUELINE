@@ -33,7 +33,7 @@ class DssRequest(models.Model):
         (
             "dss_request_bci_unique",
             "unique(bci)",
-            u"Le BCI doit être unique. Une demande DSS existe déjà avec ce BCI.",
+            "Le BCI doit être unique. Une demande DSS existe déjà avec ce BCI.",
         ),
     ]
 
@@ -94,6 +94,12 @@ class DssRequest(models.Model):
         string="Mouvement de stock Odoo",
         readonly=True,
     )
+    picking_retour_cloture_id = fields.Many2one(
+        "stock.picking",
+        string="Mouvement de retour à la clôture",
+        readonly=True,
+        copy=False,
+    )
     has_ecart = fields.Boolean(string="Ecart detecte", readonly=True)
     # Indique que le magasinier a confirmé le wizard de modification des
     # quantités. Il distingue une valeur zéro volontaire d'une valeur non
@@ -145,13 +151,17 @@ class DssRequest(models.Model):
     @api.model
     def _default_service_demandeur(self):
         """Retourne le service actif de l'utilisateur lorsqu'il en a un."""
-        services = self.env["dss.service"].sudo().search(
-            [
-                ("active", "=", True),
-                ("dss_demandeurs_ids", "in", self.env.user.id),
-            ],
-            order="id",
-            limit=1,
+        services = (
+            self.env["dss.service"]
+            .sudo()
+            .search(
+                [
+                    ("active", "=", True),
+                    ("dss_demandeurs_ids", "in", self.env.user.id),
+                ],
+                order="id",
+                limit=1,
+            )
         )
         return services.id or False
 
@@ -187,9 +197,7 @@ class DssRequest(models.Model):
     @api.onchange("type_intervention")
     def _onchange_type_intervention_lines(self):
         for line in self.line_ids:
-            line.qty_demandee_readonly = (
-                self.type_intervention == "retour_materiel"
-            )
+            line.qty_demandee_readonly = self.type_intervention == "retour_materiel"
 
     @api.onchange("location_id")
     def _onchange_location_id_qty_standard(self):
@@ -214,9 +222,7 @@ class DssRequest(models.Model):
 
         if self.env.uid == SUPERUSER_ID:
             target_user_id = self.env.context.get("dss_user_id", self.env.uid)
-            target_user = (
-                self.env["res.users"].sudo().browse(target_user_id).exists()
-            )
+            target_user = self.env["res.users"].sudo().browse(target_user_id).exists()
             if not target_user:
                 raise ValidationError(
                     "L'utilisateur cible de la demande DSS est introuvable."
@@ -227,7 +233,8 @@ class DssRequest(models.Model):
         # Le propriétaire et son service sont déterminés côté serveur.
         vals["demandeur_id"] = target_user.id
         vals["service_demandeur_id"] = (
-            self.env["dss.service"].sudo()
+            self.env["dss.service"]
+            .sudo()
             .search(
                 [
                     ("active", "=", True),
@@ -241,9 +248,7 @@ class DssRequest(models.Model):
         )
 
         if vals.get("name", "/") == "/":
-            vals["name"] = (
-                self.env["ir.sequence"].next_by_code("dss.request") or "/"
-            )
+            vals["name"] = self.env["ir.sequence"].next_by_code("dss.request") or "/"
         return super(DssRequest, self).create(vals)
 
     @api.multi
@@ -252,34 +257,32 @@ class DssRequest(models.Model):
         vals = dict(vals)
         if "bci" in vals:
             vals["bci"] = (vals["bci"] or "").strip() or False
-        is_admin = (
-            self.env.uid == SUPERUSER_ID
-            or self.env.user.has_group("base.group_system")
+        is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group(
+            "base.group_system"
         )
         service_changes = []
         requester_changes = []
         if "demandeur_id" in vals:
             if not is_admin:
                 raise AccessError(
-                    u"Seul un administrateur peut modifier le demandeur de la DSS."
+                    "Seul un administrateur peut modifier le demandeur de la DSS."
                 )
             new_requester = (
-                self.env["res.users"]
-                .sudo()
-                .browse(vals["demandeur_id"])
-                .exists()
+                self.env["res.users"].sudo().browse(vals["demandeur_id"]).exists()
                 if vals["demandeur_id"]
                 else self.env["res.users"]
             )
-            new_requester_name = new_requester.name if new_requester else u"Aucun"
+            new_requester_name = new_requester.name if new_requester else "Aucun"
             for request in self:
                 if request.demandeur_id.id != vals["demandeur_id"]:
                     requester_changes.append(
                         (
                             request,
-                            request.demandeur_id.name
-                            if request.demandeur_id
-                            else u"Aucun",
+                            (
+                                request.demandeur_id.name
+                                if request.demandeur_id
+                                else "Aucun"
+                            ),
                             new_requester_name,
                         )
                     )
@@ -287,7 +290,7 @@ class DssRequest(models.Model):
         if "service_demandeur_id" in vals:
             if not is_admin:
                 raise AccessError(
-                    u"Seul un administrateur peut modifier le service demandeur."
+                    "Seul un administrateur peut modifier le service demandeur."
                 )
 
             new_service = (
@@ -298,17 +301,16 @@ class DssRequest(models.Model):
                 if vals["service_demandeur_id"]
                 else self.env["dss.service"]
             )
-            new_service_name = new_service.name if new_service else u"Aucun"
+            new_service_name = new_service.name if new_service else "Aucun"
             for request in self:
                 if (
                     request.state != "brouillon"
-                    and request.service_demandeur_id.id
-                    != vals["service_demandeur_id"]
+                    and request.service_demandeur_id.id != vals["service_demandeur_id"]
                 ):
                     old_service_name = (
                         request.service_demandeur_id.name
                         if request.service_demandeur_id
-                        else u"Aucun"
+                        else "Aucun"
                     )
                     service_changes.append(
                         (request, old_service_name, new_service_name)
@@ -318,15 +320,14 @@ class DssRequest(models.Model):
         for request, old_name, new_name in service_changes:
             request.message_post(
                 body=(
-                    u"L'administrateur a modifié le service demandeur : "
-                    u"%s -> %s."
-                    % (html_escape(old_name), html_escape(new_name))
+                    "L'administrateur a modifié le service demandeur : "
+                    "%s -> %s." % (html_escape(old_name), html_escape(new_name))
                 )
             )
         for request, old_name, new_name in requester_changes:
             request.message_post(
                 body=(
-                    u"L'administrateur a modifié le demandeur : %s -> %s."
+                    "L'administrateur a modifié le demandeur : %s -> %s."
                     % (html_escape(old_name), html_escape(new_name))
                 )
             )
@@ -344,6 +345,5 @@ class DssRequest(models.Model):
             )
             if duplicate:
                 raise ValidationError(
-                    u"Le BCI %s est déjà utilisé par une autre demande DSS."
-                    % rec.bci
+                    "Le BCI %s est déjà utilisé par une autre demande DSS." % rec.bci
                 )

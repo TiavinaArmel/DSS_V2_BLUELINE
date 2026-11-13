@@ -2,7 +2,7 @@
 
 ## 1. Présentation rapide
 
-DSS V2 est un module Odoo de gestion des demandes de sortie de stock : saisie d'articles, validations Chef et Stock, mouvements Odoo, suivi dans le chatter et génération d'un bon de livraison PDF. Le manifeste indique la version `2.4`; le `README.md` du module cible Odoo 10 Community. Le cahier de projet mentionne Python 2.7 et PostgreSQL, mais le manifeste ne fixe pas la version de Python.
+DSS V2 est un module Odoo de gestion des demandes de sortie de stock : saisie d'articles, validations Chef et Stock, mouvements Odoo, suivi dans le chatter et génération d'un bon de livraison PDF. Le manifeste indique la version `2.8`; le `README.md` du module cible Odoo 10 Community. Le cahier de projet mentionne Python 2.7 et PostgreSQL, mais le manifeste ne fixe pas la version de Python.
 
 ## 2. Prérequis
 
@@ -14,7 +14,7 @@ DSS V2 est un module Odoo de gestion des demandes de sortie de stock : saisie d'
 | wkhtmltopdf | Nécessaire au rendu PDF Odoo; aucune version n'est imposée par le manifeste. |
 | Less | Aucun fichier Less propre à `dss_v2` n'a été recensé; le module livre des fichiers CSS. |
 
-Les dépendances Odoo déclarées sont `web`, `stock` et `mail`.
+Les dépendances Odoo déclarées sont `web`, `stock` et `mail`. Le module RH n'est plus requis pour le fonctionnement courant. La migration 2.5 conserve une lecture conditionnelle des anciennes tables RH pour transférer les départements historiques vers `dss.service`.
 
 ## 3. Installation rapide
 
@@ -41,7 +41,7 @@ python odoo-bin -c odoo.conf -d NOM_DE_LA_BASE -u dss_v2
 | Rapports | [Vue d'ensemble](05-rapports/00-vue-ensemble.md), [bon de livraison](05-rapports/01-bon-de-livraison.md), [bon de retour](05-rapports/02-bon-de-retour.md) |
 | Intégrations | [Stock](06-integrations/00-stock.md), [courriels et SMTP](06-integrations/01-email-smtp.md), [séquence](06-integrations/02-sequence.md) |
 | Sécurité | [Groupes](07-securite/00-groupes.md), [droits CRUD](07-securite/01-droits-crud.md), [règles d'enregistrement](07-securite/02-regles-enregistrement.md) |
-| Tests | [Notifications](08-tests/00-tests-notifications.md) |
+| Tests | [Notifications, quantités et clôture](08-tests/00-tests-notifications.md) |
 | Maintenance | [Dépannage](09-maintenance/00-depannage.md), [migrations](09-maintenance/01-migrations.md), [organisation du code](09-maintenance/02-refactorisation.md) |
 | Historique | [Versions](10-historique-des-versions.md) |
 
@@ -61,7 +61,7 @@ python odoo-bin -c odoo.conf -d NOM_DE_LA_BASE -u dss_v2
 |---|---|
 | Auteur du module | Tiavina Armel, selon `__manifest__.py`. |
 | Encadreur | Non indiqué dans les fichiers du module audités. |
-| Mise à jour de cet index | 2026-10-16. |
+| Mise à jour de cet index | 2026-11-13. |
 
 ## 7. Fiche de mémorisation
 

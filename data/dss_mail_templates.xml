@@ -6,14 +6,18 @@
         <!-- Nom interne affiché aux administrateurs dans la configuration des e-mails. -->
         <field name="name">DSS - Notification workflow</field>
         <!-- ref pointe vers l'identifiant XML du modèle d'enregistrement dss.request. -->
-        <field name="model_id" ref="dss_v2.model_dss_request"/>
-        <!-- ${...} insère une valeur calculée ; ctx.get(clé, valeur_par_défaut) lit le contexte Odoo. -->
+        <field name="model_id" ref="dss_v2.model_dss_request" />
+        <!-- ${...} insère une valeur calculée ; ctx.get(clé, valeur_par_défaut) lit le contexte
+        Odoo. -->
         <field name="subject">DSS ${object.name} - ${ctx.get('dss_action_label', 'Notification')}</field>
-        <!-- user.email fournit l'adresse de l'utilisateur courant ; or '' utilise une chaîne vide si elle manque. -->
+        <!-- user.email fournit l'adresse de l'utilisateur courant ; or '' utilise une chaîne vide
+        si elle manque. -->
         <field name="email_from">${user.email or ''}</field>
         <!-- Styles intégrés au HTML pour une meilleure compatibilité avec les clients e-mail. -->
-        <!-- CDATA empêche XML d'interpréter les balises HTML comme des balises de configuration Odoo. -->
-        <!-- Le contenu HTML présente l'action, la demande, les changements éventuels et un lien vers Odoo. -->
+        <!-- CDATA empêche XML d'interpréter les balises HTML comme des balises de configuration
+        Odoo. -->
+        <!-- Le contenu HTML présente l'action, la demande, les changements éventuels et un lien
+        vers Odoo. -->
         <field name="body_html"><![CDATA[
 ## Ce contenu HTML est traite par Mako avant d'etre envoye comme courriel.
 ## ${...} insere une valeur Python ; les lignes % if et % for pilotent les blocs conditionnels et repetes.
@@ -250,6 +254,33 @@
                         </table>
                     </td>
                 </tr>
+                % elif ctx.get('dss_event_key') == 'closure' and ctx.get('dss_closure_returns'):
+                <tr>
+                    <td style="padding:0 30px 22px 30px;">
+                        <table role="presentation" width="100%" cellpadding="0"
+                               cellspacing="0" border="0"
+                               style="background-color:#eaf6ee;
+                                      border-left:4px solid #65a878;">
+                            <tr>
+                                <td style="padding:16px 18px;">
+                                    <p style="margin:0 0 8px 0;font-size:13px;
+                                              font-weight:bold;color:#216b35;">
+                                        Articles retournés à l’emplacement d’origine
+                                    </p>
+                                    <ul style="margin:0;padding-left:20px;">
+                                        % for closure_return in ctx.get('dss_closure_returns', []):
+                                        <li style="margin-bottom:6px;">
+                                            Une quantité ${closure_return['quantity']} de l’article
+                                            ${closure_return['product']} a été retournée à l’emplacement
+                                            d’origine : ${closure_return['location']}.
+                                        </li>
+                                        % endfor
+                                    </ul>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
                 % elif ctx.get('dss_event_key') in ('chef_rejection', 'stock_rejection', 'return_to_requester') and ctx.get('dss_motif'):
                 <tr>
                     <td style="padding:0 30px 22px 30px;">
@@ -344,6 +375,6 @@
         ]]></field>
         <!-- Conserve la notification dans Odoo après son envoi pour permettre son suivi. -->
         <!-- eval interprète False comme un booléen ; le courriel reste conservé après son envoi. -->
-        <field name="auto_delete" eval="False"/>
+        <field name="auto_delete" eval="False" />
     </record>
 </odoo>

@@ -10,7 +10,7 @@
 |---|---|---|---|
 | `name` | `Char` | `copy=False`, `readonly=True`, défaut `/` | Numéro produit par la séquence `dss.request` dans `create()`. |
 | `state` | `Selection` | Défaut `brouillon` | État du workflow; clés listées ci-dessous. |
-| `bci` | `Char` | Aucun `required=True` | Référence administrative, contrôlée à la soumission. |
+| `bci` | `Char` | Aucun `required=True` | Référence administrative; les espaces extérieurs sont supprimés et la valeur non vide doit être unique. |
 | `partner_id` | `Many2one(res.partner)` | Aucun `required=True` | Client de l'intervention. |
 | `lieu_intervention` | `Char` | Aucun `required=True` | Lieu saisi pour l'intervention. |
 | `date_intervention` | `Date` | Défaut `fields.Date.today` | Date prévue/renseignée pour l'intervention. |
@@ -22,7 +22,8 @@
 | `type_intervention` | `Selection` | Six valeurs | Catégorie métier qui détermine le sens calculé. |
 | `sens_mouvement` | `Char` | `compute`, `store=True`, `readonly=True` | Sens de stock dérivé du type d'intervention. |
 | `picking_id` | `Many2one(stock.picking)` | `readonly=True` | Lien vers le dernier picking affecté par les méthodes DSS. |
-| `has_ecart` | `Boolean` | `readonly=True` | Indicateur calculé à la validation Stock et à la clôture lorsque `qty_sortie + qty_retour` diffère de `qty_demandee` à deux décimales près. |
+| `picking_retour_cloture_id` | `Many2one(stock.picking)` | `readonly=True`, `copy=False` | Picking entrant qui réintègre les retours des interventions de sens `Sortie` à l'emplacement d'origine. |
+| `has_ecart` | `Boolean` | `readonly=True` | À la validation Stock, compare sortie + retour à la demande; à la clôture des interventions de sortie seule, compare installé + retour à la demande, à deux décimales près. |
 | `is_qty_modified` | `Boolean` | Défaut `False`, `readonly=True`, `copy=False` | Indique que le wizard de modification des quantités a été confirmé. |
 | `motif_rejet` | `Text` | Aucun | Motif reporté depuis le wizard de rejet. |
 | `line_ids` | `One2many(dss.request.line)` | Relation inverse `request_id` | Lignes de la demande. |
@@ -49,6 +50,8 @@ Les champs métiers de soumission ne portent pas `required=True` dans le modèle
 Les méthodes de transition sont documentées dans [le workflow](03-dss-request-workflow.md).
 
 La validation Stock utilise `is_qty_modified` pour distinguer une validation directe d'une validation confirmée par le wizard de quantités. En validation directe, `qty_sortie` reprend `qty_demandee` et `qty_retour` est remis à zéro.
+
+La contrainte SQL et `_check_unique_bci()` interdisent les BCI dupliqués. `create()` et `write()` retirent les espaces en début/fin et transforment une valeur vide en valeur nulle avant contrôle; la comparaison reste sensible à la casse.
 
 ## 4. Machine à états
 

@@ -10,6 +10,7 @@
                 <field name="request_id" invisible="1"/>
                 <!-- Le serveur utilise ce champ pour distinguer la clôture exceptionnelle. -->
                 <field name="is_exception" invisible="1"/>
+                <field name="is_sortie_only" invisible="1"/>
                 <!-- Le motif est obligatoire uniquement pour une clôture exceptionnelle. -->
                 <field name="motif_exception"
                     attrs="{'required': [('is_exception', '=', True)],
@@ -20,8 +21,17 @@
                         <!-- Article et quantité sortie sont consultables mais verrouillés pendant la clôture. -->
                         <field name="product_id" readonly="1"/>
                         <field name="qty_sortie" readonly="1"/>
-                        <field name="qty_installee"/>
-                        <field name="qty_retour"/>
+                        <field name="is_sortie_only" invisible="1"/>
+                        <field name="mode_saisie"
+                            attrs="{'invisible': [('is_sortie_only', '=', False)]}"/>
+                        <field name="qty_installee"
+                            attrs="{'readonly': ['&amp;',
+                                ('is_sortie_only', '=', True),
+                                ('mode_saisie', '!=', 'installee')]}"/>
+                        <field name="qty_retour"
+                            attrs="{'readonly': ['&amp;',
+                                ('is_sortie_only', '=', True),
+                                ('mode_saisie', '!=', 'retour')]}"/>
                     </tree>
                 </field>
                 <footer>

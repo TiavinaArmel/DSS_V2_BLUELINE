@@ -50,6 +50,17 @@ class DssClotureWizard(models.TransientModel):
     # One2many vers dss.cloture.wizard.line via wizard_id.
     line_ids = fields.One2many(
         'dss.cloture.wizard.line', 'wizard_id', string='Articles')
+    is_sortie_only = fields.Boolean(
+        string='Intervention avec mouvement sortie uniquement',
+        compute='_compute_is_sortie_only',
+    )
+
+    @api.depends('request_id.sens_mouvement')
+    def _compute_is_sortie_only(self):
+        for wizard in self:
+            wizard.is_sortie_only = (
+                wizard.request_id.sens_mouvement == 'Sortie'
+            )
 
     @api.model
     def default_get(self, fields_list):
@@ -76,8 +87,15 @@ class DssClotureWizard(models.TransientModel):
                     'request_line_id': line.id,
                     'product_id': line.product_id.id,
                     'qty_sortie': line.qty_sortie,
-                    'qty_installee': line.qty_installee,
-                    'qty_retour': line.qty_retour,
+                    'is_sortie_only': line.is_sortie_only,
+                    'qty_installee': (
+                        line.qty_sortie if line.is_sortie_only
+                        else line.qty_installee
+                    ),
+                    'qty_retour': (
+                        0.0 if line.is_sortie_only else line.qty_retour
+                    ),
+                    'mode_saisie': 'installee',
                 }))
             res['request_id'] = request_id
             res['line_ids'] = lines
@@ -129,28 +147,89 @@ class DssClotureWizard(models.TransientModel):
 
         ecarts = []   # Liste des écarts détectés
         recap = []    # Liste du récapitulatif des quantités
+        retours_stock = []
+        is_sortie_only = request.sens_mouvement == 'Sortie'
 
         for line in self.line_ids:
+            qty_installee = line.qty_installee
+            qty_retour = line.qty_retour
+            qty_sortie = line.request_line_id.qty_sortie
+            if is_sortie_only:
+                qty_saisie = (
+                    qty_installee
+                    if line.mode_saisie == 'installee'
+                    else qty_retour
+                )
+                if line.mode_saisie not in ('installee', 'retour'):
+                    raise ValidationError(
+                        "Choisissez la quantité à saisir pour l'article %s."
+                        % line.product_id.name
+                    )
+                if (
+                    float_compare(qty_saisie, 0.0, precision_digits=2) < 0
+                    or float_compare(
+                        qty_saisie,
+                        qty_sortie,
+                        precision_digits=2,
+                    ) > 0
+                ):
+                    raise ValidationError(
+                        "La quantité saisie pour l'article %s doit être comprise "
+                        "entre 0 et la quantité sortie (%s)."
+                        % (line.product_id.name, qty_sortie)
+                    )
+
+                if float_compare(
+                    qty_saisie, 0.0, precision_digits=2
+                ) == 0:
+                    qty_saisie = 0.0
+                elif float_compare(
+                    qty_saisie,
+                    qty_sortie,
+                    precision_digits=2,
+                ) == 0:
+                    qty_saisie = line.qty_sortie
+
+                if line.mode_saisie == 'installee':
+                    qty_installee = qty_saisie
+                    qty_retour = qty_sortie - qty_installee
+                else:
+                    qty_retour = qty_saisie
+                    qty_installee = qty_sortie - qty_retour
+
             # Écrit les nouvelles quantités dans la VRAIE ligne DSS.
             # Comme pour le wizard de quantité, le wizard travaille
             # sur une COPIE, puis écrit dans la vraie ligne à la validation.
             line.request_line_id.write({
-                'qty_installee': line.qty_installee,
-                'qty_retour': line.qty_retour,
+                'qty_installee': qty_installee,
+                'qty_retour': qty_retour,
             })
 
             # Ajoute une ligne au récapitulatif du message.
             recap.append(
                     u'\u2022 %s : Qte Installee %s, Qte Retour %s' % (
                     html_escape(line.product_id.name or ''),
-                    line.qty_installee,
-                    line.qty_retour)
+                    qty_installee,
+                    qty_retour)
             )
+            if is_sortie_only and qty_retour > 0:
+                emplacement_origine = request.location_id.name or ''
+                retours_stock.append({
+                    'product': html_escape(line.product_id.name or ''),
+                    'quantity': qty_retour,
+                    'location': html_escape(emplacement_origine),
+                })
 
             # L'indicateur d'écart reste défini par la règle métier des
             # quantités demandées, sorties et retournées.
+            qty_totale_traitee = (
+                qty_installee + qty_retour
+                if is_sortie_only
+                else line.request_line_id.qty_sortie
+                + line.request_line_id.qty_retour
+            )
             if float_compare(
-                line.request_line_id.qty_sortie + line.request_line_id.qty_retour,
+                qty_totale_traitee,
                 line.request_line_id.qty_demandee,
                 precision_digits=2,
             ) != 0:
@@ -159,10 +238,13 @@ class DssClotureWizard(models.TransientModel):
                         html_escape(line.product_id.name or ''),
                         line.request_line_id.qty_demandee,
                         line.request_line_id.qty_sortie,
-                        line.qty_installee,
-                        line.request_line_id.qty_retour,
+                        qty_installee,
+                        qty_retour,
                     )
                 )
+
+        if retours_stock:
+            request._generer_mouvement_retour_cloture()
 
         # Remplit le champ has_ecart sur la DSS :
         #   - bool(ecarts) = True  s'il y a au moins un écart
@@ -188,6 +270,20 @@ class DssClotureWizard(models.TransientModel):
         else:
             message = u'<b>%s</b> a clôturé la demande.<br/>%s' % (
                 nom_acteur, u'<br/>'.join(recap))
+        if retours_stock:
+            message += (
+                u'<br/><br/><b>Retours à l’emplacement d’origine :</b><br/>'
+                + u'<br/>'.join(
+                    u'\u2022 Une quantité %s de l’article %s a été retournée '
+                    u'à l’emplacement d’origine : %s.'
+                    % (
+                        item['quantity'],
+                        item['product'],
+                        item['location'],
+                    )
+                    for item in retours_stock
+                )
+            )
         if ecarts:
             message += (
                 u'<br/><br/><b>Ecarts detectes :</b><br/>'
@@ -202,6 +298,7 @@ class DssClotureWizard(models.TransientModel):
             dss_closure_actor=self.env.user.name or '',
             dss_closure_reason=self.motif_exception or '',
             dss_closure_motif_exception=self.motif_exception or '',
+            dss_closure_returns=retours_stock,
         )._dss_notify_closure()
 
         # Ferme la popup.
@@ -237,3 +334,48 @@ class DssClotureWizardLine(models.TransientModel):
     #   - qty_retour    : quantité retournée au stock
     qty_installee = fields.Float(string='Qte Installee')
     qty_retour = fields.Float(string='Qte Retour')
+    mode_saisie = fields.Selection(
+        [
+            ('installee', 'Saisir la quantité installée'),
+            ('retour', 'Saisir la quantité retournée'),
+        ],
+        string='Quantité à saisir',
+        required=True,
+        default='installee',
+    )
+    is_sortie_only = fields.Boolean(
+        related='request_line_id.is_sortie_only',
+        readonly=True,
+    )
+
+    @api.onchange('mode_saisie', 'qty_installee', 'qty_retour')
+    def _onchange_quantites_sortie(self):
+        for line in self:
+            if not line.is_sortie_only:
+                continue
+            qty_saisie = (
+                line.qty_installee
+                if line.mode_saisie == 'installee'
+                else line.qty_retour
+            )
+            if (
+                float_compare(qty_saisie, 0.0, precision_digits=2) < 0
+                or float_compare(
+                    qty_saisie,
+                    line.qty_sortie,
+                    precision_digits=2,
+                ) > 0
+            ):
+                return {
+                    'warning': {
+                        'title': 'Quantité invalide',
+                        'message': (
+                            "La quantité saisie doit être comprise entre 0 "
+                            "et la quantité sortie (%s)." % line.qty_sortie
+                        ),
+                    }
+                }
+            if line.mode_saisie == 'installee':
+                line.qty_retour = line.qty_sortie - qty_saisie
+            else:
+                line.qty_installee = line.qty_sortie - qty_saisie

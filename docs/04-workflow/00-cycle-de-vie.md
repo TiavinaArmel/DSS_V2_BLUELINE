@@ -33,11 +33,11 @@ Le groupe Sécurité ne forme pas une étape du circuit de `dss.request`. Le par
 | `valide_magasin` | `approuve` | `action_valider_magasin()` | Vérifie l'état et exécute les mouvements avant d'approuver. |
 | Tout état en cas d'appel direct | `rejete` | `action_rejeter()` | Pas de contrôle serveur de l'état initial; les boutons sont conditionnés par la vue. |
 | `rejete` | `brouillon` | `action_renvoyer_demandeur()` | Vérifie l'état et le groupe Chef. |
-| `approuve` | `cloture` | `DssClotureWizard.action_confirmer()` | Le bouton est visible au Chef à l'état approuvé; le wizard ne contrôle pas lui-même cet état. |
+| `approuve` | `cloture` | `DssClotureWizard.action_confirmer()` | Clôture normale par le demandeur d'origine ou exceptionnelle par le Chef avec motif; état et acteur vérifiés côté serveur. |
 
 ## 4. Cas particuliers
 
-Le rejet conserve son motif dans `motif_rejet`. Le renvoi retourne l'état à `brouillon`; le code de cette action ne vide pas les signataires, dates ou le motif existants. La clôture calcule l'écart à partir de `qty_installee != qty_sortie`.
+Le rejet conserve son motif dans `motif_rejet`. Le renvoi retourne l'état à `brouillon`; le code de cette action ne vide pas les signataires, dates ou le motif existants. Pour les deux types d'intervention de sens `Sortie`, la clôture impose `qty_installee + qty_retour = qty_sortie`; les retours positifs sont transférés à l'emplacement source d'origine.
 
 ## 5. Fiche de mémorisation
 

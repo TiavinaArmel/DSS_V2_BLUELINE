@@ -19,12 +19,23 @@ Le renvoi est affiché au Chef quand l'état vaut `rejete`. Le code vérifie ég
 
 ## 3. Clôture
 
-Le demandeur d'origine ouvre `dss.cloture.wizard` à l'état `approuve` pour une clôture normale. Le Chef dispose d'une action de clôture exceptionnelle utilisant le même wizard et exigeant un motif. Le wizard préremplit une copie des lignes et permet de saisir `qty_installee` et `qty_retour`.
+Le demandeur d'origine ouvre `dss.cloture.wizard` à l'état `approuve` pour une clôture normale. Le Chef dispose d'une action de clôture exceptionnelle utilisant le même wizard et exigeant un motif, vérifié aussi côté serveur.
+
+Pour les interventions **Nouvelle installation client** et **Installation interne** (`sens_mouvement == "Sortie"`), l'ouverture du wizard initialise chaque ligne avec `qty_installee = qty_sortie` et `qty_retour = 0`. Le choix « Quantité à saisir » rend un seul champ modifiable par ligne :
+
+- saisir la quantité installée calcule `qty_retour = qty_sortie - qty_installee` ;
+- saisir la quantité retournée calcule `qty_installee = qty_sortie - qty_retour`.
+
+La quantité saisie doit être comprise entre zéro et `qty_sortie`; le contrôle est répété côté serveur à la confirmation. Les lignes laissées intactes sont donc considérées entièrement installées. À la clôture, chaque retour positif crée un picking entrant du stock client vers l'emplacement source `location_id`. Le picking est accessible depuis `picking_retour_cloture_id`; le chatter et l'e-mail de clôture indiquent l'article, la quantité retournée et son emplacement d'origine.
+
+Pour les autres types d'intervention, les valeurs installée/retour conservent le comportement antérieur. L'indicateur d'écart des interventions de sortie seule compare le total installé + retourné à la quantité demandée.
 
 | Opération lors de la confirmation | Détail |
 |---|---|
 | Écriture | Écrit `qty_installee` et `qty_retour` sur les lignes DSS. |
-| Écart | Compare `qty_installee` à `qty_sortie`; `has_ecart` devient vrai si une ligne diffère. |
+| Quantités sortie seule | Le total installé + retourné correspond à `qty_sortie`; une seule quantité est saisie et l'autre est calculée. |
+| Retour stock | Chaque quantité retournée positive est transférée à la clôture vers l'emplacement source de la demande. |
+| Écart | Pour une sortie seule, compare le total installé + retourné à `qty_demandee`; `has_ecart` devient vrai si une ligne diffère. |
 | État | Passe la demande à `cloture`. |
 | Chatter | Ajoute un récapitulatif et les écarts éventuels. |
 | Notification | Appelle `_dss_notify_closure()` pour le Chef, le Magasin et le demandeur; le contexte conserve le type et le motif d'une clôture exceptionnelle. |
@@ -37,5 +48,5 @@ Le wizard vérifie côté serveur que la demande est encore à l'état `approuve
 |---|---|
 | Rejet | Motif obligatoire dans le wizard; garde-fou d'état absent dans `action_rejeter()`. |
 | Renvoi | Chef seulement, état `rejete` vérifié côté serveur. |
-| Clôture | Écart calculé sur installé versus sorti; la quantité retournée n'entre pas dans cette comparaison. |
+| Clôture sortie seule | `qty_installee + qty_retour = qty_sortie`; un retour positif crée un transfert entrant à la clôture. |
 | Sources | [`dss_rejet_wizard.py`](../../models/dss_rejet_wizard.py), [`dss_cloture_wizard.py`](../../models/dss_cloture_wizard.py), [`dss_request_workflow.py`](../../models/dss_request_workflow.py). |

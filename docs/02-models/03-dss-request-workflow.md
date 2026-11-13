@@ -8,7 +8,7 @@
 | `action_valider_chef` | Exige `valide_chef` et l'utilisateur doit être le Chef DSS configuré sur le service | `valide_magasin` | Enregistre signataire/date Chef, poste un message et prépare une notification. |
 | `action_valider_magasin` | Exige `valide_magasin` | `approuve` après génération stock | Prépare les quantités, calcule `has_ecart`, enregistre signataire/date Stock, appelle le routeur stock, génère le BL, poste des messages et prépare une notification. |
 | `action_rejeter` | Chef DSS assigné à l'étape Chef, groupe Magasin à l'étape Stock; autres états refusés | `rejete` | Contrôle l'acteur côté serveur, conserve l'état précédent pour le routage, poste le motif et prépare une notification. |
-| `action_confirmer` du wizard de clôture | Demandeur signataire ou Chef DSS en mode exceptionnel; état `approuve` obligatoire | `cloture` | Contrôle l'acteur et l'état avant d'écrire les quantités, puis journalise et notifie la clôture. |
+| `action_confirmer` du wizard de clôture | Demandeur signataire ou Chef DSS en mode exceptionnel; état `approuve` obligatoire | `cloture` | Contrôle l'acteur et l'état; pour les sorties seules, valide les quantités, crée le picking entrant des retours et journalise/notifie la clôture. |
 | `action_renvoyer_demandeur` | Exige groupe Chef et état `rejete` | `brouillon` | Poste le nom du demandeur et prépare un courriel de renvoi. |
 
 Les actions métier et leur ordre réel sont implémentés dans [`dss_request_workflow.py`](../../models/dss_request_workflow.py). Les contrôles d'accès visuels et les contrôles serveur ne sont pas équivalents.
@@ -20,6 +20,8 @@ La méthode `_prepare_quantities_before_stock_validation()` applique la règle s
 - si `is_qty_modified` vaut `False`, `qty_sortie` reçoit `qty_demandee` et `qty_retour` reçoit `0.0` ;
 - si `is_qty_modified` vaut `True`, les valeurs confirmées par le wizard sont conservées ;
 - `has_ecart` vaut vrai si `qty_sortie + qty_retour` diffère de `qty_demandee` avec `float_compare(..., precision_digits=2)`.
+
+À la clôture des interventions `nouvelle_installation` et `installation_interne`, une seule quantité est saisie par ligne. Le wizard impose `qty_installee + qty_retour = qty_sortie`; `has_ecart` y compare ce total à `qty_demandee`. Le retour positif est transféré à l'emplacement source.
 
 ## 2. Validations de soumission
 

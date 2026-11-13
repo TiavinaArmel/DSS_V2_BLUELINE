@@ -9,6 +9,58 @@ class DssRequestStock(models.Model):
 
     _inherit = "dss.request"
 
+    def _generer_mouvement_retour_cloture(self):
+        """Réintègre les retours de clôture d'une sortie dans l'emplacement source."""
+        self.ensure_one()
+        request = self.sudo()
+        lignes_a_traiter = request.line_ids.filtered(
+            lambda line: line.qty_retour > 0
+        )
+        if not lignes_a_traiter:
+            return False
+        if not request.location_id or request.location_id.usage != "internal":
+            raise ValidationError(
+                "Un emplacement source interne est requis pour enregistrer le retour."
+            )
+
+        emplacement_source = request.partner_id.property_stock_customer
+        if not emplacement_source:
+            emplacement_source = request.env.ref("stock.stock_location_customers")
+        picking_type = request.env["stock.picking.type"].search(
+            [("code", "=", "incoming")], limit=1
+        )
+        if not picking_type:
+            raise ValidationError(
+                "Aucun type de transfert entrant n'est configuré pour le retour."
+            )
+
+        picking = request.env["stock.picking"].create(
+            {
+                "partner_id": request.partner_id.id,
+                "picking_type_id": picking_type.id,
+                "location_id": emplacement_source.id,
+                "location_dest_id": request.location_id.id,
+                "origin": request.name,
+            }
+        )
+        for line in lignes_a_traiter:
+            request.env["stock.move"].create(
+                {
+                    "name": line.product_id.name,
+                    "product_id": line.product_id.id,
+                    "product_uom_qty": line.qty_retour,
+                    "product_uom": line.product_id.uom_id.id,
+                    "location_id": emplacement_source.id,
+                    "location_dest_id": request.location_id.id,
+                    "picking_id": picking.id,
+                }
+            )
+        picking.action_confirm()
+        picking.action_assign()
+        picking.action_done()
+        request.picking_retour_cloture_id = picking.id
+        return picking
+
     def _generer_mouvement_sortie(self):
         """Transfère les quantités sorties de l'emplacement vers le client."""
         # Cette méthode traite une seule demande, condition nécessaire à ensure_one().

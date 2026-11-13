@@ -23,7 +23,8 @@ dss.request.line_ids (One2many) -> dss.request.line
 | `qty_demandee` | `Float` | Non | Quantité demandée. |
 | `qty_sortie` | `Float` | Non | Quantité effectivement sortie ou déplacée par le flux DSS. |
 | `qty_installee` | `Float` | Non | Quantité déclarée installée lors de la clôture. |
-| `qty_retour` | `Float` | Non | Quantité de retour utilisée par le mouvement entrant. |
+| `qty_retour` | `Float` | Non | Quantité retournée; utilisée à la clôture pour une sortie seule et au mouvement Stock selon les autres sens. |
+| `is_sortie_only` | `Boolean` | Oui, non stocké | Vrai si le sens de la demande est `Sortie`; verrouille l'installation et le retour hors wizard de clôture. |
 | `motif_ecart` | `Text` | Non | Motif de l'écart saisi par article lorsque la quantité sortie diffère de la quantité demandée. |
 | `observation` | `Char` | Non | Texte d'observation affiché notamment sur le BL. |
 | `qty_demandee_readonly` | `Boolean` | Non | Indicateur lu par la vue pour verrouiller la quantité demandée. |
@@ -33,6 +34,7 @@ dss.request.line_ids (One2many) -> dss.request.line
 | Méthode | Déclencheur | Effet |
 |---|---|---|
 | `_compute_qty_standard` | `@api.depends('product_id', 'request_id.location_id')` | Somme le stock de l'article dans l'emplacement exact, sans inclure les sous-emplacements; vaut `0.0` si l'article ou l'emplacement manque. Le champ est déclaré `store=True`. |
+| `_compute_is_sortie_only` | `@api.depends('request_id.sens_mouvement')` | Active les règles de saisie réservées aux interventions de sens `Sortie`. |
 | `_onchange_product_id_qty_demandee_readonly` | `@api.onchange('product_id')` | Si la ligne a une demande parente, reflète le type `retour_materiel` dans `qty_demandee_readonly`. |
 
 Le modèle parent met également à jour cet indicateur lors du changement du type d'intervention. L'`onchange` agit sur le formulaire; il ne constitue pas à lui seul une contrainte de sécurité serveur.
@@ -43,5 +45,5 @@ Le modèle parent met également à jour cet indicateur lors du changement du ty
 |---|---|
 | Relation | Une demande possède plusieurs lignes; chaque ligne pointe vers un seul article. |
 | Disponibilité locale | `qty_standard` est calculé depuis `stock.quant` avec `location_id = request_id.location_id`; les sous-emplacements sont exclus. |
-| Quantités | Sortie, installation et retour sont des champs distincts utilisés à des étapes différentes. La demande initiale n'est pas écrasée par le wizard. |
+| Quantités | Pour les sorties seules, installation et retour sont saisis à la clôture, l'un étant calculé à partir de l'autre; un retour positif est remis à l'emplacement source. Les autres types conservent leurs étapes actuelles. La demande initiale n'est pas écrasée par le wizard. |
 | Source | [`models/dss_request_line.py`](../../models/dss_request_line.py). |

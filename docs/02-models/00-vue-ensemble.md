@@ -31,6 +31,7 @@ dss.request
 |-- location_id -> stock.location
 |-- location_dest_id -> stock.location
 |-- picking_id -> stock.picking
+|-- picking_retour_cloture_id -> stock.picking
 `-- signataires -> res.users
 
 Wizards temporaires -> dss.request / dss.request.line

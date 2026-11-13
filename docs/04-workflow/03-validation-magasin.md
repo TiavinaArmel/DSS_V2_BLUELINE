@@ -21,6 +21,8 @@ La méthode ne vérifie pas directement le groupe de l'utilisateur. Elle enregis
 | `Sortie + Entree` | Sortie puis entrée |
 | `Transfert` | `_generer_mouvement_transfert()` |
 
+Pour les interventions `nouvelle_installation` et `installation_interne` (sens `Sortie`), le wizard Stock ne permet pas de renseigner `qty_retour`; cette valeur est remise à zéro côté serveur. Les quantités installée et retournée sont déterminées seulement lors de la clôture. Les autres sens suivent le routeur ci-dessus sans changement.
+
 Les contrôles de stock, les emplacements et le cycle des pickings sont décrits dans [l'intégration Stock](../06-integrations/00-stock.md).
 
 ## 4. Effets après le routeur

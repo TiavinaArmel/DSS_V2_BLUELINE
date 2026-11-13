@@ -2,7 +2,7 @@
 
 ## 1. Fichier et périmètre
 
-Le manifeste déclare `tests/test_dss_notifications.py`, `tests/test_dss_stock_location.py` et `tests/test_dss_quantities.py`. Les tests utilisent `odoo.tests.common.TransactionCase`. Les tests de notifications vérifient le routage, le journal et le rendu des courriels; les tests de quantités vérifient la validation directe, la modification par wizard, le motif obligatoire, la conservation de `qty_demandee` et la précision à deux décimales.
+Le manifeste déclare des tests de notifications, d'emplacements, de services, de clôture et de quantités. Ils utilisent `odoo.tests.common.TransactionCase`. Les tests de notifications vérifient le routage, le journal et le rendu des courriels; les tests de quantités vérifient la validation directe, la modification par wizard, le motif obligatoire, la conservation de `qty_demandee` et la précision à deux décimales. Les tests de clôture vérifient l'accès, les motifs exceptionnels, le calcul des retours et leur transfert vers l'emplacement source.
 
 ## 2. Cas couverts
 
@@ -18,6 +18,15 @@ Le manifeste déclare `tests/test_dss_notifications.py`, `tests/test_dss_stock_l
 | `test_return_to_requester_email_contains_rejection_motif` | Destinataire demandeur et motif inclus dans le courriel de renvoi. |
 | `test_security_is_not_notified_without_a_real_dss_security_transition` | L'action d'approbation Stock ne crée pas de clé d'événement `security`. |
 | `test_stock_approval_email_contains_quantity_change_motif` | L'e-mail de validation Stock contient le motif d'écart et le nom de l'article dans une liste `<ul><li>`, sans `<br/>` dans le bloc des motifs. |
+| `test_sortie_closure_defaults_to_all_installed` | Une ligne de sortie laissée intacte est clôturée avec toute la quantité installée et aucun retour. |
+| `test_sortie_closure_calculates_return_and_replenishes_origin` | Le retour calculé crée un picking entrant vers l'emplacement source et apparaît dans le chatter et l'e-mail. |
+| `test_sortie_closure_can_use_return_as_the_input` | Saisir le retour calcule la quantité installée complémentaire. |
+| `test_sortie_closure_onchange_updates_the_complementary_quantity` | Le wizard recalcule immédiatement l'autre quantité lorsque le mode ou la valeur saisie change. |
+| `test_sortie_closure_rejects_quantity_above_stock_output` | Le serveur rejette une quantité installée supérieure à la quantité sortie. |
+| `test_sortie_closure_rejects_negative_return` | Le serveur rejette une quantité retournée négative. |
+| `test_other_movement_types_keep_manual_closure_quantities` | Les autres sens de mouvement conservent leur saisie antérieure. |
+| `test_requester_closure_can_create_the_return_picking` | Le demandeur peut fermer une sortie avec retour sans avoir les droits Stock nécessaires à la création du picking. |
+| `test_sortie_only_return_is_deferred_to_closure` | Le wizard Stock ne peut pas enregistrer un retour pour les deux types de sortie seule. |
 | `test_rejection_mapping_is_explicit` | Vérifie seulement l'état brouillon par défaut et l'absence de motif initial. |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.
@@ -32,7 +41,7 @@ python odoo-bin -c odoo.conf -d BASE_DE_TEST -u dss_v2 --test-enable --stop-afte
 
 L'audit documentaire n'a pas exécuté Odoo ni cette commande; le résultat des tests n'est donc pas certifié ici.
 
-Pour l'évolution du 3 novembre 2026, la compilation Python et l'analyse syntaxique XML ont été vérifiées. Le test runner Odoo n'a pas été exécuté dans l'environnement de développement utilisé, car aucun `odoo-bin` ou `odoo.py` n'y a été trouvé.
+La compilation Python et l'analyse des diagnostics peuvent être exécutées localement. Les tests Odoo doivent être lancés sur une base de test et avec l'interpréteur compatible avec l'instance Odoo 10; ne pas lancer le module sur une base de production.
 
 ## 3 bis. Incident Unicode du wizard de quantités
 

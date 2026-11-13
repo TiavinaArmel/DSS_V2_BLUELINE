@@ -3,13 +3,13 @@
     "name": "DSS V2 - Demande de Sortie de Stock",
 
     # Version du module DSS
-    "version": "2.6",
+    "version": "2.8",
 
     # Dépendances Odoo :
     # - web   : assets et rapports QWeb
     # - stock : mouvements de stock (Inventory)
     # - mail  : chatter et notifications internes
-    "depends": ["web", "stock", "mail", "hr"],
+    "depends": ["web", "stock", "mail"],
 
     # Auteur du module
     "author": "Tiavina Armel",
@@ -31,7 +31,6 @@
         #Format DSS/XX/XX/XXXX
         "data/dss_sequence.xml",
         "data/dss_mail_templates.xml",
-        "data/dss_department_data.xml",
 
         # Vues des assistants (wizards)
         "views/dss_qty_sortie_wizard_views.xml",     # quantité à sortir

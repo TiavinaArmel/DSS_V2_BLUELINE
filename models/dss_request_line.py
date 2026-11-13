@@ -57,6 +57,10 @@ class DssRequestLine(
     qty_demandee_readonly = fields.Boolean(
         string="Qte Demandee lecture seule", default=False
     )
+    is_sortie_only = fields.Boolean(
+        string="Intervention avec mouvement sortie uniquement",
+        compute="_compute_is_sortie_only",
+    )
 
     # Décorateur @api.depends : recalcule la disponibilité quand l'article ou
     # l'emplacement source de la demande change.
@@ -81,6 +85,11 @@ class DssRequestLine(
                 ]
             )
             line.qty_standard = sum(quant.qty for quant in quants)
+
+    @api.depends("request_id.sens_mouvement")
+    def _compute_is_sortie_only(self):
+        for line in self:
+            line.is_sortie_only = line.request_id.sens_mouvement == "Sortie"
 
     # @api.onchange (différent de @api.depends) : s'exécute UNIQUEMENT
     # côté interface, en direct pendant que l'utilisateur remplit le

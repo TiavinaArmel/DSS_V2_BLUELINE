@@ -6,7 +6,7 @@
 |---|---|---|---|
 | Rejet | `dss.rejet.wizard` | Recueille le motif obligatoire puis appelle le rejet de la demande. | Bouton « Rejeter » du Chef ou du Magasin. |
 | Quantités Stock | `dss.qty.sortie.wizard` et lignes | Copie les lignes et permet de modifier sortie/retour. | Bouton « Modifier Qte ». |
-| Clôture | `dss.cloture.wizard` et lignes | Copie les lignes, recueille installé/retour, détecte les écarts et clôture. | Bouton Chef « Cloturer ». |
+| Clôture | `dss.cloture.wizard` et lignes | Copie les lignes, calcule installé/retour pour les sorties seules, crée le transfert de retour et clôture. | Bouton du demandeur ou clôture exceptionnelle du Chef. |
 | Confirmation Chef | `dss.validation.chef.wizard` | Confirme puis délègue à `action_valider_chef()`. | Bouton « Valider Chef ». |
 | Confirmation Stock | `dss.validation.stock.wizard` | Confirme puis délègue à `action_valider_magasin()`. | Bouton « Valider Stock ». |
 
@@ -28,11 +28,17 @@ Le serveur Odoo 10 fonctionne avec Python 2. Les messages construits dans `actio
 |---|---|---|
 | Rejet | `motif` requis | Copie dans `motif_rejet`, puis appelle `action_rejeter()`. |
 | Quantités | `qty_sortie`, `qty_retour`, `motif_ecart` | Compare chaque ligne à ses valeurs initiales, exige un motif uniquement pour une ligne réellement modifiée, initialise les autres lignes avec `qty_demandee` et conserve `qty_demandee`. |
-| Clôture | `qty_installee`, `qty_retour`, `is_exception`, `motif_exception` | Le demandeur clôture normalement; le Chef peut clôturer exceptionnellement avec motif. Le wizard écrit les quantités, calcule l'écart selon demande/sortie/retour, passe à `cloture`, poste un résumé et notifie. |
+| Clôture | `qty_installee`, `qty_retour`, `mode_saisie`, `is_exception`, `motif_exception` | Pour `sens_mouvement == "Sortie"`, installe = sortie et retour = 0 par défaut; le demandeur choisit une quantité à saisir, l'autre est calculée et contrôlée entre 0 et la sortie. Un retour positif est transféré à l'emplacement source. Les autres sens conservent la saisie manuelle. Le Chef doit toujours fournir le motif de clôture exceptionnelle. |
 | Confirmation Chef | Aucune donnée métier saisie | Appelle `action_valider_chef()`. |
 | Confirmation Stock | Aucune donnée métier saisie | Appelle `action_valider_magasin()`. |
 
 Chaque ligne du wizard mémorise ses valeurs initiales (`qty_sortie_initiale`, `qty_retour_initiale`, `motif_ecart_initial`). Une ligne non modifiée reçoit automatiquement `qty_sortie = qty_demandee` et `qty_retour = 0.0`.
+
+Pour les deux interventions dont le sens est uniquement `Sortie` (« Nouvelle installation client » et « Installation interne »), `qty_installee` et `qty_retour` ne sont pas modifiables sur la demande ni dans le wizard Stock; ils le sont uniquement dans le wizard de clôture. Par ligne, `mode_saisie` choisit le champ actif. Le serveur recalcule la valeur complémentaire et rejette une quantité saisie négative ou supérieure à `qty_sortie`, même si l'on contourne l'interface.
+
+À la clôture, les retours positifs de ces interventions créent un picking entrant depuis l'emplacement client vers `request.location_id`. Le lien de ce transfert est conservé dans `picking_retour_cloture_id`; le chatter et la notification de clôture mentionnent chaque article, sa quantité retournée et son emplacement d'origine.
+
+Le chatter du wizard Stock regroupe les lignes modifiées dans un seul message à puces. Chaque article affiche son nom, sa quantité demandée, sa nouvelle quantité sortie et le motif; la puce est un caractère Unicode et non la séquence littérale `\u2022`.
 
 ## 4. Cycle de vie d'un wizard
 

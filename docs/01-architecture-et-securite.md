@@ -8,12 +8,12 @@ dss_v2/
 |-- __manifest__.py             # Métadonnées, dépendances et données XML/CSV
 |-- data/                       # Séquence et modèle de courriel
 |-- docs/                       # Documentation du module
-|-- migrations/2.2/             # Migration de l'identifiant du format PDF
+|-- migrations/                 # Migrations du format PDF, des services et des propriétaires
 |-- models/                     # Modèles, extensions, workflow et assistants
 |-- report/                     # Rapport QWeb et format papier
 |-- security/                   # Groupes et droits d'accès aux modèles
 |-- static/src/css/             # Styles de l'interface et du rapport
-|-- tests/                      # Tests Odoo du routage des notifications
+|-- tests/                      # Tests Odoo des services, quantités, stocks et workflows
 `-- views/                      # Formulaires, listes, recherche, menus et wizards
 ```
 
@@ -23,14 +23,14 @@ Les fichiers compilés Python (`.pyc`) présents localement ne sont pas des sour
 
 | Couche | Dossier ou fichier | Rôle vérifié |
 |---|---|---|
-| Métadonnées | `__manifest__.py` | Déclare la version `2.4`, les dépendances et les fichiers de données chargés. |
+| Métadonnées | `__manifest__.py` | Déclare la version `2.8`, les dépendances et les fichiers de données chargés. |
 | Modèles | `models/` | Définit la demande, ses lignes, les extensions Odoo et les traitements métier. |
 | Interface | `views/` | Déclare les vues, filtres, menus et fenêtres modales. |
 | Sécurité | `security/` | Crée quatre groupes et déclare les ACL CSV; aucune règle d'enregistrement n'est définie dans le XML fourni. |
 | Données | `data/` | Déclare la séquence DSS et le template de courriel. |
 | Rapport | `report/` | Déclare le rapport QWeb du bon de livraison et son format A5 paysage. |
 | Assets | `static/`, `views/assets_backend.xml` | Fournit les CSS du chatter et du rapport. |
-| Tests | `tests/` | Vérifie principalement la création et le routage des courriels sans SMTP. |
+| Tests | `tests/` | Couvre les notifications, services, quantités, emplacements et clôtures DSS. |
 
 ## 3. Chargement et flux de données
 
@@ -86,6 +86,8 @@ Les droits effectifs peuvent aussi dépendre des ACL des autres modules et des g
 | `stock` | Articles, emplacements, quantités, pickings et mouvements. |
 | `mail` | Chatter, templates et file de courriels. |
 
+Le workflow courant utilise le modèle DSS `dss.service`, associé aux utilisateurs Odoo (`res.users`), et non les modèles RH. La migration 2.5 lit conditionnellement les anciennes tables `hr_department` et `hr_department_res_users_rel` pour transférer les services historiques. Cette compatibilité de migration ne rend pas le module `hr` nécessaire au fonctionnement courant; le script de migration est conservé pour les bases anciennes.
+
 ## 8. Fiche de mémorisation
 
 | Repère | À retenir |
@@ -93,4 +95,4 @@ Les droits effectifs peuvent aussi dépendre des ACL des autres modules et des g
 | Source de vérité | Le manifeste, les modèles Python et les XML définissent le comportement réel. |
 | Sécurité | Groupes, ACL, restrictions de vue et règles d'enregistrement sont des mécanismes distincts. |
 | Workflow principal | `dss.request` n'a pas d'étape de validation Sécurité. |
-| Versions | Le manifeste indique `2.4`; il ne déclare pas de version Python. |
+| Versions | Le manifeste indique `2.8`; il ne déclare pas de version Python. |

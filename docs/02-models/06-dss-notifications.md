@@ -18,6 +18,8 @@ Le template est `dss_v2.mail_template_dss_workflow`. La matrice des événements
 
 Lors de l'événement `stock_approval`, le motif de modification des quantités est construit par article à partir de `dss.request.line.motif_ecart`. Il est transmis au template via `dss_motif` et n'est affiché que lorsqu'au moins une ligne possède un motif.
 
+Pour l'événement `closure`, le contexte `dss_closure_returns` peut contenir les articles retournés des interventions de sens `Sortie`. Le template liste leur quantité et leur emplacement source d'origine; aucun bloc de retour n'est affiché si aucune quantité positive n'est retournée.
+
 ## 3. Rendu et création
 
 Le code transmet au template le libellé d'action, la clé d'événement, le motif, l'état, l'URL de la demande et l'URL du logo. Le lien du logo est construit depuis le paramètre système `web.base.url`, avec le nom de la base et l'identifiant de la société de l'utilisateur courant; si le paramètre est absent, le template conserve le nom de l'entreprise comme solution de repli. Pour que le logo soit visible à l'extérieur, la base URL doit être publiquement accessible aux destinataires et la route Odoo du logo ne doit pas leur demander une authentification inaccessible.

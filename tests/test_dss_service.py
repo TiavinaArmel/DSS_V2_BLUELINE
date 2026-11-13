@@ -424,6 +424,57 @@ class TestDssServiceWorkflow(common.TransactionCase):
 
         self.assertEqual(request.state, "cloture")
 
+    def test_requester_closure_can_create_the_return_picking(self):
+        """Le demandeur clôture et crée un retour sans droits Stock."""
+        location = self.env["stock.location"].create({
+            "name": "DSS Requester Return Location",
+            "usage": "internal",
+        })
+        product = self.env["product.product"].create({
+            "name": "DSS Requester Return Product",
+            "type": "product",
+        })
+        request = self._create_request(
+            user=self.requester,
+            values={
+                "state": "approuve",
+                "signataire_demandeur_id": self.requester.id,
+                "type_intervention": "nouvelle_installation",
+                "location_id": location.id,
+                "partner_id": self.env.ref("base.res_partner_1").id,
+            },
+        )
+        line = self.env["dss.request.line"].create({
+            "request_id": request.id,
+            "product_id": product.id,
+            "qty_demandee": 10.0,
+            "qty_sortie": 10.0,
+        })
+        wizard = self._create_closure_wizard(request, self.requester)
+        wizard.write({
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": product.id,
+                "qty_sortie": 10.0,
+                "qty_installee": 7.0,
+                "qty_retour": 0.0,
+                "mode_saisie": "installee",
+            })],
+        })
+
+        wizard.action_confirmer()
+
+        self.assertEqual(request.state, "cloture")
+        self.assertTrue(request.picking_retour_cloture_id)
+        self.assertEqual(
+            request.picking_retour_cloture_id.location_dest_id,
+            location,
+        )
+        self.assertEqual(
+            request.picking_retour_cloture_id.move_lines.product_uom_qty,
+            3.0,
+        )
+
     def test_closure_wizard_marks_chef_exception(self):
         """L'ouverture du wizard marque explicitement la clôture du Chef."""
         request = self._create_request(

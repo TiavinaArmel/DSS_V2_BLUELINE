@@ -113,6 +113,41 @@ class TestDssQuantities(common.TransactionCase):
         self.assertIn(u"Quantité sortie : 7.0", audit_message.body)
         self.assertIn(u"Motif de modification : Stock insuffisant", audit_message.body)
 
+    def test_sortie_only_return_is_deferred_to_closure(self):
+        """Le wizard Stock ne peut pas enregistrer un retour pour une sortie seule."""
+        request, line = self._request_with_line()
+        request.type_intervention = "nouvelle_installation"
+        line.qty_sortie = 10.0
+        wizard = self.env["dss.qty.sortie.wizard"].create({
+            "request_id": request.id,
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": self.product.id,
+                "qty_demandee": 10.0,
+                "qty_sortie": 10.0,
+                "qty_retour": 4.0,
+                "qty_sortie_initiale": 10.0,
+                "qty_retour_initiale": 0.0,
+            })],
+        })
+
+        wizard.action_valider()
+
+        self.assertEqual(line.qty_sortie, 10.0)
+        self.assertEqual(line.qty_retour, 0.0)
+
+    def test_stock_wizard_defaults_include_sortie_only_flag(self):
+        """Le tableau du wizard reçoit le booléen utilisé par son attrs."""
+        request, line = self._request_with_line()
+        request.type_intervention = "nouvelle_installation"
+        self.assertTrue(line.is_sortie_only)
+
+        defaults = self.env["dss.qty.sortie.wizard"].with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+
+        self.assertTrue(defaults["line_ids"][0][2]["is_sortie_only"])
+
     def test_ecart_uses_two_decimal_precision(self):
         """Une différence inférieure au centième n'est pas un écart."""
         request, line = self._request_with_line()

@@ -15,7 +15,9 @@
                         <field name="product_id" readonly="1"/>
                         <field name="qty_demandee" readonly="1"/>
                         <field name="qty_sortie"/>
-                        <field name="qty_retour"/>
+                        <field name="is_sortie_only" invisible="1"/>
+                        <field name="qty_retour"
+                            attrs="{'readonly': [('is_sortie_only', '=', True)]}"/>
                         <field name="motif_ecart"/>
                         <field name="qty_sortie_initiale" invisible="1"/>
                         <field name="qty_retour_initiale" invisible="1"/>

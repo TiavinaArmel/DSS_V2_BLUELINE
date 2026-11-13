@@ -24,15 +24,15 @@
 
 | Terme | Définition | Exemple |
 |---|---|---|
-| BCI | Bon de Commande Interne, référence administrative saisie sur la demande. | Champ `bci` de `dss.request`. |
+| BCI | Bon de Commande Interne, référence administrative saisie sur la demande; espaces extérieurs retirés et valeur non vide unique. | Champ `bci` de `dss.request`. |
 | BL | Bon de Livraison généré en PDF à partir d'une demande DSS. | Rapport QWeb `dss_v2.report_bon_livraison_document`. |
 | Demandeur | Utilisateur propriétaire de la DSS, distinct de la personne qui clique sur Soumettre. | Champ `demandeur_id`; l'acteur de soumission est `signataire_demandeur_id`. |
 | DSS | Demande de Sortie de Stock, dossier métier du module. | Modèle `dss.request`. |
-| Écart | Différence entre `qty_sortie + qty_retour` et `qty_demandee`, comparée avec une précision de deux décimales. | Le wizard de quantités exige un `motif_ecart` par article lorsque la sortie diffère de la demande. |
+| Écart | Différence entre les quantités traitées et `qty_demandee`, comparée avec une précision de deux décimales. | À la clôture d'une sortie seule, les quantités traitées sont `qty_installee + qty_retour`; leur somme vaut `qty_sortie`. |
 | Emplacement destination | Emplacement interne cible, requis pour le type `appro_distant`. | Champ `location_dest_id`. |
 | Emplacement source | Emplacement interne sélectionné comme origine d'une sortie ou d'un transfert. | Champ `location_id`. |
 | Sens du mouvement | Sens de stock calculé à partir du type d'intervention. | `Sortie`, `Entree`, `Sortie + Entree` ou `Transfert`. |
-| Type d'intervention | Catégorie choisie sur la demande et utilisée pour calculer le sens du mouvement. | `nouvelle_installation`, `retour_materiel`. |
+| Type d'intervention | Catégorie choisie sur la demande et utilisée pour calculer le sens du mouvement. | `nouvelle_installation`, `basculement`, `depannage`, `appro_distant`, `installation_interne`, `retour_materiel`. |
 
 ## 3. Termes techniques
 

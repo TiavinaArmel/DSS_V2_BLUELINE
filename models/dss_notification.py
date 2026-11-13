@@ -236,6 +236,9 @@ class DssRequestNotification(models.Model):
                         self.env.context.get("dss_closure_is_exception")
                         or self.env.context.get("dss_closure_type") == "exception"
                     ),
+                    dss_closure_returns=(
+                        self.env.context.get("dss_closure_returns") or []
+                    ),
                     # Passe l'URL du logo construite avec la base URL configurée.
                     dss_logo_url=self._dss_company_logo_url(),
                 ).generate_email(
