@@ -10,9 +10,38 @@ class DssRequestWorkflow(models.Model):
 
     _inherit = "dss.request"
 
+    def _normalize_return_material_lines(self, clear_motifs=False):
+        for request in self:
+            if request.type_intervention != "retour_materiel":
+                continue
+            for line in request.line_ids:
+                if float_compare(
+                    line.qty_retour, 0.0, precision_digits=2
+                ) < 0:
+                    raise ValidationError(
+                        "La quantité retournée ne peut pas être négative "
+                        "pour l'article %s." % line.product_id.name
+                    )
+                values = {
+                    "qty_demandee": 0.0,
+                    "qty_sortie": 0.0,
+                    "qty_installee": 0.0,
+                }
+                if clear_motifs:
+                    values["motif_ecart"] = False
+                line.write(values)
+            if clear_motifs:
+                request.is_qty_modified = False
+                request.has_ecart = False
+
     def _prepare_quantities_before_stock_validation(self):
         """Applique la règle métier avant la génération des mouvements."""
         self.ensure_one()
+        if self.type_intervention == "retour_materiel":
+            self._normalize_return_material_lines()
+            self.has_ecart = bool(self.is_qty_modified)
+            return
+
         if not self.is_qty_modified:
             for line in self.line_ids:
                 line.write({
@@ -37,6 +66,12 @@ class DssRequestWorkflow(models.Model):
         # Parcourt les articles liés et construit pour chacun une liste d'informations à afficher.
         for line in self.line_ids:
             parties = []
+            if self.type_intervention == "retour_materiel":
+                parties.append("Qte Retour %s" % line.qty_retour)
+                lignes_detail.append(
+                    "%s : %s" % (line.product_id.name, ", ".join(parties))
+                )
+                continue
             # append() ajoute le texte à la fin de la liste sans remplacer les valeurs existantes.
             if line.qty_demandee:
                 parties.append("Qte Demandee %s" % line.qty_demandee)
@@ -125,6 +160,8 @@ class DssRequestWorkflow(models.Model):
                 raise ValidationError("Le champ Emplacement destination est obligatoire pour un Transfert.")
             if not rec.line_ids:
                 raise ValidationError("Vous devez ajouter au moins un article avant de soumettre.")
+            if rec.type_intervention == "retour_materiel":
+                rec._normalize_return_material_lines(clear_motifs=True)
             rec.signataire_demandeur_id = self.env.user
             # Enregistre l'heure serveur Odoo de la soumission.
             rec.date_soumission = fields.Datetime.now()

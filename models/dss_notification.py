@@ -418,14 +418,21 @@ class DssRequestNotification(models.Model):
         motifs = []
         for line in self.line_ids:
             if line.motif_ecart:
-                details = u"quantité demandée %s, quantité sortie %s. Motif : %s" % (
-                    line.qty_demandee,
-                    line.qty_sortie,
-                    html_escape(
-                        line.motif_ecart,
-                        {"\"": "&quot;", "'": "&#x27;"},
-                    ),
+                motif = html_escape(
+                    line.motif_ecart,
+                    {"\"": "&quot;", "'": "&#x27;"},
                 )
+                if self.type_intervention == "retour_materiel":
+                    details = u"quantité retournée validée %s. Motif : %s" % (
+                        line.qty_retour,
+                        motif,
+                    )
+                else:
+                    details = u"quantité demandée %s, quantité sortie %s. Motif : %s" % (
+                        line.qty_demandee,
+                        line.qty_sortie,
+                        motif,
+                    )
                 motifs.append(
                     (
                         html_escape(line.product_id.name or ""),

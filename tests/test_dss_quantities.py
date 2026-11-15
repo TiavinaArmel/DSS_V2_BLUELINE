@@ -27,6 +27,12 @@ class TestDssQuantities(common.TransactionCase):
         })
         return request, line
 
+    def _return_material_request(self, qty_retour=4.0):
+        request, line = self._request_with_line()
+        request.type_intervention = "retour_materiel"
+        line.qty_retour = qty_retour
+        return request, line
+
     def test_default_quantity_is_copied_at_stock_validation(self):
         """Sans wizard, la sortie reprend la demande et aucun retour n'est créé."""
         request, line = self._request_with_line()
@@ -147,6 +153,105 @@ class TestDssQuantities(common.TransactionCase):
         ).default_get(["request_id", "line_ids"])
 
         self.assertTrue(defaults["line_ids"][0][2]["is_sortie_only"])
+
+    def test_return_material_defaults_preserve_return_quantity(self):
+        """Le wizard Stock reprend le retour demandé et conserve les lignes intactes."""
+        request, line = self._return_material_request(4.0)
+        defaults = self.env["dss.qty.sortie.wizard"].with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+        default_line = defaults["line_ids"][0][2]
+
+        self.assertTrue(default_line["is_retour_materiel"])
+        self.assertEqual(default_line["qty_retour"], 4.0)
+        self.assertEqual(default_line["qty_retour_initiale"], 4.0)
+
+        wizard = self.env["dss.qty.sortie.wizard"].create(defaults)
+        wizard.action_valider()
+        request._prepare_quantities_before_stock_validation()
+
+        self.assertEqual(line.qty_retour, 4.0)
+        self.assertEqual(line.qty_demandee, 0.0)
+        self.assertEqual(line.qty_sortie, 0.0)
+        self.assertEqual(line.qty_installee, 0.0)
+        self.assertFalse(request.is_qty_modified)
+        self.assertFalse(request.has_ecart)
+
+    def test_return_material_quantity_change_requires_motif(self):
+        """Toute variation de la quantité retournée exige un motif au Stock."""
+        request, line = self._return_material_request(4.0)
+        wizard = self.env["dss.qty.sortie.wizard"].create({
+            "request_id": request.id,
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": self.product.id,
+                "qty_retour": 2.0,
+                "qty_retour_initiale": 4.0,
+            })],
+        })
+
+        with self.assertRaises(ValidationError):
+            wizard.action_valider()
+
+        self.assertEqual(line.qty_retour, 4.0)
+        self.assertFalse(request.is_qty_modified)
+
+    def test_return_material_quantity_change_is_saved_and_traced(self):
+        """Le motif et la quantité corrigée sont conservés sans utiliser les autres quantités."""
+        request, line = self._return_material_request(4.0)
+        wizard = self.env["dss.qty.sortie.wizard"].create({
+            "request_id": request.id,
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": self.product.id,
+                "qty_retour": 2.0,
+                "qty_retour_initiale": 4.0,
+                "motif_ecart": u"Quantité réellement reçue",
+            })],
+        })
+
+        wizard.action_valider()
+        request._prepare_quantities_before_stock_validation()
+
+        self.assertEqual(line.qty_retour, 2.0)
+        self.assertEqual(line.qty_demandee, 0.0)
+        self.assertEqual(line.qty_sortie, 0.0)
+        self.assertEqual(line.qty_installee, 0.0)
+        self.assertEqual(line.motif_ecart, u"Quantité réellement reçue")
+        self.assertTrue(request.is_qty_modified)
+        self.assertTrue(request.has_ecart)
+
+        audit_message = self.env["mail.message"].search(
+            [
+                ("model", "=", "dss.request"),
+                ("res_id", "=", request.id),
+                ("body", "ilike", "Le Responsable Stock"),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        self.assertIn(u"Quantité retour demandée : 4.0", audit_message.body)
+        self.assertIn(u"Quantité retour validée : 2.0", audit_message.body)
+        self.assertIn(u"Quantité réellement reçue", audit_message.body)
+
+    def test_return_material_rejects_negative_quantity(self):
+        """La quantité retournée négative est refusée côté serveur."""
+        request, line = self._return_material_request(4.0)
+        wizard = self.env["dss.qty.sortie.wizard"].create({
+            "request_id": request.id,
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": self.product.id,
+                "qty_retour": -1.0,
+                "qty_retour_initiale": 4.0,
+                "motif_ecart": "Test",
+            })],
+        })
+
+        with self.assertRaises(ValidationError):
+            wizard.action_valider()
+
+        self.assertEqual(line.qty_retour, 4.0)
 
     def test_ecart_uses_two_decimal_precision(self):
         """Une différence inférieure au centième n'est pas un écart."""

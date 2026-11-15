@@ -25,6 +25,7 @@ dss.request.line_ids (One2many) -> dss.request.line
 | `qty_installee` | `Float` | Non | Quantité déclarée installée lors de la clôture. |
 | `qty_retour` | `Float` | Non | Quantité retournée; utilisée à la clôture pour une sortie seule et au mouvement Stock selon les autres sens. |
 | `is_sortie_only` | `Boolean` | Oui, non stocké | Vrai si le sens de la demande est `Sortie`; verrouille l'installation et le retour hors wizard de clôture. |
+| `is_retour_materiel` | `Boolean` | Oui, non stocké | Vrai pour l'intervention « Retour de matériel »; distingue la quantité retournée des champs de sortie/installation. |
 | `motif_ecart` | `Text` | Non | Motif de l'écart saisi par article lorsque la quantité sortie diffère de la quantité demandée. |
 | `observation` | `Char` | Non | Texte d'observation affiché notamment sur le BL. |
 | `qty_demandee_readonly` | `Boolean` | Non | Indicateur lu par la vue pour verrouiller la quantité demandée. |
@@ -46,4 +47,5 @@ Le modèle parent met également à jour cet indicateur lors du changement du ty
 | Relation | Une demande possède plusieurs lignes; chaque ligne pointe vers un seul article. |
 | Disponibilité locale | `qty_standard` est calculé depuis `stock.quant` avec `location_id = request_id.location_id`; les sous-emplacements sont exclus. |
 | Quantités | Pour les sorties seules, installation et retour sont saisis à la clôture, l'un étant calculé à partir de l'autre; un retour positif est remis à l'emplacement source. Les autres types conservent leurs étapes actuelles. La demande initiale n'est pas écrasée par le wizard. |
+| Retour de matériel | `qty_retour` est la seule quantité métier; les quantités demandée, sortie et installée sont normalisées à zéro à la soumission et à la validation Stock. |
 | Source | [`models/dss_request_line.py`](../../models/dss_request_line.py). |

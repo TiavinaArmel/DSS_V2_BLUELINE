@@ -61,6 +61,10 @@ class DssRequestLine(
         string="Intervention avec mouvement sortie uniquement",
         compute="_compute_is_sortie_only",
     )
+    is_retour_materiel = fields.Boolean(
+        string="Intervention de retour de matériel",
+        compute="_compute_is_retour_materiel",
+    )
 
     # Décorateur @api.depends : recalcule la disponibilité quand l'article ou
     # l'emplacement source de la demande change.
@@ -90,6 +94,13 @@ class DssRequestLine(
     def _compute_is_sortie_only(self):
         for line in self:
             line.is_sortie_only = line.request_id.sens_mouvement == "Sortie"
+
+    @api.depends("request_id.type_intervention")
+    def _compute_is_retour_materiel(self):
+        for line in self:
+            line.is_retour_materiel = (
+                line.request_id.type_intervention == "retour_materiel"
+            )
 
     # @api.onchange (différent de @api.depends) : s'exécute UNIQUEMENT
     # côté interface, en direct pendant que l'utilisateur remplit le

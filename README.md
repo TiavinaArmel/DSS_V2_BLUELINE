@@ -20,6 +20,7 @@ Il prend en charge le workflow complet d’une demande, depuis sa création jusq
 - Rejet d’une demande avec indication du motif ;
 - Clôture d’une demande ;
 - Clôture normale par le demandeur ou exceptionnelle par le Chef avec motif obligatoire ;
+- Parcours dédié au retour de matériel : correction de la quantité au Stock avec motif obligatoire si elle change, puis clôture de confirmation en lecture seule ;
 - Saisie d’une seule quantité installée/retournée par article lors de la clôture pour les sorties seules ;
 - Réintégration automatique des quantités retournées à l’emplacement source avec traçabilité dans le chatter et l’e-mail ;
 - Suivi de l’état d’avancement de la demande ;
@@ -60,7 +61,7 @@ Les groupes et les droits d’accès sont configurés dans le dossier `security/
 |---|---|
 | Nom technique | `dss_v2` |
 | Nom affiché | DSS V2 - Demande de Sortie de Stock |
-| Version du module | 2.8 |
+| Version du module | 2.9 |
 | Version Odoo supportée actuellement | Odoo 10 Community |
 | Catégorie | Inventory |
 | Auteur | Tiavina Armel |
@@ -135,6 +136,7 @@ dss_v2/
 - Vérifier le respect des droits d’accès ;
 - Clôturer une demande terminée.
 - Pour une nouvelle installation ou une installation interne, vérifier les deux modes de saisie de clôture et le mouvement entrant pour chaque retour positif.
+- Pour un retour de matériel, vérifier la conservation de la quantité sans modification, le motif requis si Stock l'ajuste, puis la clôture en lecture seule sans second mouvement.
 
 ## 9. Documentation
 
@@ -181,6 +183,6 @@ Module développé pour la gestion des demandes de sortie de stock dans Odoo 10 
 
 | Repère | À retenir |
 |---|---|
-| Version | `2.8`, selon le manifeste. |
+| Version | `2.9`, selon le manifeste. |
 | Workflow | Chef puis Stock; le workflow principal n'a pas d'étape Sécurité. |
 | Documentation détaillée | [`docs/README.md`](docs/README.md). |

@@ -292,6 +292,44 @@ class TestDssNotifications(common.TransactionCase):
         self.assertIn("quantité demandée 5.0, quantité sortie 3.0", body)
         self.assertIn("Motif : Stock disponible limité", body)
 
+    def test_return_material_approval_email_uses_return_quantity(self):
+        request, requester_email, chef_email, _magasin_email = (
+            self._create_routed_request("RETURN-MATERIAL-APPROVAL")
+        )
+        request.sudo().write({"type_intervention": "retour_materiel"})
+        product = self.env["product.product"].sudo().create(
+            {"name": "Returned item"}
+        )
+        self.env["dss.request.line"].sudo().create(
+            {
+                "request_id": request.id,
+                "product_id": product.id,
+                "qty_retour": 2.0,
+                "motif_ecart": "Received quantity differs",
+            }
+        )
+        request.sudo().write({"state": "approuve"})
+
+        request._dss_notify_stock_approval()
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "stock_approval"),
+            ],
+            limit=1,
+        )
+        body = log.mail_id.body_html
+        if isinstance(body, str):
+            body = body.decode("utf-8")
+        body = u" ".join(body.split())
+        self.assertIn(requester_email, log.recipient_emails)
+        self.assertIn(chef_email, log.recipient_emails)
+        self.assertIn("Returned item", body)
+        self.assertIn("quantit&#233; retourn&#233;e valid&#233;e 2.0", body)
+        self.assertIn("Motif : Received quantity differs", body)
+        self.assertNotIn("quantit&#233; demand&#233;e", body)
+
     def test_stock_rejection_notifies_requester_and_assigned_chef(self):
         request, requester_email, chef_email, _magasin_email = (
             self._create_routed_request("STOCK-REJECTION")

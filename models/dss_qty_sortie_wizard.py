@@ -65,13 +65,18 @@ class DssQtySortieWizard(models.TransientModel):
                             "request_line_id": line.id,
                             "product_id": line.product_id.id,
                             "qty_demandee": line.qty_demandee,
-                            "qty_sortie": line.qty_sortie,
+                            "qty_sortie": (
+                                0.0 if line.is_retour_materiel else line.qty_sortie
+                            ),
                             "qty_retour": (
                                 0.0 if line.is_sortie_only else line.qty_retour
                             ),
                             "is_sortie_only": line.is_sortie_only,
+                            "is_retour_materiel": line.is_retour_materiel,
                             "motif_ecart": line.motif_ecart,
-                            "qty_sortie_initiale": line.qty_sortie,
+                            "qty_sortie_initiale": (
+                                0.0 if line.is_retour_materiel else line.qty_sortie
+                            ),
                             "qty_retour_initiale": (
                                 0.0 if line.is_sortie_only else line.qty_retour
                             ),
@@ -96,17 +101,62 @@ class DssQtySortieWizard(models.TransientModel):
         changements = []  # Pour stocker la liste des changements détectés
         lignes_modifiees = False
         for line in self.line_ids:
+            request_line = line.request_line_id
+            if request_line.is_retour_materiel:
+                qty_retour_initiale = line.qty_retour_initiale
+                qty_retour = line.qty_retour
+                retour_modifie = float_compare(
+                    qty_retour,
+                    qty_retour_initiale,
+                    precision_digits=2,
+                ) != 0
+                if float_compare(
+                    qty_retour, 0.0, precision_digits=2
+                ) < 0:
+                    raise ValidationError(
+                        u"La quantité retournée ne peut pas être négative "
+                        u"pour l'article %s." % line.product_id.name
+                    )
+                if retour_modifie and not (line.motif_ecart or "").strip():
+                    raise ValidationError(
+                        u"Le motif de modification de la quantité retournée "
+                        u"est obligatoire pour l'article %s."
+                        % line.product_id.name
+                    )
+                if retour_modifie:
+                    request_line.write({
+                        "qty_demandee": 0.0,
+                        "qty_sortie": 0.0,
+                        "qty_installee": 0.0,
+                        "qty_retour": qty_retour,
+                        "motif_ecart": line.motif_ecart,
+                    })
+                    lignes_modifiees = True
+                    changements.append(
+                        u"\u2022 Article %s : Quantité retour demandée : %s, "
+                        u"Quantité retour validée : %s, Motif : %s"
+                        % (
+                            html_escape(line.product_id.name or u""),
+                            qty_retour_initiale,
+                            qty_retour,
+                            html_escape(
+                                line.motif_ecart or u""
+                            ).replace("\n", "<br/>"),
+                        )
+                    )
+                continue
+
             parties = []
-            is_sortie_only = line.request_line_id.is_sortie_only
+            is_sortie_only = request_line.is_sortie_only
             # Comparaison entre l'ancienne et la nouvelle Quantité de sortie
-            ancienne_sortie = line.request_line_id.qty_sortie
+            ancienne_sortie = request_line.qty_sortie
             nouvelle_sortie = line.qty_sortie
             if ancienne_sortie != nouvelle_sortie:
                 parties.append(
                     u"Qte Sortie %s \u2192 %s" % (ancienne_sortie, nouvelle_sortie)
                 )
             # Comparaison entre l'ancienne et la nouvelle Quantité de retour
-            ancienne_retour = line.request_line_id.qty_retour
+            ancienne_retour = request_line.qty_retour
             nouvelle_retour = 0.0 if is_sortie_only else line.qty_retour
             if ancienne_retour != nouvelle_retour:
                 parties.append(
@@ -147,10 +197,10 @@ class DssQtySortieWizard(models.TransientModel):
                     % line.product_id.name
                 )
 
-            if line.motif_ecart != line.request_line_id.motif_ecart:
+            if line.motif_ecart != request_line.motif_ecart:
                 parties.append(u"Motif de l'écart modifié")
 
-            line.request_line_id.write(
+            request_line.write(
                 {
                     "qty_sortie": nouvelle_sortie,
                     "qty_retour": nouvelle_retour,
@@ -182,9 +232,14 @@ class DssQtySortieWizard(models.TransientModel):
                 # dans la liste changements[] 
                 # On écrit les nouvelles valeurs dans la VRAIE ligne de la DSS
 
-        # La validation de ce wizard constitue l'intervention explicite du
-        # magasinier, même si les valeurs saisies restent identiques.
-        self.request_id.is_qty_modified = lignes_modifiees
+        # Pour un retour de matériel, seul un changement de quantité crée un
+        # écart; une confirmation inchangée conserve l'indicateur existant.
+        if self.request_id.type_intervention == "retour_materiel":
+            self.request_id.is_qty_modified = (
+                self.request_id.is_qty_modified or lignes_modifiees
+            )
+        else:
+            self.request_id.is_qty_modified = lignes_modifiees
 
         if changements:
             # Si la liste des changements n'est pas vide
@@ -242,5 +297,9 @@ class DssQtySortieWizardLine(models.TransientModel):
     motif_ecart_initial = fields.Text(string="Motif initial")
     is_sortie_only = fields.Boolean(
         related="request_line_id.is_sortie_only",
+        readonly=True,
+    )
+    is_retour_materiel = fields.Boolean(
+        related="request_line_id.is_retour_materiel",
         readonly=True,
     )

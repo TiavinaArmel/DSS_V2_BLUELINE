@@ -88,6 +88,7 @@ class DssClotureWizard(models.TransientModel):
                     'product_id': line.product_id.id,
                     'qty_sortie': line.qty_sortie,
                     'is_sortie_only': line.is_sortie_only,
+                    'is_retour_materiel': line.is_retour_materiel,
                     'qty_installee': (
                         line.qty_sortie if line.is_sortie_only
                         else line.qty_installee
@@ -149,8 +150,18 @@ class DssClotureWizard(models.TransientModel):
         recap = []    # Liste du récapitulatif des quantités
         retours_stock = []
         is_sortie_only = request.sens_mouvement == 'Sortie'
+        is_retour_materiel = request.type_intervention == 'retour_materiel'
 
         for line in self.line_ids:
+            if is_retour_materiel:
+                recap.append(
+                    u'\u2022 %s : Qte Retour confirmée %s' % (
+                        html_escape(line.product_id.name or ''),
+                        line.request_line_id.qty_retour,
+                    )
+                )
+                continue
+
             qty_installee = line.qty_installee
             qty_retour = line.qty_retour
             qty_sortie = line.request_line_id.qty_sortie
@@ -251,7 +262,8 @@ class DssClotureWizard(models.TransientModel):
         #   - bool(ecarts) = False si aucun écart
         # C'est ICI que le mystère du champ has_ecart est résolu :
         # il est enfin mis à jour par le wizard de clôture.
-        request.has_ecart = bool(ecarts)
+        if not is_retour_materiel:
+            request.has_ecart = bool(ecarts)
 
         # Fait passer la DSS à l'état 'cloture'.
         request.state = 'cloture'
@@ -345,6 +357,10 @@ class DssClotureWizardLine(models.TransientModel):
     )
     is_sortie_only = fields.Boolean(
         related='request_line_id.is_sortie_only',
+        readonly=True,
+    )
+    is_retour_materiel = fields.Boolean(
+        related='request_line_id.is_retour_materiel',
         readonly=True,
     )
 

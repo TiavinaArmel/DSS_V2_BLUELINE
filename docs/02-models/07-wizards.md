@@ -27,14 +27,16 @@ Le serveur Odoo 10 fonctionne avec Python 2. Les messages construits dans `actio
 | Wizard | Valeurs modifiables dans l'assistant | Effets à la confirmation |
 |---|---|---|
 | Rejet | `motif` requis | Copie dans `motif_rejet`, puis appelle `action_rejeter()`. |
-| Quantités | `qty_sortie`, `qty_retour`, `motif_ecart` | Compare chaque ligne à ses valeurs initiales, exige un motif uniquement pour une ligne réellement modifiée, initialise les autres lignes avec `qty_demandee` et conserve `qty_demandee`. |
-| Clôture | `qty_installee`, `qty_retour`, `mode_saisie`, `is_exception`, `motif_exception` | Pour `sens_mouvement == "Sortie"`, installe = sortie et retour = 0 par défaut; le demandeur choisit une quantité à saisir, l'autre est calculée et contrôlée entre 0 et la sortie. Un retour positif est transféré à l'emplacement source. Les autres sens conservent la saisie manuelle. Le Chef doit toujours fournir le motif de clôture exceptionnelle. |
+| Quantités | `qty_sortie`, `qty_retour`, `motif_ecart` | Compare chaque ligne à ses valeurs initiales, exige un motif uniquement pour une ligne réellement modifiée, initialise les autres lignes avec `qty_demandee` et conserve `qty_demandee`. Pour `retour_materiel`, la quantité retournée est préremplie; toute variation exige un motif et les autres quantités restent à zéro. |
+| Clôture | `qty_installee`, `qty_retour`, `mode_saisie`, `is_exception`, `motif_exception` | Pour `sens_mouvement == "Sortie"`, installe = sortie et retour = 0 par défaut; le demandeur choisit une quantité à saisir, l'autre est calculée et contrôlée entre 0 et la sortie. Un retour positif est transféré à l'emplacement source. Pour `retour_materiel`, l'assistant affiche la quantité validée au Stock en lecture seule et ne réécrit pas la ligne ni ne crée de mouvement. Le Chef doit toujours fournir le motif de clôture exceptionnelle. |
 | Confirmation Chef | Aucune donnée métier saisie | Appelle `action_valider_chef()`. |
 | Confirmation Stock | Aucune donnée métier saisie | Appelle `action_valider_magasin()`. |
 
 Chaque ligne du wizard mémorise ses valeurs initiales (`qty_sortie_initiale`, `qty_retour_initiale`, `motif_ecart_initial`). Une ligne non modifiée reçoit automatiquement `qty_sortie = qty_demandee` et `qty_retour = 0.0`.
 
 Pour les deux interventions dont le sens est uniquement `Sortie` (« Nouvelle installation client » et « Installation interne »), `qty_installee` et `qty_retour` ne sont pas modifiables sur la demande ni dans le wizard Stock; ils le sont uniquement dans le wizard de clôture. Par ligne, `mode_saisie` choisit le champ actif. Le serveur recalcule la valeur complémentaire et rejette une quantité saisie négative ou supérieure à `qty_sortie`, même si l'on contourne l'interface.
+
+Pour `retour_materiel`, le wizard Stock compare `qty_retour` à sa valeur initiale et exige un motif si elle diffère, quelle que soit la direction du changement. La clôture est une confirmation seule; les valeurs transmises par le wizard ne peuvent pas remplacer la quantité déjà validée au Stock.
 
 À la clôture, les retours positifs de ces interventions créent un picking entrant depuis l'emplacement client vers `request.location_id`. Le lien de ce transfert est conservé dans `picking_retour_cloture_id`; le chatter et la notification de clôture mentionnent chaque article, sa quantité retournée et son emplacement d'origine.
 

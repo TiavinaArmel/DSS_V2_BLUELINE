@@ -2,7 +2,7 @@
 
 ## 1. Fichier et périmètre
 
-Le manifeste déclare des tests de notifications, d'emplacements, de services, de clôture et de quantités. Ils utilisent `odoo.tests.common.TransactionCase`. Les tests de notifications vérifient le routage, le journal et le rendu des courriels; les tests de quantités vérifient la validation directe, la modification par wizard, le motif obligatoire, la conservation de `qty_demandee` et la précision à deux décimales. Les tests de clôture vérifient l'accès, les motifs exceptionnels, le calcul des retours et leur transfert vers l'emplacement source.
+Le manifeste déclare des tests de notifications, d'emplacements, de services, de clôture et de quantités. Ils utilisent `odoo.tests.common.TransactionCase`. Les tests de notifications vérifient le routage, le journal et le rendu des courriels; les tests de quantités vérifient la validation directe, la modification par wizard, le motif obligatoire, la conservation de `qty_demandee` et la précision à deux décimales. Les tests de clôture vérifient l'accès, les motifs exceptionnels, le calcul des retours et leur transfert vers l'emplacement source. Les cas « Retour de matériel » couvrent aussi la correction motivée de `qty_retour`, sa conservation si elle est inchangée et la clôture sans réécriture ni nouveau mouvement.
 
 ## 2. Cas couverts
 
@@ -18,6 +18,7 @@ Le manifeste déclare des tests de notifications, d'emplacements, de services, d
 | `test_return_to_requester_email_contains_rejection_motif` | Destinataire demandeur et motif inclus dans le courriel de renvoi. |
 | `test_security_is_not_notified_without_a_real_dss_security_transition` | L'action d'approbation Stock ne crée pas de clé d'événement `security`. |
 | `test_stock_approval_email_contains_quantity_change_motif` | L'e-mail de validation Stock contient le motif d'écart et le nom de l'article dans une liste `<ul><li>`, sans `<br/>` dans le bloc des motifs. |
+| `test_return_material_approval_email_uses_return_quantity` | Le courriel d'approbation affiche la quantité retournée validée, son motif et non la quantité demandée/sortie. |
 | `test_sortie_closure_defaults_to_all_installed` | Une ligne de sortie laissée intacte est clôturée avec toute la quantité installée et aucun retour. |
 | `test_sortie_closure_calculates_return_and_replenishes_origin` | Le retour calculé crée un picking entrant vers l'emplacement source et apparaît dans le chatter et l'e-mail. |
 | `test_sortie_closure_can_use_return_as_the_input` | Saisir le retour calcule la quantité installée complémentaire. |
@@ -25,8 +26,13 @@ Le manifeste déclare des tests de notifications, d'emplacements, de services, d
 | `test_sortie_closure_rejects_quantity_above_stock_output` | Le serveur rejette une quantité installée supérieure à la quantité sortie. |
 | `test_sortie_closure_rejects_negative_return` | Le serveur rejette une quantité retournée négative. |
 | `test_other_movement_types_keep_manual_closure_quantities` | Les autres sens de mouvement conservent leur saisie antérieure. |
+| `test_return_material_closure_only_confirms_validated_quantity` | La clôture de retour matériel conserve la quantité validée au Stock et ne crée pas de second transfert. |
 | `test_requester_closure_can_create_the_return_picking` | Le demandeur peut fermer une sortie avec retour sans avoir les droits Stock nécessaires à la création du picking. |
 | `test_sortie_only_return_is_deferred_to_closure` | Le wizard Stock ne peut pas enregistrer un retour pour les deux types de sortie seule. |
+| `test_return_material_defaults_preserve_return_quantity` | Le wizard Stock préremplit la quantité de retour et conserve une ligne inchangée. |
+| `test_return_material_quantity_change_requires_motif` | Une variation de quantité retournée sans motif est refusée. |
+| `test_return_material_quantity_change_is_saved_and_traced` | Une variation motivée est enregistrée, notifiée dans le chatter et gardée séparée des autres quantités. |
+| `test_return_material_rejects_negative_quantity` | Une quantité retournée négative est refusée côté serveur. |
 | `test_rejection_mapping_is_explicit` | Vérifie seulement l'état brouillon par défaut et l'absence de motif initial. |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.

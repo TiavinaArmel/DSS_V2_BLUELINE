@@ -30,6 +30,10 @@ La quantité saisie doit être comprise entre zéro et `qty_sortie`; le contrôl
 
 Pour les autres types d'intervention, les valeurs installée/retour conservent le comportement antérieur. L'indicateur d'écart des interventions de sortie seule compare le total installé + retourné à la quantité demandée.
 
+### Retour de matériel
+
+Pour `retour_materiel`, le demandeur renseigne en brouillon l'article, la quantité retournée et l'observation. À la validation Stock, la quantité retournée est préremplie et modifiable; toute différence par rapport à la quantité demandée impose un motif. Une confirmation sans modification conserve la valeur initiale. Les quantités demandée, sortie et installée sont ignorées et ramenées à zéro. À la clôture normale ou exceptionnelle, la quantité retournée validée est affichée en lecture seule : confirmer ne réécrit pas les quantités et ne crée pas un second mouvement. Le motif reste obligatoire pour toute clôture exceptionnelle.
+
 | Opération lors de la confirmation | Détail |
 |---|---|
 | Écriture | Écrit `qty_installee` et `qty_retour` sur les lignes DSS. |
@@ -49,4 +53,5 @@ Le wizard vérifie côté serveur que la demande est encore à l'état `approuve
 | Rejet | Motif obligatoire dans le wizard; garde-fou d'état absent dans `action_rejeter()`. |
 | Renvoi | Chef seulement, état `rejete` vérifié côté serveur. |
 | Clôture sortie seule | `qty_installee + qty_retour = qty_sortie`; un retour positif crée un transfert entrant à la clôture. |
+| Clôture retour matériel | Confirmation uniquement; conserve la quantité validée au Stock, sans réécriture ni nouveau mouvement. |
 | Sources | [`dss_rejet_wizard.py`](../../models/dss_rejet_wizard.py), [`dss_cloture_wizard.py`](../../models/dss_cloture_wizard.py), [`dss_request_workflow.py`](../../models/dss_request_workflow.py). |

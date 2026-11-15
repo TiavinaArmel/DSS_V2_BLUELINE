@@ -239,6 +239,43 @@ class TestDssClosure(common.TransactionCase):
         self.assertEqual(line.qty_retour, 4.0)
         self.assertFalse(request.picking_retour_cloture_id)
 
+    def test_return_material_closure_only_confirms_validated_quantity(self):
+        """La clôture retour matériel ne réécrit pas les quantités ni le mouvement."""
+        request, line = self._sortie_request("retour_materiel")
+        line.write({
+            "qty_demandee": 0.0,
+            "qty_sortie": 0.0,
+            "qty_installee": 0.0,
+            "qty_retour": 4.0,
+        })
+        request.is_qty_modified = True
+        request.has_ecart = True
+
+        defaults = self.Wizard.with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+        default_line = defaults["line_ids"][0][2]
+        self.assertTrue(default_line["is_retour_materiel"])
+        self.assertEqual(default_line["qty_retour"], 4.0)
+
+        wizard = self.Wizard.create({
+            "request_id": request.id,
+            "line_ids": [(0, 0, {
+                "request_line_id": line.id,
+                "product_id": line.product_id.id,
+                "qty_sortie": 0.0,
+                "qty_installee": 99.0,
+                "qty_retour": 99.0,
+            })],
+        })
+        wizard.action_confirmer()
+
+        self.assertEqual(request.state, "cloture")
+        self.assertEqual(line.qty_installee, 0.0)
+        self.assertEqual(line.qty_retour, 4.0)
+        self.assertTrue(request.has_ecart)
+        self.assertFalse(request.picking_retour_cloture_id)
+
     def test_exception_closure_email_contains_actor_and_reason(self):
         """Le contexte exceptionnel enrichit le courriel de clôture."""
         request = self._approved_request()

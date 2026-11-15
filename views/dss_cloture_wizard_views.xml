@@ -20,16 +20,23 @@
                     <tree editable="bottom">
                         <!-- Article et quantité sortie sont consultables mais verrouillés pendant la clôture. -->
                         <field name="product_id" readonly="1"/>
-                        <field name="qty_sortie" readonly="1"/>
                         <field name="is_sortie_only" invisible="1"/>
+                        <field name="is_retour_materiel" invisible="1"/>
+                        <field name="qty_sortie" readonly="1"
+                            attrs="{'invisible': [('is_retour_materiel', '=', True)]}"/>
                         <field name="mode_saisie"
                             attrs="{'invisible': [('is_sortie_only', '=', False)]}"/>
                         <field name="qty_installee"
-                            attrs="{'readonly': ['&amp;',
+                            attrs="{'invisible': [('is_retour_materiel', '=', True)],
+                                'readonly': ['|',
+                                    ('is_retour_materiel', '=', True),
+                                    '&amp;',
                                 ('is_sortie_only', '=', True),
                                 ('mode_saisie', '!=', 'installee')]}"/>
                         <field name="qty_retour"
-                            attrs="{'readonly': ['&amp;',
+                            attrs="{'readonly': ['|',
+                                ('is_retour_materiel', '=', True),
+                                '&amp;',
                                 ('is_sortie_only', '=', True),
                                 ('mode_saisie', '!=', 'retour')]}"/>
                     </tree>
