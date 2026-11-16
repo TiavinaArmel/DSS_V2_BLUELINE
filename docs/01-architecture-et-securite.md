@@ -23,7 +23,7 @@ Les fichiers compilés Python (`.pyc`) présents localement ne sont pas des sour
 
 | Couche | Dossier ou fichier | Rôle vérifié |
 |---|---|---|
-| Métadonnées | `__manifest__.py` | Déclare la version `2.11`, les dépendances et les fichiers de données chargés. |
+| Métadonnées | `__manifest__.py` | Déclare la version `2.12`, les dépendances et les fichiers de données chargés. |
 | Modèles | `models/` | Définit la demande, ses lignes, les extensions Odoo et les traitements métier. |
 | Interface | `views/` | Déclare les vues, filtres, menus et fenêtres modales. |
 | Sécurité | `security/` | Crée quatre groupes et déclare les ACL CSV; aucune règle d'enregistrement n'est définie dans le XML fourni. |
@@ -95,4 +95,4 @@ Le workflow courant utilise le modèle DSS `dss.service`, associé aux utilisate
 | Source de vérité | Le manifeste, les modèles Python et les XML définissent le comportement réel. |
 | Sécurité | Groupes, ACL, restrictions de vue et règles d'enregistrement sont des mécanismes distincts. |
 | Workflow principal | `dss.request` n'a pas d'étape de validation Sécurité. |
-| Versions | Le manifeste indique `2.11`; il ne déclare pas de version Python. |
+| Versions | Le manifeste indique `2.12`; il ne déclare pas de version Python. |

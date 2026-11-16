@@ -399,3 +399,63 @@ class TestDssClosure(common.TransactionCase):
             wizard.action_confirmer()
 
         self.assertEqual(request.state, "approuve")
+
+    def test_depannage_closure_defaults_to_all_installed(self):
+        """Un dépannage clôturé sans modification installe toute la sortie."""
+        request, line = self._sortie_request("depannage")
+        defaults = self.Wizard.with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+        default_line = defaults["line_ids"][0][2]
+
+        self.assertTrue(default_line["is_sortie_only"])
+        self.assertEqual(default_line["qty_installee"], 10.0)
+        self.assertEqual(default_line["qty_retour"], 0.0)
+        self.assertEqual(default_line["mode_saisie"], "installee")
+
+        wizard = self._create_sortie_wizard(request, line, "installee", 10.0, 0.0)
+        wizard.action_confirmer()
+
+        self.assertEqual(line.qty_installee, 10.0)
+        self.assertEqual(line.qty_retour, 0.0)
+        self.assertFalse(request.picking_retour_cloture_id)
+
+    def test_depannage_closure_return_creates_incoming_picking(self):
+        """Le retour d'un dépannage crée l'entrée depuis l'emplacement client."""
+        request, line = self._sortie_request("depannage")
+        wizard = self._create_sortie_wizard(request, line, "installee", 6.0, 0.0)
+
+        wizard.action_confirmer()
+
+        self.assertEqual(line.qty_installee, 6.0)
+        self.assertEqual(line.qty_retour, 4.0)
+        picking = request.picking_retour_cloture_id
+        self.assertTrue(picking)
+        self.assertEqual(picking.picking_type_id.code, "incoming")
+        self.assertEqual(picking.location_dest_id, request.location_id)
+        self.assertEqual(picking.move_lines.product_uom_qty, 4.0)
+        self.assertEqual(picking.state, "done")
+
+    def test_depannage_closure_can_use_return_as_the_input(self):
+        """Saisir le retour calcule la quantité installée du dépannage."""
+        request, line = self._sortie_request("depannage")
+        wizard = self._create_sortie_wizard(request, line, "retour", 10.0, 3.0)
+
+        wizard.action_confirmer()
+
+        self.assertEqual(line.qty_installee, 7.0)
+        self.assertEqual(line.qty_retour, 3.0)
+        self.assertEqual(
+            request.picking_retour_cloture_id.move_lines.product_uom_qty,
+            3.0,
+        )
+
+    def test_depannage_closure_rejects_quantity_above_output(self):
+        """La quantité d'un dépannage ne peut pas dépasser la quantité sortie."""
+        request, line = self._sortie_request("depannage")
+        wizard = self._create_sortie_wizard(request, line, "installee", 12.0, 0.0)
+
+        with self.assertRaises(ValidationError):
+            wizard.action_confirmer()
+
+        self.assertEqual(request.state, "approuve")

@@ -55,13 +55,14 @@ class DssClotureWizard(models.TransientModel):
         compute='_compute_is_sortie_only',
     )
 
-    @api.depends('request_id.sens_mouvement')
+    @api.depends('request_id.sens_mouvement', 'request_id.type_intervention')
     def _compute_is_sortie_only(self):
         for wizard in self:
-            # Le transfert interne (approvisionnement distant) suit le même
-            # parcours de clôture que la nouvelle installation.
-            wizard.is_sortie_only = (
-                wizard.request_id.sens_mouvement in ('Sortie', 'Transfert')
+            # Même règle que sur la ligne DSS : sorties pures, transfert
+            # interne et dépannage suivent un parcours de clôture calculé.
+            request = wizard.request_id
+            wizard.is_sortie_only = bool(
+                request and request._closure_uses_complement_quantities()
             )
 
     @api.model
@@ -151,9 +152,9 @@ class DssClotureWizard(models.TransientModel):
         ecarts = []   # Liste des écarts détectés
         recap = []    # Liste du récapitulatif des quantités
         retours_stock = []
-        # Une sortie seule et un transfert interne suivent le même parcours :
-        # une seule quantité est saisie, l'autre est calculée.
-        is_sortie_only = request.sens_mouvement in ('Sortie', 'Transfert')
+        # Sorties pures, transfert interne et dépannage suivent le même
+        # parcours : une seule quantité est saisie, l'autre est calculée.
+        is_sortie_only = request._closure_uses_complement_quantities()
         is_retour_materiel = request.type_intervention == 'retour_materiel'
 
         for line in self.line_ids:

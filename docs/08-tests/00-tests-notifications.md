@@ -39,7 +39,12 @@ Le manifeste déclare des tests de notifications, d'emplacements, de services, d
 | `test_appro_distant_closure_can_use_return_as_the_input` | Saisir le retour calcule la quantité installée complémentaire. |
 | `test_appro_distant_closure_rejects_quantity_above_transfer` | Une quantité supérieure à `qty_sortie` est refusée et l'état reste `approuve`. |
 | `test_appro_distant_stock_wizard_defers_return_to_closure` | Le wizard Stock met `qty_retour` à zéro pour un approvisionnement distant; le retour se décide à la clôture. |
-| `test_appro_distant_keeps_manual_quantities_for_other_movements` | `basculement` et `depannage` conservent la saisie manuelle (drapeau `is_sortie_only` faux). |
+| `test_depannage_stock_wizard_defers_return_to_closure` | Le wizard Stock met `qty_retour` à zéro pour un dépannage : l'entrée est reportée à la clôture. |
+| `test_basculement_keeps_manual_quantities_at_stock` | Le basculement conserve la saisie manuelle au Stock (drapeau `is_sortie_only` faux). |
+| `test_depannage_closure_defaults_to_all_installed` | Un dépannage clôturé sans modification préremplit `qty_installee = qty_sortie` et ne crée aucun retour. |
+| `test_depannage_closure_return_creates_incoming_picking` | Un retour positif de dépannage crée un picking `incoming` vers `location_id`, terminé, avec la quantité retournée. |
+| `test_depannage_closure_can_use_return_as_the_input` | Saisir le retour calcule la quantité installée complémentaire du dépannage. |
+| `test_depannage_closure_rejects_quantity_above_output` | Une quantité supérieure à `qty_sortie` est refusée et l'état reste `approuve`. |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.
 

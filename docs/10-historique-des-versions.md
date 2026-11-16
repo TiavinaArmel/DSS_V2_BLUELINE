@@ -4,6 +4,7 @@
 
 | Version ou repère | Information vérifiable |
 |---|---|
+| `2.12` | Le `depannage` suit le parcours de clôture calculé de la nouvelle installation : `qty_installee` préremplie à `qty_sortie`, retour saisi à la clôture et entrée de stock générée à ce moment. Le `basculement` reste en saisie manuelle. |
 | `2.11` | L'approvisionnement distant (`appro_distant`) suit le parcours de clôture de la nouvelle installation : `qty_installee` préremplie à `qty_sortie`, retour éventuel saisi à la clôture et transféré par un picking interne de `location_dest_id` vers `location_id`. |
 | `2.10` | Harmonisation des messages du chatter : libellés accentués, échappement HTML des noms et des motifs, fusion des deux messages de validation Stock et sous-type `mail.mt_note` explicite. |
 | `2.9` | Parcours dédié de retour de matériel : correction motivée à Stock et clôture de confirmation en lecture seule. |
@@ -12,14 +13,14 @@
 | `2.6` | Version du manifeste précédant le retrait de `hr` en `2.7`. |
 | `2.2` | Répertoire de migration contenant le renommage conditionnel de l'identifiant externe du format papier. |
 
-Les fichiers présents ne fournissent pas un journal complet des changements pour les versions `2.0` à `2.11`. Les changements intermédiaires ne sont donc pas détaillés ici sans source vérifiable.
+Les fichiers présents ne fournissent pas un journal complet des changements pour les versions `2.0` à `2.12`. Les changements intermédiaires ne sont donc pas détaillés ici sans source vérifiable.
 
 ## 2. État actuel du manifeste
 
 | Clé | Valeur |
 |---|---|
 | Nom | DSS V2 - Demande de Sortie de Stock |
-| Version | `2.11` |
+| Version | `2.12` |
 | Auteur | Tiavina Armel |
 | Dépendances | `web`, `stock`, `mail` |
 | Installable | Oui (`installable=True`) |
@@ -47,7 +48,7 @@ Pour les interventions `nouvelle_installation` et `installation_interne` (sens `
 
 ## 5. Convention de versioning
 
-La version `2.7` retire `hr` des dépendances du module et supprime le fichier de données vide `data/dss_department_data.xml`. La migration 2.5 est conservée pour transférer les données RH historiques lorsque leurs tables existent. La version `2.8` inclut explicitement `is_sortie_only` dans les valeurs initiales des lignes du wizard Stock, afin que le client Odoo puisse évaluer les règles `attrs` dès l'ouverture. La version `2.9` ajoute les contrôles de quantité et de motif au parcours « Retour de matériel », ainsi qu'une clôture de confirmation en lecture seule. La version `2.10` ne modifie aucune donnée ni aucun état du workflow : elle uniformise le rendu des messages de chatter et déclare explicitement leur sous-type, sans migration de base nécessaire. La version `2.11` étend le parcours de clôture des interventions de sens `Sortie` au transfert interne `appro_distant`, et adapte le mouvement de retour à la source réelle du matériel (`location_dest_id`).
+La version `2.7` retire `hr` des dépendances du module et supprime le fichier de données vide `data/dss_department_data.xml`. La migration 2.5 est conservée pour transférer les données RH historiques lorsque leurs tables existent. La version `2.8` inclut explicitement `is_sortie_only` dans les valeurs initiales des lignes du wizard Stock, afin que le client Odoo puisse évaluer les règles `attrs` dès l'ouverture. La version `2.9` ajoute les contrôles de quantité et de motif au parcours « Retour de matériel », ainsi qu'une clôture de confirmation en lecture seule. La version `2.10` ne modifie aucune donnée ni aucun état du workflow : elle uniformise le rendu des messages de chatter et déclare explicitement leur sous-type, sans migration de base nécessaire. La version `2.11` étend le parcours de clôture des interventions de sens `Sortie` au transfert interne `appro_distant`, et adapte le mouvement de retour à la source réelle du matériel (`location_dest_id`). La version `2.12` applique le même parcours au `depannage`, dont l'entrée de stock est désormais créée à la clôture à partir de la quantité retournée, et laisse le `basculement` en saisie manuelle.
 
 Le manifeste expose un numéro de version, mais les sources auditées ne documentent pas de règle de versioning complète ni un changelog exhaustif. Ajouter une entrée datée et sourcée lors d'une évolution future permettrait d'établir cet historique sans le reconstruire par supposition.
 
@@ -55,6 +56,6 @@ Le manifeste expose un numéro de version, mais les sources auditées ne documen
 
 | Repère | À retenir |
 |---|---|
-| Version actuelle | `2.11`, lue dans `__manifest__.py`. |
+| Version actuelle | `2.12`, lue dans `__manifest__.py`. |
 | Historique antérieur | Non reconstituable de manière fiable avec les seuls fichiers audités. |
 | Migrations | Scripts conservés dans `migrations/2.2/`, `migrations/2.5/` et `migrations/2.6/`. |

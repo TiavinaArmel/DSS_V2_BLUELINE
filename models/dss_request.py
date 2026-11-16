@@ -199,6 +199,24 @@ class DssRequest(models.Model):
         for line in self.line_ids:
             line.qty_demandee_readonly = self.type_intervention == "retour_materiel"
 
+    def _closure_uses_complement_quantities(self):
+        """Indique si la clôture calcule une quantité à partir de l'autre.
+
+        C'est le cas des interventions dont le retour se décide uniquement à
+        la clôture, après l'intervention sur site :
+            - nouvelle installation et installation interne (sens Sortie) ;
+            - approvisionnement distant (sens Transfert) ;
+            - dépannage, dont l'entrée est enregistrée à la clôture.
+
+        `basculement`, de même sens que le dépannage, conserve pour l'instant
+        sa saisie manuelle et n'est donc pas inclus ici.
+        """
+        self.ensure_one()
+        return (
+            self.sens_mouvement in ("Sortie", "Transfert")
+            or self.type_intervention == "depannage"
+        )
+
     @api.onchange("location_id")
     def _onchange_location_id_qty_standard(self):
         for line in self.line_ids:

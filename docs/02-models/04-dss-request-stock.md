@@ -15,10 +15,14 @@ L'extension `DssRequestStock` crée les transferts Odoo lors de la validation St
 
 Le routeur est dans `action_valider_magasin()`; les types d'intervention et leur sens sont décrits dans [le modèle principal](01-dss-request.md).
 
-Pour les interventions de sens `Sortie` seulement (« Nouvelle installation client » et « Installation interne ») **et pour le transfert interne** (`appro_distant`), le wizard Stock conserve `qty_retour` à zéro. Le retour réel est saisi à la clôture, puis `_generer_mouvement_retour_cloture()` crée un picking pour chaque ligne dont `qty_retour > 0` :
+Pour les interventions de sens `Sortie` seulement (« Nouvelle installation client » et « Installation interne »), pour le transfert interne (`appro_distant`) et pour le `depannage`, le wizard Stock conserve `qty_retour` à zéro. Le retour réel est saisi à la clôture, puis `_generer_mouvement_retour_cloture()` crée un picking pour chaque ligne dont `qty_retour > 0` :
 
-- sens `Sortie` : picking `incoming` depuis l'emplacement client vers l'emplacement source d'origine `location_id` ;
+- sens `Sortie` et `depannage` : picking `incoming` depuis l'emplacement client vers l'emplacement source d'origine `location_id` ;
 - sens `Transfert` : picking `internal` de l'emplacement destination `location_dest_id` vers l'emplacement source `location_id`, puisque le matériel a déjà été transféré à l'emplacement distant.
+
+Le `basculement`, de même sens que le dépannage, conserve la saisie manuelle au Stock et à la clôture.
+
+Pour un `depannage`, le routeur appelle toujours `_generer_mouvement_sortie()` puis `_generer_mouvement_entree()` à la validation Stock. Comme `qty_retour` y vaut zéro, l'appel d'entrée ne crée aucun picking : l'entrée réelle est celle produite à la clôture.
 
 ## 3. Emplacements et contrôle de quantité
 
@@ -62,6 +66,6 @@ Le picking est confirmé, affecté, puis terminé dans chacune des trois méthod
 |---|---|
 | Sortie/transfert | Utilisent `qty_sortie` et contrôlent la quantité agrégée du stock source. |
 | Entrée | Utilise `qty_retour`; aucun contrôle de disponibilité source n'est effectué par cette méthode. |
-| Retour clôture | Réservé aux interventions de sens `Sortie` et `Transfert`; un picking `incoming` (client) ou `internal` (destination distante) réintègre les articles dans `location_id`. |
+| Retour clôture | Réservé aux interventions de sens `Sortie`, de sens `Transfert` et au `depannage`; un picking `incoming` (client) ou `internal` (destination distante) réintègre les articles dans `location_id`. |
 | Sortie + entrée | Deux appels successifs peuvent créer deux pickings; `picking_id` est réaffecté à chaque appel et ne conserve donc que le dernier lien. |
 | Source | [`models/dss_request_stock.py`](../../models/dss_request_stock.py). |
