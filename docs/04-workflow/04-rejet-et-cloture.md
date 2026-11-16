@@ -23,14 +23,14 @@ Le renvoi est affiché au Chef quand l'état vaut `rejete`. Le code vérifie ég
 
 Le demandeur d'origine ouvre `dss.cloture.wizard` à l'état `approuve` pour une clôture normale. Le Chef dispose d'une action de clôture exceptionnelle utilisant le même wizard et exigeant un motif, vérifié aussi côté serveur.
 
-Pour les interventions **Nouvelle installation client** et **Installation interne** (`sens_mouvement == "Sortie"`), l'ouverture du wizard initialise chaque ligne avec `qty_installee = qty_sortie` et `qty_retour = 0`. Le choix « Quantité à saisir » rend un seul champ modifiable par ligne :
+Pour les interventions **Nouvelle installation client** et **Installation interne** (`sens_mouvement == "Sortie"`), ainsi que pour l'**approvisionnement distant** (`appro_distant`, `sens_mouvement == "Transfert"`), l'ouverture du wizard initialise chaque ligne avec `qty_installee = qty_sortie` et `qty_retour = 0`. Le choix « Quantité à saisir » rend un seul champ modifiable par ligne :
 
 - saisir la quantité installée calcule `qty_retour = qty_sortie - qty_installee` ;
 - saisir la quantité retournée calcule `qty_installee = qty_sortie - qty_retour`.
 
-La quantité saisie doit être comprise entre zéro et `qty_sortie`; le contrôle est répété côté serveur à la confirmation. Les lignes laissées intactes sont donc considérées entièrement installées. À la clôture, chaque retour positif crée un picking entrant du stock client vers l'emplacement source `location_id`. Le picking est accessible depuis `picking_retour_cloture_id`; le chatter et l'e-mail de clôture indiquent l'article, la quantité retournée et son emplacement d'origine.
+La quantité saisie doit être comprise entre zéro et `qty_sortie`; le contrôle est répété côté serveur à la confirmation. Les lignes laissées intactes sont donc considérées entièrement installées. À la clôture, chaque retour positif crée un picking vers l'emplacement source `location_id` : picking entrant depuis le stock client pour une sortie, picking interne depuis l'emplacement destination `location_dest_id` pour un approvisionnement distant. Le picking est accessible depuis `picking_retour_cloture_id`; le chatter et l'e-mail de clôture indiquent l'article, la quantité retournée et son emplacement d'origine.
 
-Pour les autres types d'intervention, les valeurs installée/retour conservent le comportement antérieur. L'indicateur d'écart des interventions de sortie seule compare le total installé + retourné à la quantité demandée.
+Pour les autres types d'intervention (`basculement` et `depannage`), les valeurs installée/retour conservent le comportement antérieur : elles restent saisies manuellement dans le wizard, sans calcul complémentaire. L'indicateur d'écart des interventions de sortie seule et du transfert interne compare le total installé + retourné à la quantité demandée.
 
 ### Retour de matériel
 

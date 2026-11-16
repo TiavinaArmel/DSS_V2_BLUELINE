@@ -62,6 +62,46 @@ class TestDssClosure(common.TransactionCase):
             })],
         })
 
+    def _appro_distant_request(self):
+        """Crée une DSS approuvée d'approvisionnement distant entre deux emplacements."""
+        source = self.Location.create({
+            "name": "DSS Distant Source Location",
+            "usage": "internal",
+        })
+        destination = self.Location.create({
+            "name": "DSS Distant Destination Location",
+            "usage": "internal",
+        })
+        product = self.Product.create({
+            "name": "DSS Distant Product",
+            "type": "product",
+        })
+        request = self.Request.create({
+            "name": "TEST-DSS-CLOSURE-DISTANT",
+            "state": "approuve",
+            "type_intervention": "appro_distant",
+            "location_id": source.id,
+            "location_dest_id": destination.id,
+            "partner_id": self.env.ref("base.res_partner_1").id,
+        })
+        line = self.env["dss.request.line"].create({
+            "request_id": request.id,
+            "product_id": product.id,
+            "qty_demandee": 10.0,
+            "qty_sortie": 10.0,
+            "qty_installee": 0.0,
+            "qty_retour": 0.0,
+        })
+        return request, line
+
+    def _stock_at_distant_location(self, request, line, qty=10.0):
+        """Place la quantité transférée dans l'emplacement distant."""
+        return self.env["stock.quant"].create({
+            "product_id": line.product_id.id,
+            "location_id": request.location_dest_id.id,
+            "qty": qty,
+        })
+
     def test_requester_can_open_normal_closure_with_create_uid_fallback(self):
         """Le créateur peut clôturer si le signataire historique est vide."""
         request = self._approved_request()
@@ -296,3 +336,66 @@ class TestDssClosure(common.TransactionCase):
         self.assertIn("Clôture exceptionnelle", log.mail_id.body_html)
         self.assertIn("Chef de test", log.mail_id.body_html)
         self.assertIn("Motif de test", log.mail_id.body_html)
+
+    def test_appro_distant_closure_defaults_to_all_installed(self):
+        """Un approvisionnement distant clôturé sans modification installe tout."""
+        request, line = self._appro_distant_request()
+        defaults = self.Wizard.with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+        default_line = defaults["line_ids"][0][2]
+
+        self.assertTrue(default_line["is_sortie_only"])
+        self.assertEqual(default_line["qty_installee"], 10.0)
+        self.assertEqual(default_line["qty_retour"], 0.0)
+        self.assertEqual(default_line["mode_saisie"], "installee")
+
+        wizard = self._create_sortie_wizard(request, line, "installee", 10.0, 0.0)
+        wizard.action_confirmer()
+
+        self.assertEqual(line.qty_installee, 10.0)
+        self.assertEqual(line.qty_retour, 0.0)
+        self.assertFalse(request.picking_retour_cloture_id)
+
+    def test_appro_distant_closure_return_is_an_internal_transfer(self):
+        """Le retour repart de l'emplacement distant vers l'emplacement source."""
+        request, line = self._appro_distant_request()
+        self._stock_at_distant_location(request, line, 10.0)
+        wizard = self._create_sortie_wizard(request, line, "installee", 7.0, 0.0)
+
+        wizard.action_confirmer()
+
+        self.assertEqual(line.qty_installee, 7.0)
+        self.assertEqual(line.qty_retour, 3.0)
+        picking = request.picking_retour_cloture_id
+        self.assertTrue(picking)
+        self.assertEqual(picking.picking_type_id.code, "internal")
+        self.assertEqual(picking.location_id, request.location_dest_id)
+        self.assertEqual(picking.location_dest_id, request.location_id)
+        self.assertEqual(picking.move_lines.product_uom_qty, 3.0)
+        self.assertEqual(picking.state, "done")
+
+    def test_appro_distant_closure_can_use_return_as_the_input(self):
+        """Saisir le retour calcule la quantité installée de l'approvisionnement distant."""
+        request, line = self._appro_distant_request()
+        self._stock_at_distant_location(request, line, 10.0)
+        wizard = self._create_sortie_wizard(request, line, "retour", 10.0, 2.0)
+
+        wizard.action_confirmer()
+
+        self.assertEqual(line.qty_installee, 8.0)
+        self.assertEqual(line.qty_retour, 2.0)
+        self.assertEqual(
+            request.picking_retour_cloture_id.move_lines.product_uom_qty,
+            2.0,
+        )
+
+    def test_appro_distant_closure_rejects_quantity_above_transfer(self):
+        """La quantité saisie ne peut pas dépasser la quantité transférée."""
+        request, line = self._appro_distant_request()
+        wizard = self._create_sortie_wizard(request, line, "installee", 12.0, 0.0)
+
+        with self.assertRaises(ValidationError):
+            wizard.action_confirmer()
+
+        self.assertEqual(request.state, "approuve")

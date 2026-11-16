@@ -315,3 +315,30 @@ class TestDssQuantities(common.TransactionCase):
 
         request._prepare_quantities_before_stock_validation()
         self.assertTrue(request.has_ecart)
+
+    def test_appro_distant_stock_wizard_defers_return_to_closure(self):
+        """Un approvisionnement distant ne porte aucun retour à la validation Stock."""
+        request, line = self._request_with_line()
+        request.type_intervention = "appro_distant"
+        line.qty_retour = 4.0
+
+        defaults = self.env["dss.qty.sortie.wizard"].with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+        default_line = defaults["line_ids"][0][2]
+
+        self.assertTrue(default_line["is_sortie_only"])
+        self.assertEqual(default_line["qty_retour"], 0.0)
+        self.assertEqual(default_line["qty_retour_initiale"], 0.0)
+
+    def test_appro_distant_keeps_manual_quantities_for_other_movements(self):
+        """Les interventions à sortie + entrée conservent leur saisie manuelle."""
+        request, line = self._request_with_line()
+        request.type_intervention = "depannage"
+
+        defaults = self.env["dss.qty.sortie.wizard"].with_context(
+            default_request_id=request.id
+        ).default_get(["request_id", "line_ids"])
+        default_line = defaults["line_ids"][0][2]
+
+        self.assertFalse(default_line["is_sortie_only"])

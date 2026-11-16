@@ -21,7 +21,7 @@
 
 Le code effectue une recherche `limit=1` par code de picking; il ne filtre pas la recherche sur un entrepôt ou une société dans les méthodes présentées.
 
-Pour les interventions `nouvelle_installation` et `installation_interne`, la quantité retournée est déterminée à la clôture, et non au wizard de quantités Stock. Un picking entrant est alors créé uniquement pour les articles dont `qty_retour > 0`, depuis l'emplacement client du partenaire (ou l'emplacement client standard) vers l'emplacement source original `request.location_id`. Son lien est enregistré dans `picking_retour_cloture_id`; les articles et leur emplacement d'origine sont aussi inscrits dans le chatter et l'e-mail de clôture. Les autres types d'intervention conservent le routeur Stock existant.
+Pour les interventions `nouvelle_installation`, `installation_interne` **et `appro_distant`**, la quantité retournée est déterminée à la clôture, et non au wizard de quantités Stock. Un picking est alors créé uniquement pour les articles dont `qty_retour > 0` : depuis l'emplacement client du partenaire (ou l'emplacement client standard) vers l'emplacement source original `request.location_id` pour les deux interventions de sortie, et de l'emplacement destination `location_dest_id` vers `request.location_id` pour un approvisionnement distant, avec un type de picking `internal`. Son lien est enregistré dans `picking_retour_cloture_id`; les articles et leur emplacement d'origine sont aussi inscrits dans le chatter et l'e-mail de clôture. Les autres types d'intervention conservent le routeur Stock existant.
 
 ## 3. Contrôle de stock et cycle
 
@@ -49,7 +49,7 @@ L'extension de `stock.immediate.transfer.process()` appelle `check_dss_ecart()` 
 | Repère | À retenir |
 |---|---|
 | Flux principal | Les méthodes de `dss.request` créent et terminent les pickings. |
-| Retour de clôture | Les sorties seules réintègrent les quantités retournées à l'emplacement source après l'intervention. |
+| Retour de clôture | Les sorties seules et les approvisionnements distants réintègrent les quantités retournées à l'emplacement source après l'intervention. |
 | Contrôle de quantité | Présent avant sortie et transfert; pas dans la méthode d'entrée. |
 | Circuit secondaire | Le workflow ajouté à `stock.picking` est séparé et comporte une valeur d'état incohérente. |
 | Sources | [`dss_request_stock.py`](../../models/dss_request_stock.py), [`stock_picking.py`](../../models/stock_picking.py). |

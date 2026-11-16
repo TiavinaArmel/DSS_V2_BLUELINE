@@ -10,7 +10,7 @@ class DssRequestStock(models.Model):
     _inherit = "dss.request"
 
     def _generer_mouvement_retour_cloture(self):
-        """Réintègre les retours de clôture d'une sortie dans l'emplacement source."""
+        """Réintègre les retours de clôture dans l'emplacement source."""
         self.ensure_one()
         request = self.sudo()
         lignes_a_traiter = request.line_ids.filtered(
@@ -20,26 +20,53 @@ class DssRequestStock(models.Model):
             return False
         if not request.location_id or request.location_id.usage != "internal":
             raise ValidationError(
-                "Un emplacement source interne est requis pour enregistrer le retour."
+                u"Un emplacement source interne est requis pour enregistrer le retour."
             )
 
-        emplacement_source = request.partner_id.property_stock_customer
-        if not emplacement_source:
-            emplacement_source = request.env.ref("stock.stock_location_customers")
+        is_transfert = request.sens_mouvement == "Transfert"
+        if is_transfert:
+            # Un approvisionnement distant a déjà déplacé le matériel vers
+            # l'emplacement destination. Le retour est donc un transfert
+            # interne de cet emplacement vers l'emplacement source d'origine,
+            # et non une entrée depuis un emplacement client.
+            if (
+                not request.location_dest_id
+                or request.location_dest_id.usage != "internal"
+            ):
+                raise ValidationError(
+                    u"Un emplacement destination interne est requis pour "
+                    u"enregistrer le retour d'un approvisionnement distant."
+                )
+            emplacement_source = request.location_dest_id
+            emplacement_destination = request.location_id
+            code_picking = "internal"
+            partenaire = request.env["res.partner"]
+        else:
+            # Une sortie seule ramène le matériel depuis l'emplacement client.
+            emplacement_source = request.partner_id.property_stock_customer
+            if not emplacement_source:
+                emplacement_source = request.env.ref(
+                    "stock.stock_location_customers"
+                )
+            emplacement_destination = request.location_id
+            code_picking = "incoming"
+            partenaire = request.partner_id
+
         picking_type = request.env["stock.picking.type"].search(
-            [("code", "=", "incoming")], limit=1
+            [("code", "=", code_picking)], limit=1
         )
         if not picking_type:
             raise ValidationError(
-                "Aucun type de transfert entrant n'est configuré pour le retour."
+                u"Aucun type de transfert %s n'est configuré pour le retour."
+                % (u"interne" if is_transfert else u"entrant")
             )
 
         picking = request.env["stock.picking"].create(
             {
-                "partner_id": request.partner_id.id,
+                "partner_id": partenaire.id if partenaire else False,
                 "picking_type_id": picking_type.id,
                 "location_id": emplacement_source.id,
-                "location_dest_id": request.location_id.id,
+                "location_dest_id": emplacement_destination.id,
                 "origin": request.name,
             }
         )
@@ -51,7 +78,7 @@ class DssRequestStock(models.Model):
                     "product_uom_qty": line.qty_retour,
                     "product_uom": line.product_id.uom_id.id,
                     "location_id": emplacement_source.id,
-                    "location_dest_id": request.location_id.id,
+                    "location_dest_id": emplacement_destination.id,
                     "picking_id": picking.id,
                 }
             )

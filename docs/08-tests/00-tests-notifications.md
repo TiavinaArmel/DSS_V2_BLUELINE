@@ -34,6 +34,12 @@ Le manifeste déclare des tests de notifications, d'emplacements, de services, d
 | `test_return_material_quantity_change_is_saved_and_traced` | Une variation motivée est enregistrée, notifiée dans le chatter et gardée séparée des autres quantités. |
 | `test_return_material_rejects_negative_quantity` | Une quantité retournée négative est refusée côté serveur. |
 | `test_rejection_mapping_is_explicit` | Vérifie seulement l'état brouillon par défaut et l'absence de motif initial. |
+| `test_appro_distant_closure_defaults_to_all_installed` | Un approvisionnement distant clôturé sans modification préremplit `qty_installee = qty_sortie` et ne crée aucun retour. |
+| `test_appro_distant_closure_return_is_an_internal_transfer` | Un retour positif crée un picking `internal` de `location_dest_id` vers `location_id`, terminé, avec la quantité retournée. |
+| `test_appro_distant_closure_can_use_return_as_the_input` | Saisir le retour calcule la quantité installée complémentaire. |
+| `test_appro_distant_closure_rejects_quantity_above_transfer` | Une quantité supérieure à `qty_sortie` est refusée et l'état reste `approuve`. |
+| `test_appro_distant_stock_wizard_defers_return_to_closure` | Le wizard Stock met `qty_retour` à zéro pour un approvisionnement distant; le retour se décide à la clôture. |
+| `test_appro_distant_keeps_manual_quantities_for_other_movements` | `basculement` et `depannage` conservent la saisie manuelle (drapeau `is_sortie_only` faux). |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.
 

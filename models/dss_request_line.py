@@ -92,8 +92,16 @@ class DssRequestLine(
 
     @api.depends("request_id.sens_mouvement")
     def _compute_is_sortie_only(self):
+        # Une intervention "sortie seule" ne produit pas de retour au moment de
+        # la validation Stock : le retour éventuel se décide à la clôture.
+        # L'approvisionnement distant (transfert interne) suit exactement le
+        # même parcours que la nouvelle installation ; seule la destination
+        # du mouvement change.
         for line in self:
-            line.is_sortie_only = line.request_id.sens_mouvement == "Sortie"
+            line.is_sortie_only = line.request_id.sens_mouvement in (
+                "Sortie",
+                "Transfert",
+            )
 
     @api.depends("request_id.type_intervention")
     def _compute_is_retour_materiel(self):
