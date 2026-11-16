@@ -9,10 +9,12 @@
         <field name="model_id" ref="dss_v2.model_dss_request" />
         <!-- ${...} insère une valeur calculée ; ctx.get(clé, valeur_par_défaut) lit le contexte
         Odoo. -->
-        <field name="subject">DSS ${object.name} - ${ctx.get('dss_action_label', 'Notification')}</field>
+        <field name="subject">DSS ${object.name} - ${ctx.get('dss_action_label', 'Notification')}${(' - ' + ctx.get('dss_intervention_label')) if ctx.get('dss_intervention_label') else ''}</field>
         <!-- user.email fournit l'adresse de l'utilisateur courant ; or '' utilise une chaîne vide
         si elle manque. -->
         <field name="email_from">${user.email or ''}</field>
+        <!-- Adresse de reponse : celle de la societe, pour eviter des reponses perdues. -->
+        <field name="reply_to">${ctx.get('dss_reply_to', '')}</field>
         <!-- Styles intégrés au HTML pour une meilleure compatibilité avec les clients e-mail. -->
         <!-- CDATA empêche XML d'interpréter les balises HTML comme des balises de configuration
         Odoo. -->
@@ -45,12 +47,14 @@
                                     % if ctx.get('dss_logo_url'):
                                     ## La valeur du contexte est inseree dans l'adresse de l'image.
                                     <img src="${ctx.get('dss_logo_url')}"
-                                         alt="GulfSat Madagascar"
+                                         alt="${ctx.get('dss_company_name') or 'GulfSat Madagascar'}"
                                          width="180"
                                          style="display:block;width:180px;height:auto;
                                                 border:0;"/>
                                     % else:
-                                    GULFSAT MADAGASCAR
+                                    ## Sans adresse de serveur joignable, le nom de la societe
+                                    ## remplace une image qui serait cassee chez le destinataire.
+                                    ${ctx.get('dss_company_name') or 'GULFSAT MADAGASCAR'}
                                     % endif
                                 </td>
                                 <td align="right"
@@ -118,15 +122,40 @@
                         <p style="margin:0;font-size:15px;line-height:25px;
                                   color:#53657a;">
                             ## dss_event_key determine le message adapte a l'etape du workflow.
-                            ## Les branches elif et else choisissent un seul texte a afficher.
-                            % if ctx.get('dss_event_key') == 'stock_approval':
-                            Votre demande a été validée par le magasin. Vous pouvez maintenant la consulter et la clôturer.
+                            ## Le texte s'adresse au destinataire reel de l'evenement :
+                            ## la soumission part vers le Chef, les rejets vers le demandeur.
+                            % if ctx.get('dss_event_key') == 'submission':
+                            Vous avez reçu une demande de sortie de stock de la part de
+                            <strong>${object.demandeur_id.name or 'Non renseigné'}</strong>,
+                            du service
+                            <strong>${object.service_demandeur_id.name or 'Non renseigné'}</strong>.
+                            Elle attend votre validation en tant que Chef de service.
+                            % elif ctx.get('dss_event_key') == 'chef_validation':
+                            La demande de
+                            <strong>${object.demandeur_id.name or 'Non renseigné'}</strong>,
+                            du service
+                            <strong>${object.service_demandeur_id.name or 'Non renseigné'}</strong>,
+                            a été validée par le Chef de service. Elle attend maintenant
+                            la validation du magasin.
+                            % elif ctx.get('dss_event_key') == 'chef_rejection':
+                            Votre demande a été rejetée par le Chef du service
+                            <strong>${object.service_demandeur_id.name or 'Non renseigné'}</strong>.
+                            Le motif figure ci-dessous.
+                            % elif ctx.get('dss_event_key') == 'return_to_requester':
+                            Votre demande vous a été renvoyée pour correction. Consultez le
+                            motif ci-dessous, corrigez les articles puis soumettez à nouveau.
+                            % elif ctx.get('dss_event_key') == 'stock_approval':
+                            La demande de
+                            <strong>${object.demandeur_id.name or 'Non renseigné'}</strong>
+                            a été validée par le magasin. Elle peut maintenant être clôturée.
                             % elif ctx.get('dss_event_key') == 'closure':
                                 ## Le contexte distingue une cloture exceptionnelle d'une cloture normale.
                                 % if ctx.get('dss_closure_is_exception'):
                             La demande a été clôturée exceptionnellement par le Chef DSS.
                                 % else:
-                            La demande a été officiellement clôturée par le demandeur.
+                            La demande de
+                            <strong>${object.demandeur_id.name or 'Non renseigné'}</strong>
+                            a été officiellement clôturée.
                                 % endif
                             % elif ctx.get('dss_event_key') == 'stock_rejection':
                             ## get(clé, defaut) evite une valeur manquante si aucun motif n'a ete transmis.
@@ -219,8 +248,8 @@
                                                        border-top:1px solid #e0e9f4;
                                                        font-size:13px;font-weight:bold;
                                                        color:#15365b;">
-                                                ## Prend le statut du contexte, ou celui de l'enregistrement comme valeur de repli.
-                                                ${ctx.get('dss_status', object.state)}
+                                                ## Prend le libelle lisible du statut, avec le code brut en repli.
+                                                ${ctx.get('dss_status_label') or ctx.get('dss_status', object.state)}
                                             </td>
                                         </tr>
                                     </table>
@@ -292,12 +321,7 @@
                                 <td style="padding:16px 18px;">
                                     <p style="margin:0 0 8px 0;font-size:13px;
                                               font-weight:bold;color:#8b5b12;">
-                                        ## Le libelle du motif depend de l'evenement qui a declenche le message.
-                                        % if ctx.get('dss_event_key') == 'closure':
-                                        Motif de la clôture exceptionnelle
-                                        % else:
                                         Motif / commentaire
-                                        % endif
                                     </p>
                                     <p style="margin:0;font-size:14px;
                                               line-height:23px;color:#604c32;
@@ -355,7 +379,7 @@
                     <td align="center" style="padding:20px 30px 24px 30px;">
                         <p style="margin:0 0 7px 0;font-size:13px;
                                   font-weight:bold;color:#15365b;">
-                            GulfSat Madagascar
+                            ${ctx.get('dss_company_name') or 'GulfSat Madagascar'}
                         </p>
                         <p style="margin:0;font-size:12px;line-height:19px;
                                   color:#8795a7;">

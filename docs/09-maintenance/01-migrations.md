@@ -16,7 +16,7 @@ La requête SQL cible le module `dss_v2` et le modèle `report.paperformat`. Ell
 
 ## 3. Version et exécution
 
-Le manifeste indique actuellement la version `2.12`. Les scripts `2.5` et `2.6` modifient des données et des contraintes de base; sauvegarder la base et vérifier les journaux d'upgrade avant toute intervention. Leur présence dans le dépôt ne prouve pas qu'ils ont été exécutés sur une instance donnée.
+Le manifeste indique actuellement la version `2.13`. Les scripts `2.5` et `2.6` modifient des données et des contraintes de base; sauvegarder la base et vérifier les journaux d'upgrade avant toute intervention. Leur présence dans le dépôt ne prouve pas qu'ils ont été exécutés sur une instance donnée.
 
 Depuis la version `2.7`, `hr` n'est plus une dépendance d'exécution. Le code de migration `2.5` est conservé pour les bases historiques; il vérifie la présence des tables RH avant de les lire.
 

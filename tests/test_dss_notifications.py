@@ -546,3 +546,136 @@ class TestDssNotifications(common.TransactionCase):
         self.assertEqual(request.state, "brouillon")
         # Verifie qu'aucun motif n'a ete defini a la creation.
         self.assertFalse(request.motif_rejet)
+
+    def test_loopback_base_url_omits_broken_image_and_link(self):
+        """Une adresse localhost ne doit produire ni image ni lien casses."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "http://localhost:8069"
+        )
+        request = self.Request.create({"name": "TEST-DSS-LOOPBACK"})
+
+        self.assertTrue(
+            request._dss_notify_once(
+                "submission", "Soumission", ["no-real-send@example.invalid"]
+            )
+        )
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "submission"),
+            ],
+            limit=1,
+        )
+        body = log.mail_id.body_html
+        self.assertNotIn("localhost", body)
+        self.assertNotIn("/web/binary/company_logo", body)
+        self.assertNotIn("/web?db=", body)
+        self.assertIn(self.env.user.company_id.name, body)
+        # Le bouton reste present dans le modele, mais sans adresse exploitable.
+        self.assertIn("Consulter la demande", body)
+
+    def test_lan_base_url_keeps_logo_and_button(self):
+        """Une adresse du reseau interne reste utilisable dans les courriels."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "http://192.168.1.50:8069"
+        )
+        request = self.Request.create({"name": "TEST-DSS-LAN"})
+
+        self.assertTrue(
+            request._dss_notify_once(
+                "submission", "Soumission", ["no-real-send@example.invalid"]
+            )
+        )
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "submission"),
+            ],
+            limit=1,
+        )
+        body = log.mail_id.body_html
+        self.assertIn(
+            "http://192.168.1.50:8069/web/binary/company_logo", body
+        )
+        self.assertIn("http://192.168.1.50:8069/web?db=", body)
+
+    def test_email_displays_readable_status_label(self):
+        """La carte de reference affiche le libelle du statut, pas le code technique."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "https://odoo.example.test"
+        )
+        request = self.Request.create({"name": "TEST-DSS-STATUS-LABEL"})
+        request.sudo().write({"state": "valide_chef"})
+
+        self.assertTrue(
+            request._dss_notify_once(
+                "chef_validation",
+                "Validation Chef",
+                ["no-real-send@example.invalid"],
+            )
+        )
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "chef_validation"),
+            ],
+            limit=1,
+        )
+        body = " ".join(log.mail_id.body_html.split())
+        self.assertIn("Validation Chef", body)
+        self.assertNotIn("valide_chef", body)
+
+    def test_rejection_email_escapes_the_motif(self):
+        """Le motif de rejet ne peut pas injecter de HTML dans le courriel."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "https://odoo.example.test"
+        )
+        request = self.Request.create({"name": "TEST-DSS-MOTIF-ESCAPE"})
+
+        self.assertTrue(
+            request._dss_notify_once(
+                "chef_rejection",
+                "Rejet par le Chef",
+                ["no-real-send@example.invalid"],
+                "Motif <script>alert(1)</script>",
+            )
+        )
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "chef_rejection"),
+            ],
+            limit=1,
+        )
+        self.assertIn("&lt;script&gt;", log.mail_id.body_html)
+        self.assertNotIn("<script>", log.mail_id.body_html)
+
+    def test_subject_contains_intervention_label(self):
+        """Le sujet rappelle le type d'intervention pour trier les courriels."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "https://odoo.example.test"
+        )
+        request = self.Request.create({
+            "name": "TEST-DSS-SUBJECT",
+            "type_intervention": "depannage",
+        })
+
+        self.assertTrue(
+            request._dss_notify_once(
+                "submission", "Soumission", ["no-real-send@example.invalid"]
+            )
+        )
+
+        log = self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "submission"),
+            ],
+            limit=1,
+        )
+        self.assertIn("TEST-DSS-SUBJECT", log.mail_id.subject)
+        self.assertIn("Depannage", log.mail_id.subject)

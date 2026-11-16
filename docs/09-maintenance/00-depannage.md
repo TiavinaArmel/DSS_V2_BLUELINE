@@ -129,6 +129,17 @@ Si le wizard demande un motif pour tous les articles, vérifier que les valeurs 
 
 Si l'e-mail affiche littéralement `<br/>`, le résumé des motifs est transmis comme texte. La solution est de générer une liste HTML `<ul><li>` dans `_dss_quantity_change_motifs()` et de vérifier le rendu après mise à niveau du module.
 
+### E-mail : le logo ne s'affiche pas, seul le texte alternatif apparaît
+
+| Élément | Diagnostic |
+|---|---|
+| Symptôme | Le bandeau affiche le nom de la société à la place du logo, ou une image cassée avec son texte alternatif. |
+| Cause | Le courriel contenait une image pointant vers `http://localhost:8069/...`. Chez le destinataire, `localhost` désigne **sa propre machine** : le serveur Odoo n'y répond pas. Le bouton « Consulter la demande » portait le même défaut. |
+| Vérification | Rechercher `localhost` dans le `body_html` d'un `mail.mail` récent, ou consulter **Paramètres > Technique > Paramètres du système > `web.base.url`**. |
+| Solution | Renseigner dans `web.base.url` l'adresse réellement joignable du serveur, par exemple `http://192.168.1.50:8069` en réseau interne. Depuis la version `2.13`, une adresse de bouclage est détectée : le nom de la société remplace l'image cassée et le bouton ne porte pas d'adresse inutilisable. |
+| Limite | Même avec une adresse correcte, Gmail et Outlook bloquent les images distantes par défaut : le destinataire doit cliquer sur « Afficher les images ». |
+| Après correction | Mettre à niveau `dss_v2`, puis déclencher une nouvelle notification. Les e-mails déjà envoyés ne sont pas modifiés. |
+
 ## 5. Fiche de mémorisation
 
 | Repère | À retenir |

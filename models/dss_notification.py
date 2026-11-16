@@ -10,6 +10,10 @@ from odoo import api, fields, models
 # Cree un journal Python nomme pour ce fichier.
 _logger = logging.getLogger(__name__)
 
+# Hotes qui designent la machine du destinataire, jamais le serveur Odoo.
+# Une adresse privee du reseau interne (192.168.x, 10.x, 172.16.x) reste valide.
+_DSS_LOOPBACK_HOSTS = ("localhost", "127.0.0.1", "::1", "0.0.0.0")
+
 
 class DssNotificationLog(models.Model):
     """Journal technique qui evite les doublons de notification DSS."""
@@ -96,19 +100,73 @@ class DssRequestNotification(models.Model):
         # Le routeur d'e-mails attend une liste, meme pour un seul demandeur.
         return [email] if email else []
 
+    @staticmethod
+    def _dss_url_hostname(url):
+        """Extrait le nom d'hote d'une URL sans dependre d'urlparse.
+
+        `urlparse` n'existe que sous ce nom en Python 2; un import conditionnel
+        pour Python 3 declenche un faux positif dans les analyseurs statiques.
+        Le decoupage manuel suffit pour une URL de configuration Odoo.
+        """
+        if not url:
+            return ""
+        host = url.strip()
+        # Retire le schema (http://, https://).
+        if "://" in host:
+            host = host.split("://", 1)[1]
+        # Retire l'eventuel couple utilisateur:motdepasse@.
+        if "@" in host:
+            host = host.split("@", 1)[1]
+        # Retire le chemin, les parametres et le fragment.
+        for separator in ("/", "?", "#"):
+            if separator in host:
+                host = host.split(separator, 1)[0]
+        # Retire le port. Une adresse IPv6 entre crochets garde ses deux-points.
+        if host.startswith("["):
+            host = host.split("]", 1)[0].lstrip("[")
+        elif ":" in host:
+            host = host.split(":", 1)[0]
+        return host.strip().lower()
+
+    def _dss_base_url(self):
+        """Retourne l'adresse du serveur utilisable dans un courriel.
+
+        Une URL de bouclage designe la machine du destinataire, pas le serveur
+        Odoo : le logo et le bouton seraient casses chez tous les destinataires.
+        Dans ce cas la methode retourne une chaine vide et le modele affiche le
+        nom de la societe au lieu d'une image cassee. Une adresse privee du
+        reseau interne reste acceptee, car elle est joignable des destinataires
+        internes.
+        """
+        self.ensure_one()
+        # Lit l'URL de base dans la configuration Odoo avec les droits admin.
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        # Sans URL de base, aucun lien complet n'est constructible.
+        if not base_url:
+            return ""
+        # Extrait le nom d'hote pour detecter une adresse de bouclage.
+        hostname = self._dss_url_hostname(base_url)
+        if not hostname or hostname in _DSS_LOOPBACK_HOSTS:
+            _logger.warning(
+                "DSS courriel : liens desactives car web.base.url vaut %s. "
+                "Configurez l'adresse joignable du serveur Odoo.",
+                base_url,
+            )
+            return ""
+        # Retire le slash final pour eviter un double slash dans le lien.
+        return base_url.rstrip("/")
+
     def _dss_workflow_url(self):
         """Construit le lien web direct vers la demande DSS."""
         # S'assure que le lien sera construit pour une seule demande.
         self.ensure_one()
-        # Lit l'URL de base dans la configuration Odoo avec les droits admin.
-        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
-        # Sans URL de base, il est impossible de construire un lien complet.
+        base_url = self._dss_base_url()
+        # Sans adresse joignable, le bouton est omis du courriel.
         if not base_url:
             return ""
         # Selectionne la base de cette demande avant d'ouvrir la fiche dans le web client.
         return "%s/web?db=%s#id=%s&view_type=form&model=dss.request" % (
-            # Retire le slash final pour eviter un double slash dans le lien.
-            base_url.rstrip("/"),
+            base_url,
             # Evite que le navigateur ouvre une autre base Odoo sur le meme serveur.
             self.env.cr.dbname,
             # Insere l'identifiant de la demande dans l'URL.
@@ -119,17 +177,30 @@ class DssRequestNotification(models.Model):
         """Construit l'URL publique du logo de la société Odoo courante."""
         # S'assure que le logo correspond au contexte d'une seule demande.
         self.ensure_one()
-        # Lit l'URL publique du serveur pour éviter toute dépendance à localhost.
-        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
-        # Sans URL de base, aucun lien d'image accessible depuis l'e-mail n'est possible.
+        base_url = self._dss_base_url()
+        # Sans adresse joignable, le modele affiche le nom de la societe.
         if not base_url:
             return ""
         # Utilise la société active et la base courante dans l'URL du logo Odoo.
         return "%s/web/binary/company_logo?db=%s&company=%s" % (
-            base_url.rstrip("/"),
+            base_url,
             self.env.cr.dbname,
             self.env.user.company_id.id,
         )
+
+    def _dss_selection_label(self, field_name, value):
+        """Retourne le libelle lisible d'une valeur de selection du modele."""
+        if not value:
+            return ""
+        # fields_get() expose les choix declares sur le modele.
+        definition = self.fields_get([field_name]).get(field_name) or {}
+        # selection est une liste de couples (valeur technique, libelle).
+        labels = dict(definition.get("selection") or [])
+        return labels.get(value) or value
+
+    def _dss_company(self):
+        """Retourne la société de l'utilisateur qui déclenche la notification."""
+        return self.env.user.company_id
 
     def _dss_notify_once(
         self,
@@ -201,6 +272,8 @@ class DssRequestNotification(models.Model):
                     # Interrompt la notification sans creer de courriel.
                     return False
 
+                # Societe utilisee pour le pied de page et l'adresse de reponse.
+                company = self._dss_company()
                 # Fournit au modele les informations propres a cette notification.
                 values = template.with_context(
                     # Passe le nom de l'action affiche dans le sujet et le corps.
@@ -208,11 +281,22 @@ class DssRequestNotification(models.Model):
                     # Rend la clé technique disponible au template pour adapter le message.
                     dss_event_key=event_key,
                     # Passe le motif, ou une chaine vide s'il n'y en a pas.
-                    dss_motif=motif or "",
+                    # Le motif vient d'une saisie libre : il est echappe avant le HTML.
+                    dss_motif=html_escape(motif or ""),
                     # Passe les motifs de quantités sous forme de données structurées.
                     dss_quantity_motifs=quantity_motifs or [],
                     # Passe l'etat courant de la demande au modele.
                     dss_status=self.state,
+                    # Passe le libelle lisible de l'etat (Validation Chef, Cloture...).
+                    dss_status_label=self._dss_selection_label("state", self.state),
+                    # Passe le libelle du type d'intervention pour le sujet.
+                    dss_intervention_label=self._dss_selection_label(
+                        "type_intervention", self.type_intervention
+                    ),
+                    # Passe le nom de la societe pour l'en-tete et le pied de page.
+                    dss_company_name=company.name or "",
+                    # Passe l'adresse de reponse de la societe.
+                    dss_reply_to=company.email or "",
                     # Passe le lien direct vers la demande au modele.
                     dss_workflow_url=self._dss_workflow_url(),
                     # Donne au template les détails de la clôture lorsqu'ils existent.

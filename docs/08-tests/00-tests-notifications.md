@@ -45,6 +45,11 @@ Le manifeste déclare des tests de notifications, d'emplacements, de services, d
 | `test_depannage_closure_return_creates_incoming_picking` | Un retour positif de dépannage crée un picking `incoming` vers `location_id`, terminé, avec la quantité retournée. |
 | `test_depannage_closure_can_use_return_as_the_input` | Saisir le retour calcule la quantité installée complémentaire du dépannage. |
 | `test_depannage_closure_rejects_quantity_above_output` | Une quantité supérieure à `qty_sortie` est refusée et l'état reste `approuve`. |
+| `test_loopback_base_url_omits_broken_image_and_link` | Avec `web.base.url` sur `localhost`, le corps ne contient ni URL d'image ni lien `/web?db=`, affiche le nom de la société, et conserve le bouton sans adresse. |
+| `test_lan_base_url_keeps_logo_and_button` | Une adresse du réseau interne (`192.168.1.50`) conserve l'URL du logo et le lien vers la demande. |
+| `test_email_displays_readable_status_label` | La carte de référence affiche le libellé du statut (« Validation Chef ») et non le code technique (`valide_chef`). |
+| `test_rejection_email_escapes_the_motif` | Un motif contenant `<script>` est rendu échappé (`&lt;script&gt;`) et aucune balise active n'est injectée. |
+| `test_subject_contains_intervention_label` | Le sujet contient le numéro DSS et le libellé du type d'intervention. |
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.
 

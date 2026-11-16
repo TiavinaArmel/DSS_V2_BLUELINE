@@ -36,9 +36,27 @@ La méthode de résolution des utilisateurs préfère `partner_id.email`, puis `
 
 ## 3. Template et file d'envoi
 
-Le template XML affiche le demandeur (`demandeur_id`), le service (`service_demandeur_id`) et le statut courant. L'approbation Stock invite le demandeur à consulter et clôturer sa demande, et liste en puces les lignes modifiées avec produit, quantités demandée/sortie et motif. Pour les interventions de sortie seule, l'e-mail de clôture énumère chaque article retourné, la quantité remise en stock et l'emplacement source d'origine. Une clôture exceptionnelle affiche également son acteur et son motif; les événements de rejet et de renvoi conservent leur motif métier. Le lien de la demande inclut le nom de la base afin que le navigateur ouvre le bon registre Odoo; le destinataire doit s'authentifier et disposer des droits nécessaires. Le logo est affiché via `/web/binary/company_logo`, à partir de `web.base.url`; sans cette valeur, le template affiche le nom de l'entreprise.
+Le template XML affiche le demandeur (`demandeur_id`), le service (`service_demandeur_id`) et le **libellé** du statut (« Validation Chef », « Clôture »…) plutôt que son code technique. L'introduction est écrite du point de vue du **destinataire réel** de l'événement :
 
-Pour que les destinataires voient le logo, `web.base.url` doit contenir l'adresse du serveur joignable par eux, idéalement en HTTPS; une valeur `localhost` ne fonctionne que sur la machine locale. La route de l'image doit également être accessible depuis leur client de messagerie, qui peut par ailleurs bloquer les images distantes par défaut.
+| Événement | Destinataire principal | Formulation de l'introduction |
+|---|---|---|
+| `submission` | Chef du service | « Vous avez reçu une demande de sortie de stock de la part de **X**, du service **Y**. Elle attend votre validation en tant que Chef de service. » |
+| `chef_validation` | Magasin et demandeur | « La demande de **X**, du service **Y**, a été validée par le Chef de service. Elle attend maintenant la validation du magasin. » |
+| `chef_rejection` | Demandeur | « Votre demande a été rejetée par le Chef du service **Y**. Le motif figure ci-dessous. » |
+| `return_to_requester` | Demandeur | « Votre demande vous a été renvoyée pour correction… » |
+| `stock_approval` | Demandeur et Chef | « La demande de **X** a été validée par le magasin. Elle peut maintenant être clôturée. » |
+| `stock_rejection` | Demandeur et Chef | « La demande a été rejetée par le magasin. Motif : … » |
+| `closure` | Chef, Magasin et demandeur | « La demande de **X** a été officiellement clôturée. » ou clôture exceptionnelle |
+
+Le sujet rappelle le type d'intervention (`DSS <numéro> - <action> - <type>`), et l'adresse de réponse (`reply_to`) reprend l'e-mail de la société.
+
+L'approbation Stock invite le demandeur à consulter et clôturer sa demande, et liste en puces les lignes modifiées avec produit, quantités demandée/sortie et motif. Pour les interventions à clôture calculée, l'e-mail de clôture énumère chaque article retourné, la quantité remise en stock et l'emplacement source d'origine. Une clôture exceptionnelle affiche également son acteur et son motif. Les motifs de rejet et de renvoi sont **échappés** avant l'injection HTML; ceux des modifications de quantités le sont dans `_dss_quantity_change_motifs()`. Le lien de la demande inclut le nom de la base afin que le navigateur ouvre le bon registre Odoo; le destinataire doit s'authentifier et disposer des droits nécessaires.
+
+Le logo et le bouton reposent sur `web.base.url`, lu par `_dss_base_url()`. Cette méthode refuse une adresse de bouclage (`localhost`, `127.0.0.1`, `::1`, `0.0.0.0`) : dans ce cas elle retourne une chaîne vide et le template affiche le nom de la société à la place du logo, évitant une image cassée chez le destinataire. Le bouton « Consulter la demande » reste présent dans le modèle quel que soit le cas. Une adresse privée du réseau interne (`192.168.x`, `10.x`, `172.16.x`) reste acceptée, car elle est joignable depuis les postes internes.
+
+Le nom d'hôte est extrait par `_dss_url_hostname()`, un découpage manuel de l'URL. Ce choix évite l'import conditionnel de `urlparse` (Python 2) vers `urllib.parse` (Python 3), qui produit un faux positif `reportMissingImports` dans les analyseurs statiques configurés pour Python 3, alors que l'instance Odoo 10 s'exécute en Python 2.
+
+Pour que les destinataires voient réellement le logo, `web.base.url` doit donc contenir l'adresse du serveur sur le réseau, par exemple `http://192.168.1.50:8069`. Deux limites subsistent indépendamment du module : le client de messagerie peut bloquer les images distantes par défaut (Gmail, Outlook) jusqu'à un clic « Afficher les images », et une adresse uniquement locale n'est jamais joignable depuis l'extérieur du réseau.
 
 Le code fixe `model=False`, `res_id=False` et `auto_delete=False`, puis crée le mail sans appeler `send()`; il dépend donc de la file de courriels Odoo pour l'envoi réel.
 
