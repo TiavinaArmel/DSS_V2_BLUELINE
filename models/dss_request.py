@@ -322,14 +322,16 @@ class DssRequest(models.Model):
                 body=(
                     "L'administrateur a modifié le service demandeur : "
                     "%s -> %s." % (html_escape(old_name), html_escape(new_name))
-                )
+                ),
+                subtype="mail.mt_note",
             )
         for request, old_name, new_name in requester_changes:
             request.message_post(
                 body=(
                     "L'administrateur a modifié le demandeur : %s -> %s."
                     % (html_escape(old_name), html_escape(new_name))
-                )
+                ),
+                subtype="mail.mt_note",
             )
         return result
 

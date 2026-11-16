@@ -8,8 +8,10 @@ Les boutons « Rejeter » apparaissent au Chef à l'état `valide_chef` et au Ma
 |---|---|
 | Saisie | Le champ `motif` du wizard est requis. |
 | Confirmation | Copie `motif` vers `dss.request.motif_rejet`, puis appelle `action_rejeter()`. |
-| Transition | `state` devient `rejete`; un message chatter est ajouté. |
+| Transition | `state` devient `rejete`; une note interne (`subtype="mail.mt_note"`) est ajoutée au chatter : `<b>{utilisateur}</b> a rejeté la demande.<br/><b>Motif :</b> {motif}`, ou sans motif `<b>{utilisateur}</b> a rejeté la demande.` |
 | Notification | Le destinataire et la clé dépendent de l'état précédent. |
+
+Le motif de rejet provient d'une saisie libre : il passe par `html_escape()` avant l'injection HTML, puis ses retours à la ligne sont convertis en `<br/>`. Le nom de l'utilisateur est échappé de la même manière. Sans ce traitement, un motif contenant `<`, `>` ou `&` cassait l'affichage du message.
 
 `action_rejeter()` n'applique pas de contrôle serveur de l'état de départ. La visibilité des boutons ne suffit pas à empêcher un appel direct de cette méthode dans un autre contexte.
 
@@ -41,7 +43,7 @@ Pour `retour_materiel`, le demandeur renseigne en brouillon l'article, la quanti
 | Retour stock | Chaque quantité retournée positive est transférée à la clôture vers l'emplacement source de la demande. |
 | Écart | Pour une sortie seule, compare le total installé + retourné à `qty_demandee`; `has_ecart` devient vrai si une ligne diffère. |
 | État | Passe la demande à `cloture`. |
-| Chatter | Ajoute un récapitulatif et les écarts éventuels. |
+| Chatter | Note interne (`subtype="mail.mt_note"`) avec récapitulatif par article (`Qté installée`, `Qté retour`; `Qté retour confirmée` pour un retour de matériel), les retours à l'emplacement d'origine et, s'il y en a, la section `Écarts détectés`. |
 | Notification | Appelle `_dss_notify_closure()` pour le Chef, le Magasin et le demandeur; le contexte conserve le type et le motif d'une clôture exceptionnelle. |
 
 Le wizard vérifie côté serveur que la demande est encore à l'état `approuve` avant toute écriture. Les boutons XML ajoutent une protection d'interface, mais ne remplacent pas ce contrôle serveur.

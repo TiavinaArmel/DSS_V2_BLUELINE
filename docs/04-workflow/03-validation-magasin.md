@@ -29,7 +29,9 @@ Les contrôles de stock, les emplacements et le cycle des pickings sont décrits
 
 ## 4. Effets après le routeur
 
-Si le code de génération ne lève pas d'exception, l'action poste un message de validation Stock, passe l'état à `approuve`, génère ou met à jour le PDF du BL, poste un message d'approbation définitive et prépare `stock_approval` pour le demandeur.
+Si le code de génération ne lève pas d'exception, l'action passe l'état à `approuve`, poste **un seul** message de chatter, génère ou met à jour le PDF du BL (qui ajoute sa propre trace avec la pièce jointe), puis prépare `stock_approval` pour le demandeur.
+
+Le message de validation Stock est une note interne (`subtype="mail.mt_note"`) : `<b>{utilisateur}</b> a validé la demande en tant que <b>Responsable Stock</b> et l'a approuvée définitivement.` La validation Stock et l'approbation finale étaient auparavant deux messages successifs; elles sont désormais regroupées pour n'afficher qu'une trace par clic.
 
 ## 5. Fiche de mémorisation
 

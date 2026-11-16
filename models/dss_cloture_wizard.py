@@ -155,7 +155,7 @@ class DssClotureWizard(models.TransientModel):
         for line in self.line_ids:
             if is_retour_materiel:
                 recap.append(
-                    u'\u2022 %s : Qte Retour confirmée %s' % (
+                    u'\u2022 %s : Qté retour confirmée %s' % (
                         html_escape(line.product_id.name or ''),
                         line.request_line_id.qty_retour,
                     )
@@ -218,7 +218,7 @@ class DssClotureWizard(models.TransientModel):
 
             # Ajoute une ligne au récapitulatif du message.
             recap.append(
-                    u'\u2022 %s : Qte Installee %s, Qte Retour %s' % (
+                    u'\u2022 %s : Qté installée %s, Qté retour %s' % (
                     html_escape(line.product_id.name or ''),
                     qty_installee,
                     qty_retour)
@@ -245,7 +245,7 @@ class DssClotureWizard(models.TransientModel):
                 precision_digits=2,
             ) != 0:
                 ecarts.append(
-                    u'%s : demande %s, sorti %s, installe %s, retour %s' % (
+                    u'%s : demande %s, sorti %s, installé %s, retour %s' % (
                         html_escape(line.product_id.name or ''),
                         line.request_line_id.qty_demandee,
                         line.request_line_id.qty_sortie,
@@ -298,12 +298,14 @@ class DssClotureWizard(models.TransientModel):
             )
         if ecarts:
             message += (
-                u'<br/><br/><b>Ecarts detectes :</b><br/>'
+                u'<br/><br/><b>Écarts détectés :</b><br/>'
                 + u'<br/>'.join(ecarts)
             )
 
         # Poste le message dans le chatter.
-        request.message_post(body=message)
+        # Le sous-type est explicite : trace métier interne, sans notification
+        # supplémentaire aux abonnés (les e-mails métier sont gérés autrement).
+        request.message_post(body=message, subtype="mail.mt_note")
         request.with_context(
             dss_closure_type='exception' if self.is_exception else 'normal',
             dss_closure_is_exception=self.is_exception,

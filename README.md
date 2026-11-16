@@ -24,7 +24,7 @@ Il prend en charge le workflow complet d’une demande, depuis sa création jusq
 - Saisie d’une seule quantité installée/retournée par article lors de la clôture pour les sorties seules ;
 - Réintégration automatique des quantités retournées à l’emplacement source avec traçabilité dans le chatter et l’e-mail ;
 - Suivi de l’état d’avancement de la demande ;
-- Historique des échanges dans le chatter Odoo ;
+- Historique des échanges dans le chatter Odoo, sous forme de notes internes au format homogène ;
 - Suivi des activités et notifications internes ;
 - Création et gestion du bon de livraison ;
 - Génération d’un bon de livraison au format PDF ;
@@ -61,7 +61,7 @@ Les groupes et les droits d’accès sont configurés dans le dossier `security/
 |---|---|
 | Nom technique | `dss_v2` |
 | Nom affiché | DSS V2 - Demande de Sortie de Stock |
-| Version du module | 2.9 |
+| Version du module | 2.10 |
 | Version Odoo supportée actuellement | Odoo 10 Community |
 | Catégorie | Inventory |
 | Auteur | Tiavina Armel |
@@ -183,6 +183,6 @@ Module développé pour la gestion des demandes de sortie de stock dans Odoo 10 
 
 | Repère | À retenir |
 |---|---|
-| Version | `2.9`, selon le manifeste. |
+| Version | `2.10`, selon le manifeste. |
 | Workflow | Chef puis Stock; le workflow principal n'a pas d'étape Sécurité. |
 | Documentation détaillée | [`docs/README.md`](docs/README.md). |

@@ -33,6 +33,8 @@ Contrôles réussis
 
 La notification est créée dans la file Odoo, elle n'est pas envoyée directement par `action_soumettre()`.
 
+Le message de chatter est posté comme note interne (`subtype="mail.mt_note"`). Son corps vaut `<b>{utilisateur}</b> a soumis la demande.<br/>` suivi d'une ligne par article. Les libellés sont accentués : `Qté demandée`, `Qté sortie`, `Qté installée`, `Qté retour`; seules les quantités non nulles sont affichées, et une intervention de retour de matériel n'affiche que `Qté retour`. Le nom de l'utilisateur et le nom de chaque article passent par `html_escape()` avant l'injection HTML, et les lignes sont séparées par `<br/>`.
+
 ## 4. Fiche de mémorisation
 
 | Repère | À retenir |

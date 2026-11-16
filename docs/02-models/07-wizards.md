@@ -40,7 +40,7 @@ Pour `retour_materiel`, le wizard Stock compare `qty_retour` à sa valeur initia
 
 À la clôture, les retours positifs de ces interventions créent un picking entrant depuis l'emplacement client vers `request.location_id`. Le lien de ce transfert est conservé dans `picking_retour_cloture_id`; le chatter et la notification de clôture mentionnent chaque article, sa quantité retournée et son emplacement d'origine.
 
-Le chatter du wizard Stock regroupe les lignes modifiées dans un seul message à puces. Chaque article affiche son nom, sa quantité demandée, sa nouvelle quantité sortie et le motif; la puce est un caractère Unicode et non la séquence littérale `\u2022`.
+Le chatter du wizard Stock regroupe les lignes modifiées dans un seul message à puces. Chaque article affiche son nom, sa quantité demandée, sa nouvelle quantité sortie et le motif; la puce est un caractère Unicode et non la séquence littérale `\u2022`. Le message est posté en note interne (`subtype="mail.mt_note"`), avec l'en-tête `Le Responsable Stock {utilisateur} a modifié les quantités.` et des libellés accentués (`Quantité demandée`, `Quantité sortie`, `Motif de modification`, `Quantité retournée`).
 
 ## 4. Cycle de vie d'un wizard
 

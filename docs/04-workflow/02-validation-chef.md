@@ -23,7 +23,7 @@ La méthode de validation vérifie l'état, mais ne vérifie pas elle-même l'ap
 | `state` | Passe à `valide_magasin`. |
 | `signataire_chef_id` | Prend l'utilisateur courant. |
 | `date_validation_chef` | Prend l'heure courante Odoo. |
-| Chatter | Ajoute une trace de validation Chef. |
+| Chatter | Note interne (`subtype="mail.mt_note"`) : `<b>{utilisateur}</b> a validé la demande en tant que <b>Responsable Chef</b>.` Le nom est échappé par `html_escape()`. |
 | Notification | Prépare `chef_validation` vers les utilisateurs actifs du groupe Magasin et le demandeur. |
 
 ## 5. Fiche de mémorisation

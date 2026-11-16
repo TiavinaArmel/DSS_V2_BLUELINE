@@ -66,8 +66,9 @@ class DssRequestBonLivraison(models.Model):
             # create() enregistre le PDF ; message_post() le rend visible dans le chatter.
             attachment = attachment_model.create(attachment_values)
             self.message_post(
-                body="Bon de Livraison genere automatiquement.",
+                body=u"Bon de livraison généré automatiquement.",
                 attachment_ids=[attachment.id],
+                subtype="mail.mt_note",
             )
 
     @api.multi

@@ -2,6 +2,7 @@
 
 from odoo import SUPERUSER_ID, models, fields, api
 from odoo.exceptions import AccessError, ValidationError
+from odoo.tools import html_escape
 from odoo.tools.float_utils import float_compare
 
 
@@ -66,27 +67,32 @@ class DssRequestWorkflow(models.Model):
         # Parcourt les articles liés et construit pour chacun une liste d'informations à afficher.
         for line in self.line_ids:
             parties = []
+            # Le nom de l'article vient de la base : il est echappe avant
+            # injection dans le HTML du chatter.
+            nom_article = html_escape(line.product_id.name or "")
             if self.type_intervention == "retour_materiel":
-                parties.append("Qte Retour %s" % line.qty_retour)
+                parties.append(u"Qté retour %s" % line.qty_retour)
                 lignes_detail.append(
-                    "%s : %s" % (line.product_id.name, ", ".join(parties))
+                    u"%s : %s" % (nom_article, u", ".join(parties))
                 )
                 continue
             # append() ajoute le texte à la fin de la liste sans remplacer les valeurs existantes.
             if line.qty_demandee:
-                parties.append("Qte Demandee %s" % line.qty_demandee)
+                parties.append(u"Qté demandée %s" % line.qty_demandee)
             if line.qty_sortie:
-                parties.append("Qte Sortie %s" % line.qty_sortie)
+                parties.append(u"Qté sortie %s" % line.qty_sortie)
             if line.qty_installee:
-                parties.append("Qte Installee %s" % line.qty_installee)
+                parties.append(u"Qté installée %s" % line.qty_installee)
             if line.qty_retour:
-                parties.append("Qte Retour %s" % line.qty_retour)
+                parties.append(u"Qté retour %s" % line.qty_retour)
             if not parties:
                 # Si aucune quantité n'est renseignée, conserve malgré tout la quantité demandée dans le résumé.
-                parties.append("Qte Demandee %s" % line.qty_demandee)
-            lignes_detail.append("%s : %s" % (line.product_id.name, ", ".join(parties)))
+                parties.append(u"Qté demandée %s" % line.qty_demandee)
+            lignes_detail.append(
+                u"%s : %s" % (nom_article, u", ".join(parties))
+            )
         # join() assemble les articles avec une balise de saut de ligne HTML comme séparateur.
-        return "<br/>".join(lignes_detail)
+        return u"<br/>".join(lignes_detail)
 
     @api.multi
     def action_soumettre(self):
@@ -169,8 +175,9 @@ class DssRequestWorkflow(models.Model):
             detail = rec._detail_articles_html()
             # message_post() ajoute au chatter un message dont body peut contenir du HTML.
             rec.message_post(
-                body="<b>%s</b> a soumis la demande.<br/>%s"
-                % (self.env.user.name, detail)
+                body=u"<b>%s</b> a soumis la demande.<br/>%s"
+                % (html_escape(self.env.user.name), detail),
+                subtype="mail.mt_note",
             )
             rec._dss_notify_submission()
 
@@ -201,8 +208,11 @@ class DssRequestWorkflow(models.Model):
             rec.date_validation_chef = fields.Datetime.now()
             # Le chatter garde une trace lisible de l'utilisateur ayant validé la demande.
             rec.message_post(
-                body="<b>%s</b> a valide la demande en tant que <b>Responsable Chef</b>."
-                % self.env.user.name
+                body=(
+                    u"<b>%s</b> a validé la demande en tant que "
+                    u"<b>Responsable Chef</b>."
+                ) % html_escape(self.env.user.name),
+                subtype="mail.mt_note",
             )
             rec._dss_notify_chef_validation()
 
@@ -231,19 +241,19 @@ class DssRequestWorkflow(models.Model):
             elif rec.sens_mouvement == "Transfert":
                 rec._generer_mouvement_transfert()
 
-            # Le premier message identifie la validation effectuée par le magasinier.
-            rec.message_post(
-                body="<b>%s</b> a valide la demande en tant que <b>Responsable Stock</b>."
-                % self.env.user.name
-            )
+            # Une seule trace de chatter pour la validation Stock et l'approbation
+            # finale : deux messages successifs pour un seul clic rendaient la fiche
+            # difficile à lire.
             rec.state = "approuve"
+            rec.message_post(
+                body=(
+                    u"<b>%s</b> a validé la demande en tant que "
+                    u"<b>Responsable Stock</b> et l'a approuvée définitivement."
+                ) % html_escape(self.env.user.name),
+                subtype="mail.mt_note",
+            )
             # Produit le PDF du bon de livraison après la validation du stock.
             rec._generer_bon_livraison()
-            # Ajoute une trace distincte de l'approbation finale au chatter.
-            rec.message_post(
-                body="<b>%s</b> a approuve definitivement la demande."
-                % self.env.user.name
-            )
             # Notifie les destinataires de l'approbation finale du stock.
             rec._dss_notify_stock_approval()
 
@@ -255,14 +265,25 @@ class DssRequestWorkflow(models.Model):
             previous_state = rec.state
             rec.state = "rejete"
             # Le motif est facultatif ; les deux branches produisent un message adapté.
+            # Le motif vient d'une saisie libre : il est échappé avant l'injection
+            # HTML, puis ses retours à la ligne deviennent des sauts de ligne.
             if rec.motif_rejet:
                 rec.message_post(
-                    body="<b>%s</b> a rejete la demande.<br/>Motif : %s"
-                    % (self.env.user.name, rec.motif_rejet)
+                    body=(
+                        u"<b>%s</b> a rejeté la demande.<br/>"
+                        u"<b>Motif :</b> %s"
+                    ) % (
+                        html_escape(self.env.user.name),
+                        html_escape(rec.motif_rejet).replace("\n", "<br/>"),
+                    ),
+                    subtype="mail.mt_note",
                 )
             else:
                 rec.message_post(
-                    body="<b>%s</b> a rejete la demande." % self.env.user.name
+                    body=(
+                        u"<b>%s</b> a rejeté la demande."
+                    ) % html_escape(self.env.user.name),
+                    subtype="mail.mt_note",
                 )
             rec._dss_notify_rejection(previous_state)
 
@@ -327,8 +348,13 @@ class DssRequestWorkflow(models.Model):
             # Remet la demande en brouillon avant d'ajouter la trace du renvoi au chatter.
             rec.state = "brouillon"
             rec.message_post(
-                body="<b>%s</b> a renvoye la demande au demandeur <b>%s</b>."
-                % (self.env.user.name, nom_demandeur)
+                body=(
+                    u"<b>%s</b> a renvoyé la demande au demandeur <b>%s</b>."
+                ) % (
+                    html_escape(self.env.user.name),
+                    html_escape(nom_demandeur),
+                ),
+                subtype="mail.mt_note",
             )
             rec._dss_notify_return_to_requester()
 

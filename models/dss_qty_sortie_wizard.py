@@ -153,14 +153,14 @@ class DssQtySortieWizard(models.TransientModel):
             nouvelle_sortie = line.qty_sortie
             if ancienne_sortie != nouvelle_sortie:
                 parties.append(
-                    u"Qte Sortie %s \u2192 %s" % (ancienne_sortie, nouvelle_sortie)
+                    u"Qté sortie %s \u2192 %s" % (ancienne_sortie, nouvelle_sortie)
                 )
             # Comparaison entre l'ancienne et la nouvelle Quantité de retour
             ancienne_retour = request_line.qty_retour
             nouvelle_retour = 0.0 if is_sortie_only else line.qty_retour
             if ancienne_retour != nouvelle_retour:
                 parties.append(
-                    u"Qte Retour %s \u2192 %s" % (ancienne_retour, nouvelle_retour)
+                    u"Qté retour %s \u2192 %s" % (ancienne_retour, nouvelle_retour)
                 )
 
             ligne_modifiee = (
@@ -250,7 +250,7 @@ class DssQtySortieWizard(models.TransientModel):
                     u"<br/>".join(changements),
                 )
             )
-            self.request_id.message_post(body=message)
+            self.request_id.message_post(body=message, subtype="mail.mt_note")
             # On poste un message du type :
             # "Le Responsable Stock XXXX a modifié les quantités ..."
         return {"type": "ir.actions.act_window_close"}

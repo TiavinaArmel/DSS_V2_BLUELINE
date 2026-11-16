@@ -4,6 +4,22 @@
 
 Les messages métier du chatter sont créés par `message_post()` sur `dss.request`. Les courriels explicites utilisent le template `dss_v2.mail_template_dss_workflow`, puis créent des enregistrements `mail.mail` autonomes. La configuration du serveur SMTP est extérieure au module.
 
+Les messages du chatter sont des **notes internes** : chaque appel passe `subtype="mail.mt_note"`. Odoo 10 applique déjà cette valeur par défaut; elle est déclarée explicitement pour que le rendu ne dépende pas d'un changement du cœur Odoo.
+
+Chaque corps est construit en HTML. Le nom de l'utilisateur, le nom des articles et les motifs saisis par les utilisateurs passent par `html_escape()` avant l'injection; les retours à la ligne d'un motif deviennent des `<br/>`. Les libellés de quantités sont accentués et identiques dans tout le module : `Qté demandée`, `Qté sortie`, `Qté installée`, `Qté retour`.
+
+| Situation | Trace produite dans le chatter |
+|---|---|
+| Soumission | `<b>{utilisateur}</b> a soumis la demande.` puis une ligne par article |
+| Validation Chef | `<b>{utilisateur}</b> a validé la demande en tant que <b>Responsable Chef</b>.` |
+| Validation Stock | `<b>{utilisateur}</b> a validé la demande en tant que <b>Responsable Stock</b> et l'a approuvée définitivement.` (un seul message) |
+| Rejet | `<b>{utilisateur}</b> a rejeté la demande.` et, si un motif existe, `<b>Motif :</b> {motif}` échappé |
+| Renvoi au demandeur | `<b>{utilisateur}</b> a renvoyé la demande au demandeur <b>{demandeur}</b>.` |
+| Modification des quantités | `Le Responsable Stock {utilisateur} a modifié les quantités.` puis des puces par article modifié |
+| Clôture | `<b>{utilisateur}</b> a clôturé la demande.` ou `<b>{utilisateur}</b> a effectué une <b>clôture exceptionnelle</b>.` avec son motif |
+| Bon de livraison | `Bon de livraison généré automatiquement.` avec la pièce jointe PDF |
+| Changement administratif | `L'administrateur a modifié le service demandeur : …` ou `L'administrateur a modifié le demandeur : …` |
+
 ## 2. Événements et destinataires
 
 | Événement | Destinataires du code | Motif rendu |
@@ -47,7 +63,7 @@ Ne jamais ajouter de mot de passe SMTP, de mot de passe de base ou de jeton dans
 
 | Repère | À retenir |
 |---|---|
-| Chatter | Trace métier visible sur la fiche DSS. |
+| Chatter | Trace métier visible sur la fiche DSS, toujours postée en note interne (`mail.mt_note`) et échappée en HTML. |
 | Email | Mail autonome en file, pas attaché au chatter DSS. |
 | SMTP | Configuration d'instance, pas du code du module. |
 | Sources | [`dss_notification.py`](../../models/dss_notification.py), [`dss_mail_templates.xml`](../../data/dss_mail_templates.xml), [`test_dss_notifications.py`](../../tests/test_dss_notifications.py). |

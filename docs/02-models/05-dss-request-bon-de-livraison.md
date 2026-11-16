@@ -24,7 +24,7 @@ La méthode cherche `dss_v2.paperformat_dss_a5` sans lever d'erreur si l'identif
 | Encodage | `base64.b64encode(pdf_content)` vers `ir.attachment.datas`. |
 | Liaison | `res_model='dss.request'` et `res_id=self.id`. |
 | Remplacement | Recherche par nom, modèle et ID; mise à jour si trouvé. |
-| Chatter | `message_post()` avec la pièce jointe lors de sa création initiale. |
+| Chatter | `message_post()` en note interne (`subtype="mail.mt_note"`) avec la pièce jointe, et le texte `Bon de livraison généré automatiquement.` Une régénération met à jour l'attachement existant sans poster un nouveau message. |
 
 ## 5. Cycle
 
