@@ -3,7 +3,7 @@
     "name": "DSS V2 - Demande de Sortie de Stock",
 
     # Version du module DSS
-    "version": "2.13",
+    "version": "2.14",
 
     # Dépendances Odoo :
     # - web   : assets et rapports QWeb
@@ -26,6 +26,9 @@
         # Sécurité : groupes et droits d'accès
         "security/dss_security.xml",
         "security/ir.model.access.csv",
+        # Règles d'enregistrement : périmètre de visibilité par rôle.
+        # Chargées après les ACL et les groupes, dont elles dépendent.
+        "security/dss_record_rules.xml",
 
         # Données techniques : séquence de numérotation DSS 
         #Format DSS/XX/XX/XXXX
@@ -68,5 +71,6 @@
         "tests/test_dss_service.py",
         "tests/test_dss_closure.py",
         "tests/test_dss_quantities.py",
+        "tests/test_dss_security.py",
     ],
 }

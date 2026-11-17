@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import SUPERUSER_ID, models, fields, api
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tools import html_escape
 from odoo.tools.float_utils import float_compare
 
@@ -98,6 +98,29 @@ class DssQtySortieWizard(models.TransientModel):
         # puis poste un message dans le chatter.
 
         self.ensure_one()  # S'assurer de ne traiter qu'un seul enregistrement
+        # ------------------------------------------------------------------
+        # CONTRÔLES SERVEUR AJOUTÉS (sécurité et intégrité)
+        # L'ACL du modèle assistant limite déjà sa création au groupe Magasin,
+        # mais l'ACL ne dit rien sur la DEMANDE ciblée : on revérifie donc
+        # le rôle et l'étape avant toute écriture sur les lignes.
+        # ------------------------------------------------------------------
+        request = self.request_id
+        # 1) Le rôle : le superutilisateur reste autorisé (scripts et tests).
+        if self.env.uid != SUPERUSER_ID and not self.env.user.has_group(
+            "dss_v2.group_dss_magasin"
+        ):
+            raise AccessError(
+                u"Seul un utilisateur du groupe DSS / Magasin peut modifier "
+                u"les quantités de stock."
+            )
+        # 2) L'étape : l'ajustement n'a de sens que pendant la préparation
+        #    au Stock. Après approbation ou clôture, les mouvements sont déjà
+        #    enregistrés : une modification fausserait l'historique.
+        if request.state != "valide_magasin":
+            raise ValidationError(
+                u"Les quantités ne peuvent être modifiées qu'à l'étape "
+                u"Validation Stock."
+            )
         changements = []  # Pour stocker la liste des changements détectés
         lignes_modifiees = False
         for line in self.line_ids:

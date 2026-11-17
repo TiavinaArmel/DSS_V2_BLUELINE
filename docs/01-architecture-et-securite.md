@@ -23,10 +23,10 @@ Les fichiers compilés Python (`.pyc`) présents localement ne sont pas des sour
 
 | Couche | Dossier ou fichier | Rôle vérifié |
 |---|---|---|
-| Métadonnées | `__manifest__.py` | Déclare la version `2.13`, les dépendances et les fichiers de données chargés. |
+| Métadonnées | `__manifest__.py` | Déclare la version `2.14`, les dépendances et les fichiers de données chargés. |
 | Modèles | `models/` | Définit la demande, ses lignes, les extensions Odoo et les traitements métier. |
 | Interface | `views/` | Déclare les vues, filtres, menus et fenêtres modales. |
-| Sécurité | `security/` | Crée quatre groupes et déclare les ACL CSV; aucune règle d'enregistrement n'est définie dans le XML fourni. |
+| Sécurité | `security/` | Crée quatre groupes, déclare les ACL CSV par rôle et **dix règles d'enregistrement** depuis la version `2.14`. |
 | Données | `data/` | Déclare la séquence DSS et le template de courriel. |
 | Rapport | `report/` | Déclare le rapport QWeb du bon de livraison et son format A5 paysage. |
 | Assets | `static/`, `views/assets_backend.xml` | Fournit les CSS du chatter et du rapport. |
@@ -74,7 +74,7 @@ Les droits effectifs peuvent aussi dépendre des ACL des autres modules et des g
 
 ## 6. Règles d'enregistrement
 
-`security/dss_security.xml` crée la catégorie et les groupes; il ne contient pas de record rule (`ir.rule`). Les domaines des actions de menus servent à filtrer des listes, pas à isoler les enregistrements pour des accès directs à l'ORM.
+`security/dss_security.xml` crée la catégorie et les groupes. Les ACL de `security/ir.model.access.csv` sont désormais toutes rattachées à un groupe, et `security/dss_record_rules.xml` déclare le périmètre de visibilité par rôle : un demandeur ne voit que ses demandes, un Chef celles de son service, le Magasin et la Sécurité voient tout. Les domaines des actions de menus restent une simple commodité de navigation et ne protègent pas les accès directs à l'ORM.
 
 À noter dans le code actuel : `action_renvoyer_demandeur()` vérifie le groupe Chef côté serveur; les actions de soumission, rejet et validation reposent principalement sur les boutons de vue et, pour les validations Chef/Stock, sur l'état attendu. `action_rejeter()` ne vérifie pas l'état de départ. Voir [les droits détaillés](07-securite/01-droits-crud.md).
 
@@ -95,4 +95,4 @@ Le workflow courant utilise le modèle DSS `dss.service`, associé aux utilisate
 | Source de vérité | Le manifeste, les modèles Python et les XML définissent le comportement réel. |
 | Sécurité | Groupes, ACL, restrictions de vue et règles d'enregistrement sont des mécanismes distincts. |
 | Workflow principal | `dss.request` n'a pas d'étape de validation Sécurité. |
-| Versions | Le manifeste indique `2.13`; il ne déclare pas de version Python. |
+| Versions | Le manifeste indique `2.14`; il ne déclare pas de version Python. |

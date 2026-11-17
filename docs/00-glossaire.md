@@ -15,7 +15,7 @@
 | ORM | Couche d'accès aux enregistrements et modèles Odoo, au-dessus de PostgreSQL. | `self.env['stock.move'].create(...)`. |
 | One2many | Relation donnant accès à plusieurs enregistrements liés par un Many2one inverse. | `dss.request.line_ids` regroupe les lignes de la demande. |
 | QWeb | Moteur de modèles XML utilisé notamment pour produire des rapports. | `report_bon_livraison_document` compose le BL. |
-| Règle d'enregistrement | Filtre de sécurité appliqué aux enregistrements accessibles; distinct des droits CRUD. | Aucun enregistrement `ir.rule` n'est défini dans `dss_security.xml`. |
+| Règle d'enregistrement | Filtre de sécurité appliqué aux enregistrements accessibles; distinct des droits CRUD. | Dix règles sont déclarées dans `security/dss_record_rules.xml` depuis la version `2.14`. |
 | TransientModel | Modèle temporaire généralement utilisé pour les assistants et fenêtres modales. | `dss.cloture.wizard` collecte les quantités avant clôture. |
 | Vue | Définition XML de l'affichage et des actions disponibles pour un modèle. | `dss_request_views.xml` définit les formulaires et la liste DSS. |
 | Wizard | Assistant temporaire qui guide ou confirme une action utilisateur. | Le wizard de rejet recueille un motif avant d'appeler l'action de rejet. |

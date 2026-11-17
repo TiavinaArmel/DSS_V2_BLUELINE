@@ -171,7 +171,9 @@ class DssRequestWorkflow(models.Model):
             rec.signataire_demandeur_id = self.env.user
             # Enregistre l'heure serveur Odoo de la soumission.
             rec.date_soumission = fields.Datetime.now()
-            rec.state = "valide_chef"
+            # Passage obligé par _dss_set_state() : write() refuse l'écriture
+            # directe du champ state.
+            rec._dss_set_state("valide_chef")
             detail = rec._detail_articles_html()
             # message_post() ajoute au chatter un message dont body peut contenir du HTML.
             rec.message_post(
@@ -202,8 +204,28 @@ class DssRequestWorkflow(models.Model):
                 raise AccessError(
                     u"Seul le Chef DSS actif et assigné à ce service peut valider cette demande."
                 )
+            # ------------------------------------------------------------------
+            # SÉPARATION DES TÂCHES
+            # Un Chef qui serait aussi le demandeur de la demande ne peut pas
+            # la valider lui-même : sinon le premier niveau de contrôle ne
+            # contrôle plus rien. Le superutilisateur reste libre (dépannage
+            # et tests). Les tests comparent les objets utilisateur, car deux
+            # identifiants différents désignent deux personnes différentes.
+            # ------------------------------------------------------------------
+            if (
+                self.env.uid != SUPERUSER_ID
+                and rec.demandeur_id
+                and self.env.user == rec.demandeur_id
+            ):
+                raise AccessError(
+                    u"Vous ne pouvez pas valider votre propre demande DSS. "
+                    u"Faites-la valider par un autre Chef de service ou "
+                    u"contactez un administrateur pour réaffecter le Chef."
+                )
             # Mémorise le nouvel état, le signataire et la date de validation.
-            rec.state = "valide_magasin"
+            # _dss_set_state() est le passage obligé : write() refuse une
+            # écriture directe du champ state.
+            rec._dss_set_state("valide_magasin")
             rec.signataire_chef_id = self.env.user
             rec.date_validation_chef = fields.Datetime.now()
             # Le chatter garde une trace lisible de l'utilisateur ayant validé la demande.
@@ -219,6 +241,21 @@ class DssRequestWorkflow(models.Model):
     @api.multi
     def action_valider_magasin(self):
         """Crée les mouvements de stock correspondants puis approuve la demande."""
+        # ------------------------------------------------------------------
+        # CONTRÔLE DU RÔLE CÔTÉ SERVEUR
+        # Le bouton de la vue porte bien groups="dss_v2.group_dss_magasin",
+        # mais un attribut de vue ne protège RIEN : il masque seulement le
+        # bouton. Un appel direct (RPC, import, script, console) contournerait
+        # l'interface. On revérifie donc l'appartenance au groupe ici.
+        # Le superutilisateur (uid = 1) reste autorisé pour les scripts.
+        # ------------------------------------------------------------------
+        if self.env.uid != SUPERUSER_ID and not self.env.user.has_group(
+            "dss_v2.group_dss_magasin"
+        ):
+            raise AccessError(
+                u"Seul un utilisateur du groupe DSS / Magasin peut valider "
+                u"la sortie de stock."
+            )
         for rec in self:
             # Le responsable Stock ne peut agir qu'après la validation du Chef.
             if rec.state != "valide_magasin":
@@ -244,7 +281,9 @@ class DssRequestWorkflow(models.Model):
             # Une seule trace de chatter pour la validation Stock et l'approbation
             # finale : deux messages successifs pour un seul clic rendaient la fiche
             # difficile à lire.
-            rec.state = "approuve"
+            # _dss_set_state() est le passage obligé : write() refuse une
+            # écriture directe du champ state.
+            rec._dss_set_state("approuve")
             rec.message_post(
                 body=(
                     u"<b>%s</b> a validé la demande en tant que "
@@ -263,7 +302,9 @@ class DssRequestWorkflow(models.Model):
         for rec in self:
             rec._check_rejet_access()
             previous_state = rec.state
-            rec.state = "rejete"
+            # Passage obligé par _dss_set_state() : write() refuse l'écriture
+            # directe du champ state.
+            rec._dss_set_state("rejete")
             # Le motif est facultatif ; les deux branches produisent un message adapté.
             # Le motif vient d'une saisie libre : il est échappé avant l'injection
             # HTML, puis ses retours à la ligne deviennent des sauts de ligne.
@@ -346,7 +387,9 @@ class DssRequestWorkflow(models.Model):
             demandeur = rec.demandeur_id
             nom_demandeur = demandeur.name if demandeur else "demandeur"
             # Remet la demande en brouillon avant d'ajouter la trace du renvoi au chatter.
-            rec.state = "brouillon"
+            # _dss_set_state() est le passage obligé : write() refuse une
+            # écriture directe du champ state.
+            rec._dss_set_state("brouillon")
             rec.message_post(
                 body=(
                     u"<b>%s</b> a renvoyé la demande au demandeur <b>%s</b>."
@@ -362,6 +405,23 @@ class DssRequestWorkflow(models.Model):
     def action_open_modifier_qte_sortie(self):
         """Ouvre le wizard temporaire de modification des quantités de stock."""
         self.ensure_one()
+        # Contrôle du rôle : voir le commentaire de action_valider_magasin().
+        if self.env.uid != SUPERUSER_ID and not self.env.user.has_group(
+            "dss_v2.group_dss_magasin"
+        ):
+            raise AccessError(
+                u"Seul un utilisateur du groupe DSS / Magasin peut modifier "
+                u"les quantités de stock."
+            )
+        # Contrôle de l'étape : le magasin ajuste les quantités uniquement
+        # lorsqu'il prépare la sortie, donc à l'état valide_magasin.
+        # Avant, il n'a rien à ajuster ; après (approuve / cloture), l'ajustement
+        # fausserait l'historique et les mouvements déjà enregistrés.
+        if self.state != "valide_magasin":
+            raise ValidationError(
+                u"Les quantités ne peuvent être modifiées qu'à l'étape "
+                u"Validation Stock."
+            )
         return {
             "type": "ir.actions.act_window",
             "name": "Modifier Qte",

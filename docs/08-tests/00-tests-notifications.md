@@ -53,6 +53,24 @@ Le manifeste déclare des tests de notifications, d'emplacements, de services, d
 
 Les deux tests signalés avec « seulement » ont des assertions plus étroites que leur nom ne le suggère.
 
+## 2 bis. Tests de sécurité (version 2.14)
+
+Le fichier [`tests/test_dss_security.py`](../../tests/test_dss_security.py) vérifie les contrôles d'accès. Il crée quatre utilisateurs, chacun avec un rôle distinct, deux services indépendants, puis construit un environnement Odoo par utilisateur avec `api.Environment(cr, uid, context)` — indispensable puisque la suite de tests s'exécute en superutilisateur.
+
+| Test | Contrôle vérifié |
+|---|---|
+| `test_outsider_has_no_access_to_requests` | Un utilisateur sans groupe DSS ne peut pas lire les demandes (ACL). |
+| `test_requester_cannot_read_request_of_another_service` | Règle d'enregistrement : un demandeur ne voit que ses demandes. |
+| `test_chef_sees_only_his_service` | Règle d'enregistrement : un Chef ne voit que les demandes de son service. |
+| `test_magasin_sees_all_requests` | Le Magasin voit bien toutes les demandes. |
+| `test_state_cannot_be_written_directly` | Un `write({'state': ...})` hors workflow lève `AccessError`. |
+| `test_workflow_still_changes_state` | `_dss_set_state()` continue de faire avancer la demande. |
+| `test_stock_validation_requires_magasin_group` | Un non-magasinier est refusé sur son rôle, avant le contrôle d'étape. |
+| `test_magasinier_passes_the_role_check` | Le magasinier franchit le contrôle de rôle et bute sur le contrôle d'étape. |
+| `test_quantity_wizard_requires_stock_stage` | L'ajustement des quantités est refusé hors de l'état `valide_magasin`. |
+| `test_chef_cannot_validate_his_own_request` | Un Chef demandeur ne peut pas valider sa propre demande. |
+| `test_validation_wizards_are_open_to_their_groups` | Les assistants de confirmation Chef et Stock sont accessibles à leur groupe. |
+
 ## 3. Exécution
 
 L'exécution doit se faire avec le lanceur et l'interpréteur de l'installation Odoo 10, sur une base de test. Exemple de commande à adapter à cette installation :

@@ -19,7 +19,10 @@ class TestDssQuantities(common.TransactionCase):
         })
 
     def _request_with_line(self, demand=10.0):
-        request = self.Request.create({})
+        # Le magasinier n'intervient qu'à l'étape Stock : la demande est créée
+        # dans cet état pour respecter le contrôle serveur du wizard
+        # (action_valider refuse tout autre état depuis la version 2.14).
+        request = self.Request.create({"state": "valide_magasin"})
         line = self.Line.create({
             "request_id": request.id,
             "product_id": self.product.id,

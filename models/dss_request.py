@@ -269,10 +269,51 @@ class DssRequest(models.Model):
             vals["name"] = self.env["ir.sequence"].next_by_code("dss.request") or "/"
         return super(DssRequest, self).create(vals)
 
+    def _dss_set_state(self, new_state):
+        """Change l'état de la demande depuis une action du workflow.
+
+        Le champ state est volontairement protégé contre une écriture directe
+        (voir write() plus bas) : un simple write({'state': ...}) ne doit pas
+        permettre de sauter les validations, les signatures et les mouvements
+        de stock. Cette méthode est le SEUL chemin autorisé : elle ajoute la
+        clé de contexte 'dss_workflow_write' que write() reconnaît.
+
+        with_context() crée une copie de l'environnement Odoo avec une valeur
+        de contexte supplémentaire, sans modifier l'environnement d'origine.
+        """
+        # Une seule demande à la fois : évite d'écrire l'état sur un lot.
+        self.ensure_one()
+        # Le contexte est la "clé" qui autorise l'écriture du champ state.
+        return self.with_context(dss_workflow_write=True).write(
+            {"state": new_state}
+        )
+
     @api.multi
     def write(self, vals):
         """Réserve le service aux admins et trace les corrections après soumission."""
         vals = dict(vals)
+        # ------------------------------------------------------------------
+        # GARDE-FOU DU WORKFLOW
+        # L'état d'une demande ne se modifie que par les boutons du circuit.
+        # Sans ce contrôle, un appel technique (RPC, import, script) pourrait
+        # écrire state = 'cloture' et contourner toutes les étapes.
+        # Exceptions acceptées :
+        #   - le superutilisateur (uid = 1) : scripts d'administration et
+        #     tests automatiques ;
+        #   - le contexte 'dss_workflow_write', posé uniquement par
+        #     _dss_set_state() ci-dessus.
+        # Odoo 10 : sudo() bascule l'environnement sur l'utilisateur 1, d'où
+        # le test sur self.env.uid plutôt que sur un attribut « su ».
+        # ------------------------------------------------------------------
+        if "state" in vals and not (
+            self.env.uid == SUPERUSER_ID
+            or self.env.context.get("dss_workflow_write")
+        ):
+            raise AccessError(
+                u"L'état d'une demande ne peut pas être modifié directement. "
+                u"Utilisez les boutons du circuit : Soumettre, Valider Chef, "
+                u"Valider Stock, Rejeter, Renvoyer au demandeur ou Clôturer."
+            )
         if "bci" in vals:
             vals["bci"] = (vals["bci"] or "").strip() or False
         is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group(

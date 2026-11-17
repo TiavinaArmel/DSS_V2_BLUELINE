@@ -8,9 +8,14 @@ Le bouton « Valider Stock » porte directement l'attribut `groups="dss_v2.group
 
 | Contrôle | Résultat si non respecté |
 |---|---|
+| Membre du groupe **DSS / Magasin** (ou superutilisateur) | `AccessError` : le rôle est revérifié côté serveur depuis la version `2.14`, car un attribut `groups` de vue ne protège pas un appel direct. |
 | `state == valide_magasin` | `ValidationError`; le traitement des mouvements ne démarre pas. |
 
-La méthode ne vérifie pas directement le groupe de l'utilisateur. Elle enregistre d'abord le signataire Stock et la date, puis choisit les méthodes de mouvement selon `sens_mouvement`.
+La méthode contrôle d'abord le rôle, puis l'état. Elle enregistre ensuite le signataire Stock et la date, puis choisit les méthodes de mouvement selon `sens_mouvement`.
+
+## 2 bis. Ajustement des quantités
+
+Le bouton **Modifier Qte** n'est visible qu'à l'état `valide_magasin`. L'action `action_open_modifier_qte_sortie()` et la confirmation de l'assistant `action_valider()` vérifient toutes deux le rôle Magasin **et** cet état : une demande déjà approuvée ou clôturée ne peut plus voir ses quantités modifiées, car les mouvements de stock sont déjà enregistrés.
 
 ## 3. Routeur des mouvements
 

@@ -13,8 +13,10 @@ Le bouton appelle `action_open_wizard_chef()`, qui ouvre `dss.validation.chef.wi
 | Contrôle | Résultat si non respecté |
 |---|---|
 | `state == valide_chef` | `ValidationError` indique que la demande doit être en Validation Chef. |
+| Utilisateur = Chef du service de la demande | `AccessError` sinon. |
+| Utilisateur ≠ demandeur de la demande | `AccessError` depuis la version `2.14` : un Chef qui serait aussi le demandeur ne peut pas valider sa propre demande (séparation des tâches). |
 
-La méthode de validation vérifie l'état, mais ne vérifie pas elle-même l'appartenance au groupe Chef. La restriction du bouton est une condition d'interface.
+La méthode vérifie l'état, l'identité du Chef du service et l'absence d'auto-validation. La restriction du bouton dans la vue est une condition d'interface qui ne remplace pas ces contrôles.
 
 ## 4. Effets
 

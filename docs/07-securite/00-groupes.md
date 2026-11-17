@@ -27,5 +27,5 @@ Les groupes sont des enregistrements `res.groups` rangés sous la catégorie DSS
 |---|---|
 | Définition | Groupes et catégorie dans `dss_security.xml`. |
 | Permissions | Les droits d'accès sont séparés dans `ir.model.access.csv`. |
-| Sécurité | La présence d'un groupe n'implique ni ACL restreinte ni record rule. |
+| Sécurité | Depuis 2.14, chaque groupe porte ses ACL et son périmètre d'enregistrements : plus aucune ACL DSS n'est laissée sans groupe. |
 | Source | [`security/dss_security.xml`](../../security/dss_security.xml). |

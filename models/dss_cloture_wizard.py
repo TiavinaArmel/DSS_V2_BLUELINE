@@ -271,7 +271,9 @@ class DssClotureWizard(models.TransientModel):
             request.has_ecart = bool(ecarts)
 
         # Fait passer la DSS à l'état 'cloture'.
-        request.state = 'cloture'
+        # _dss_set_state() est le passage obligé : write() refuse une écriture
+        # directe du champ state, même depuis un assistant.
+        request._dss_set_state('cloture')
 
         # Construit le message pour le chatter.
         nom_acteur = html_escape(self.env.user.name or '')

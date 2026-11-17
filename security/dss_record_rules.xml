@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    RÈGLES D'ENREGISTREMENT (RECORD RULES) DU MODULE DSS.
+
+    Différence essentielle avec le fichier ir.model.access.csv :
+
+      - Une ACL (ir.model.access) répond à la question :
+        "Ce rôle a-t-il le droit de lire/écrire/créer/supprimer
+         dans ce MODÈLE ?"  -> oui ou non, pour tout le modèle.
+
+      - Une règle d'enregistrement (ir.rule) répond à la question :
+        "Sur QUELLES LIGNES de ce modèle ce rôle peut-il agir ?"
+        Odoo ajoute automatiquement le filtre (domain_force) à toutes
+        les recherches et à tous les accès par identifiant.
+
+    Sans règle, un utilisateur qui a le droit de lecture sur dss.request
+    peut ouvrir N'IMPORTE QUELLE demande en connaissant son identifiant.
+    Les menus ne filtrent que l'affichage : ils ne protègent rien.
+-->
+<odoo>
+
+    <!-- ================================================================= -->
+    <!-- 1. MODÈLE dss.request - LA DEMANDE                                -->
+    <!-- ================================================================= -->
+
+    <!--
+        Demandeur : il ne voit que les demandes dont il est le propriétaire.
+
+        Le domaine utilise deux conditions reliées par le OU logique '|' :
+          - ('demandeur_id', '=', user.id) : les demandes qu'il a créées ;
+          - ('create_uid', '=', user.id)   : filet de sécurité pour les
+            demandes historiques créées avant l'affectation de demandeur_id.
+
+        'user' est une variable fournie par Odoo au moment de l'évaluation :
+        elle représente l'utilisateur connecté (courant).
+    -->
+    <record id="rule_dss_request_demandeur" model="ir.rule">
+        <field name="name">DSS - Demande : ses propres demandes</field>
+        <field name="model_id" ref="model_dss_request"/>
+        <field name="groups" eval="[(4, ref('group_dss_demandeur'))]"/>
+        <field name="domain_force">['|', ('demandeur_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+    </record>
+
+    <!--
+        Chef : il ne voit que les demandes rattachées à un service
+        dont IL est le Chef.
+
+        La notation pointée ('service_demandeur_id.dss_chef_id') traverse
+        la relation Many2one : Odoo construit la jointure SQL nécessaire.
+        Le filtre vaut donc : "la demande appartient à un service dont le
+        champ dss_chef_id pointe sur moi".
+    -->
+    <record id="rule_dss_request_chef" model="ir.rule">
+        <field name="name">DSS - Demande : demandes du service dirigé</field>
+        <field name="model_id" ref="model_dss_request"/>
+        <field name="groups" eval="[(4, ref('group_dss_chef'))]"/>
+        <field name="domain_force">[('service_demandeur_id.dss_chef_id', '=', user.id)]</field>
+    </record>
+
+    <!--
+        Magasin : il prépare les sorties pour TOUS les services.
+        Un filtre [(1, '=', 1)] est toujours vrai : il n'exclut rien.
+        On garde malgré tout une règle explicite pour documenter
+        l'intention et pour que le droit reste lisible en un seul endroit.
+    -->
+    <record id="rule_dss_request_magasin" model="ir.rule">
+        <field name="name">DSS - Demande : toutes les demandes (magasin)</field>
+        <field name="model_id" ref="model_dss_request"/>
+        <field name="groups" eval="[(4, ref('group_dss_magasin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!--
+        Sécurité : rôle de contrôle, il consulte tout mais ne modifie rien
+        (le droit d'écriture est déjà refusé par l'ACL).
+    -->
+    <record id="rule_dss_request_securite" model="ir.rule">
+        <field name="name">DSS - Demande : toutes les demandes (securite)</field>
+        <field name="model_id" ref="model_dss_request"/>
+        <field name="groups" eval="[(4, ref('group_dss_securite'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!--
+        Administrateur système : accès complet, y compris pour les
+        demandes orphelines (service supprimé, demandeur archivé).
+        Sans cette règle, un administrateur non superutilisateur
+        pourrait être bloqué par les règles ci-dessus.
+    -->
+    <record id="rule_dss_request_system" model="ir.rule">
+        <field name="name">DSS - Demande : acces administrateur</field>
+        <field name="model_id" ref="model_dss_request"/>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- 2. MODÈLE dss.request.line - LES LIGNES D'ARTICLES                -->
+    <!-- ================================================================= -->
+    <!--
+        Les lignes n'ont pas de propriétaire propre : leur périmètre est
+        celui de leur demande parente. On traverse donc la relation
+        avec le préfixe 'request_id.' avant chaque champ.
+    -->
+
+    <record id="rule_dss_request_line_demandeur" model="ir.rule">
+        <field name="name">DSS - Ligne : lignes de ses propres demandes</field>
+        <field name="model_id" ref="model_dss_request_line"/>
+        <field name="groups" eval="[(4, ref('group_dss_demandeur'))]"/>
+        <field name="domain_force">['|', ('request_id.demandeur_id', '=', user.id), ('request_id.create_uid', '=', user.id)]</field>
+    </record>
+
+    <record id="rule_dss_request_line_chef" model="ir.rule">
+        <field name="name">DSS - Ligne : lignes des demandes du service dirigé</field>
+        <field name="model_id" ref="model_dss_request_line"/>
+        <field name="groups" eval="[(4, ref('group_dss_chef'))]"/>
+        <field name="domain_force">[('request_id.service_demandeur_id.dss_chef_id', '=', user.id)]</field>
+    </record>
+
+    <record id="rule_dss_request_line_magasin" model="ir.rule">
+        <field name="name">DSS - Ligne : toutes les lignes (magasin)</field>
+        <field name="model_id" ref="model_dss_request_line"/>
+        <field name="groups" eval="[(4, ref('group_dss_magasin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_dss_request_line_securite" model="ir.rule">
+        <field name="name">DSS - Ligne : toutes les lignes (securite)</field>
+        <field name="model_id" ref="model_dss_request_line"/>
+        <field name="groups" eval="[(4, ref('group_dss_securite'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_dss_request_line_system" model="ir.rule">
+        <field name="name">DSS - Ligne : acces administrateur</field>
+        <field name="model_id" ref="model_dss_request_line"/>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+</odoo>

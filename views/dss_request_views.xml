@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Formulaire principal de saisie, validation et consultation d'une demande DSS. -->
     <record id="view_dss_request_form" model="ir.ui.view">
@@ -33,9 +33,11 @@
                     <button name="action_open_wizard_rejeter" type="object" string="Rejeter"
                         groups="dss_v2.group_dss_magasin"
                         attrs="{'invisible': [('state', '!=', 'valide_magasin')]}"/>
+                    <!-- Le bouton n'apparaît qu'à l'étape où le magasin prépare la sortie.
+                         Le contrôle serveur correspondant est dans action_open_modifier_qte_sortie(). -->
                     <button name="action_open_modifier_qte_sortie" type="object"
                         string="Modifier Qte" groups="dss_v2.group_dss_magasin"
-                        attrs="{'invisible': [('state', '=', 'approuve')]}"/>
+                        attrs="{'invisible': [('state', '!=', 'valide_magasin')]}"/>
                     <button name="action_imprimer_bon_livraison" type="object" string="Bon de Livraison"
                         groups="dss_v2.group_dss_magasin"
                         attrs="{'invisible': [('state', '!=', 'approuve')]}" class="oe_highlight"/>
