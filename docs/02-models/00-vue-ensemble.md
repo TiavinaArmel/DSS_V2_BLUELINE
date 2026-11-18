@@ -17,9 +17,8 @@
 | `dss.cloture.wizard` et `.line` | [`dss_cloture_wizard.py`](../../models/dss_cloture_wizard.py) | `TransientModel` | Saisie des quantités installées/retournées, clôture normale par le demandeur ou clôture exceptionnelle justifiée par le Chef. |
 | `dss.validation.chef.wizard` et `dss.validation.stock.wizard` | [`dss_validation_wizard.py`](../../models/dss_validation_wizard.py) | `TransientModel` | Confirmation avant les validations Chef et Stock. |
 | `product.product` | [`product_product.py`](../../models/product_product.py) | Extension | Filtre les articles proposés si le contexte contient `dss_location_id`. |
-| `product.template` | [`product_template.py`](../../models/product_template.py) | Extension | Ajoute `dss_standard_qty`. |
-| `stock.picking` | [`stock_picking.py`](../../models/stock_picking.py) | Extension | Ajoute des champs et un workflow DSS distinct. |
-| `stock.immediate.transfer` | [`stock_picking.py`](../../models/stock_picking.py) | Extension de `TransientModel` | Vérifie les écarts avant le traitement natif du transfert immédiat. |
+
+> Depuis la version `2.16`, le module n'étend plus `product.template`, `stock.picking` ni `stock.immediate.transfer` : le circuit DSS parallèle qu'ils portaient n'a jamais été utilisé et a été retiré. Voir [les extensions](08-heritages.md).
 
 ## 2. Relations principales
 

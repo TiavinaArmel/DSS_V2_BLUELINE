@@ -109,11 +109,10 @@ Ne pas corriger ce problème en supprimant les accents des données métier : la
 | Symptôme possible | Élément source à contrôler |
 |---|---|
 | Boutons Valider/Rejeter Chef ou Magasin absents | Le header DSS a été simplifié : les boutons sont des éléments directs du `<header>` et portent chacun leur attribut `groups`. Mettre à niveau le module sur la base concernée, puis vérifier le groupe de l'utilisateur et l'état de la demande (`valide_chef` pour Chef, `valide_magasin` pour Magasin). Si le problème persiste, inspecter la vue formulaire combinée et les personnalisations de la base. |
-| Action de wizard introuvable | `action_open_wizard_approuver()` référence `dss.validation.approuver.wizard`, non déclaré dans les fichiers Python recensés; aucun bouton ne l'appelle dans la vue principale. |
-| État de picking inattendu | `action_soumettre_dss()` écrit `soumis`, qui n'est pas une option de `dss_validation_state`. |
-| Numéro picking `/` | L'extension cherche `ir.sequence` de code `dss.number`; aucune séquence de ce code n'est déclarée dans les données de ce module. |
-| Refus de soumission | Lire le message `ValidationError` de `action_soumettre()` et vérifier les champs et lignes requis. |
+| Action de wizard introuvable | **Ne peut plus arriver depuis 2.17** : la méthode `action_open_wizard_approuver()`, qui visait le modèle inexistant `dss.validation.approuver.wizard`, a été supprimée. Si un message « Model not found » apparaît malgré tout, vérifier qu'une version antérieure du module n'est pas encore chargée sur la base. |
+| Refus de soumission | Lire le message `ValidationError` de `action_soumettre()` et vérifier les champs, les lignes et la quantité strictement positive de chaque ligne. |
 | Refus de mouvement | Lire l'erreur de quantité du modèle stock et contrôler l'emplacement source et les quantités saisies. |
+| Validation de transfert bloquée par un message d'écart DSS | **Ne devrait plus arriver depuis 2.16** : le contrôle d'écart branché sur la popup « Transfert immédiat ? » a été retiré avec le circuit parallèle. Si le message réapparaît, vérifier qu'une version antérieure du module n'est pas encore chargée. |
 
 ### Historique du problème d'affichage des boutons DSS
 

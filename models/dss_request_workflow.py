@@ -548,15 +548,3 @@ class DssRequestWorkflow(models.Model):
             "target": "new",
             "context": {"default_request_id": self.id},
         }
-
-    @api.multi
-    def action_open_wizard_approuver(self):
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Confirmation d approbation",
-            "res_model": "dss.validation.approuver.wizard",
-            "view_mode": "form",
-            "target": "new",
-            "context": {"default_request_id": self.id},
-        }

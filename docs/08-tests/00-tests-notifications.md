@@ -85,6 +85,18 @@ Le fichier [`tests/test_dss_security.py`](../../tests/test_dss_security.py) vér
 | `test_cron_keeps_recent_mails` | Un courriel récent n'est jamais purgé. |
 | `test_cron_keeps_pending_mails_even_when_old` | Un courriel encore en file (`outgoing`) n'est pas purgé, même ancien. |
 
+## 2 quater. Tests de garde-fou (versions 2.16 et 2.17)
+
+[`tests/test_dss_no_parallel_circuit.py`](../../tests/test_dss_no_parallel_circuit.py) empêche la réintroduction du code retiré.
+
+| Test | Contrôle vérifié |
+|---|---|
+| `test_stock_picking_has_no_dss_fields` | `stock.picking` ne porte plus `dss_number`, `dss_validation_state`, `dss_justification` ni `dss_movement_type` (2.16). |
+| `test_product_template_has_no_standard_quantity` | `product.template` ne porte plus `dss_standard_qty` (2.16). |
+| `test_stock_picking_keeps_eccart_method_removed` | La méthode `check_dss_ecart()` a disparu du modèle (2.16). |
+| `test_approval_wizard_method_is_removed` | `action_open_wizard_approuver()` a disparu de `dss.request` (2.17). |
+| `test_approval_wizard_model_is_still_absent` | Le modèle `dss.validation.approuver.wizard`, jamais écrit, n'est pas réapparu (2.17). |
+
 ## 3. Exécution
 
 L'exécution doit se faire avec le lanceur et l'interpréteur de l'installation Odoo 10, sur une base de test. Exemple de commande à adapter à cette installation :

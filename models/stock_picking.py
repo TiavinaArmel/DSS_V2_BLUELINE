@@ -1,106 +1,35 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+"""Fichier neutralisé — le circuit DSS parallèle a été retiré en version 2.16.
 
+CE QU'IL CONTENAIT AVANT
+    Une extension du modèle Odoo `stock.picking` qui ajoutait :
+      - des champs DSS propres au transfert : dss_number, dss_validation_state,
+        dss_justification, dss_movement_type ;
+      - une seconde machine à états (brouillon -> soumis -> valide_chef ->
+        valide_magasin -> valide_securite -> approuve) avec ses méthodes de
+        validation ;
+      - un contrôle d'écart `check_dss_ecart()` branché sur la popup Odoo
+        « Transfert immédiat ? » (stock.immediate.transfer).
 
-class StockPicking(models.Model):
-    """Ajoute des champs DSS et une validation dédiée aux transferts de stock."""
+POURQUOI IL A ÉTÉ RETIRÉ
+    Ce circuit n'a jamais été utilisé, ce que la base a confirmé :
+      - aucune vue, aucun menu, aucun bouton ne l'exposait ;
+      - la séquence `dss.number` n'a jamais existé : tous les numéros valent « / » ;
+      - 53 pickings sur 53 sont restés à l'état `brouillon` ;
+      - aucune justification d'écart n'a jamais été saisie.
 
-    _inherit = 'stock.picking'
+    Un élément restait néanmoins actif : le contrôle branché sur la popup
+    « Transfert immédiat ? ». Il pouvait bloquer la validation de n'importe quel
+    transfert de stock de l'entreprise dès qu'une « quantité standard » aurait
+    été renseignée, en exigeant un champ invisible dans l'interface.
 
-    # Ces champs étendent le modèle Odoo existant sans créer une nouvelle table métier.
-    dss_number = fields.Char(string="Numero DSS", copy=False, readonly=True)
-    dss_justification = fields.Text(string="Justification d'ecart")
-    dss_movement_type = fields.Selection([
-        ('sortie', 'Sortie'),
-        ('entree', 'Entree'),
-        ('transfert', 'Transfert'),
-    ], string="Type de mouvement DSS")
-    dss_validation_state = fields.Selection([
-        ('brouillon', 'Brouillon'),
-        ('demandeur', 'Demandeur'),
-        ('valide_chef', 'Validation Chef'),
-        ('valide_magasin', 'Validation Stock'),
-        ('valide_securite', 'Validation Demandeur'),
-        ('approuve', 'Approuve'),
-    ], string="Statut DSS", default='brouillon')
+CE FICHIER N'EST PLUS CHARGÉ
+    `models/__init__.py` ne l'importe plus : son contenu n'est donc jamais
+    exécuté par Odoo. Il ne reste que pour permettre la suppression physique
+    depuis un poste, sans risque :
 
-    @api.model
-    def create(self, vals):
-        """Attribue un numéro DSS avant la création ORM du transfert."""
-        # create() reçoit les valeurs du nouvel enregistrement dans un dictionnaire.
-        if not vals.get('dss_number'):
-            # next_by_code() demande à la séquence Odoo le prochain numéro disponible.
-            vals['dss_number'] = self.env['ir.sequence'].next_by_code('dss.number') or '/'
-        # super() conserve le comportement standard de création de stock.picking.
-        return super(StockPicking, self).create(vals)
+        Remove-Item C:\\ODOO_10_DEV\\custom-addons\\dss_v2\\models\\stock_picking.py
 
-    def check_dss_ecart(self):
-        """Exige une justification lorsque la quantité diffère du standard article."""
-        # La boucle accepte également un ensemble de transferts fourni par l'appelant.
-        for picking in self:
-            for move in picking.move_lines:
-                # La tolérance évite de signaler les écarts dus aux arrondis décimaux.
-                standard_qty = move.product_id.dss_standard_qty
-                if standard_qty and abs(move.product_uom_qty - standard_qty) > 0.001:
-                    if not picking.dss_justification:
-                        raise ValidationError(
-                            "ECART DETECTE sur '%s' : standard=%s, demande=%s.\n"
-                            "Le champ Justification d ecart est obligatoire." % (
-                                move.product_id.name,
-                                standard_qty,
-                                move.product_uom_qty,
-                            )
-                        )
-
-    @api.multi
-    def action_soumettre_dss(self):
-        """Place les transferts sélectionnés dans l'étape de soumission DSS."""
-        for picking in self:
-            picking.dss_validation_state = 'soumis'
-
-    @api.multi
-    def action_valider_chef(self):
-        """Valide l'étape Chef après avoir vérifié l'état précédent."""
-        for picking in self:
-            if picking.dss_validation_state != 'soumis':
-                raise ValidationError("La demande doit etre soumise avant validation du Chef.")
-            picking.dss_validation_state = 'valide_chef'
-
-    @api.multi
-    def action_valider_magasin(self):
-        """Valide l'étape Magasin uniquement après l'accord du Chef."""
-        for picking in self:
-            if picking.dss_validation_state != 'valide_chef':
-                raise ValidationError("La demande doit etre validee par le Chef avant le Magasin.")
-            picking.dss_validation_state = 'valide_magasin'
-
-    @api.multi
-    def action_valider_securite(self):
-        """Valide l'étape Sécurité uniquement après l'accord du Magasin."""
-        for picking in self:
-            if picking.dss_validation_state != 'valide_magasin':
-                raise ValidationError("La demande doit etre validee par le Magasin avant la Securite.")
-            picking.dss_validation_state = 'valide_securite'
-
-    @api.multi
-    def action_approuver(self):
-        """Termine le workflow DSS après la validation de l'étape Sécurité."""
-        for picking in self:
-            if picking.dss_validation_state != 'valide_securite':
-                raise ValidationError("La demande doit etre validee par la Securite avant approbation.")
-            picking.dss_validation_state = 'approuve'
-
-
-class StockImmediateTransfer(models.TransientModel):
-    """Intercepte le wizard de transfert immédiat pour appliquer le contrôle DSS."""
-
-    _inherit = 'stock.immediate.transfer'
-
-    @api.multi
-    def process(self):
-        """Contrôle les écarts avant de déléguer le traitement standard à Odoo."""
-        # pick_id désigne le transfert associé au wizard temporaire.
-        self.pick_id.check_dss_ecart()
-        # super() exécute ensuite le traitement immédiat natif d'Odoo 10.
-        return super(StockImmediateTransfer, self).process()
+    Les colonnes correspondantes subsistent en base (Odoo ne les supprime pas
+    automatiquement), mais plus aucun code ne les lit.
+"""

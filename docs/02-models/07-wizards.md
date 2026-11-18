@@ -58,5 +58,5 @@ Bouton de la demande -> action window modal + default_request_id
 |---|---|
 | Données temporaires | Le wizard collecte des valeurs; les méthodes `action_*` déterminent les effets persistants. |
 | Délégation | Les confirmations Chef/Stock appellent les méthodes de `dss.request`. |
-| Modèle absent | `dss.validation.approuver.wizard` est référencé par une méthode, mais n'est pas déclaré dans les sources auditées. |
+| Modèle supprimé | `dss.validation.approuver.wizard` n'a jamais été écrit : la méthode qui le référençait a été retirée en 2.17. |
 | Sources | [`models/`](../../models/), [`views/`](../../views/). |

@@ -36,13 +36,13 @@ DSS line_ids
                           `-- action_done()
 ```
 
-## 4. Workflow DSS parallèle sur `stock.picking`
+## 4. Circuit DSS parallèle : retiré en 2.16
 
-`models/stock_picking.py` ajoute des champs DSS et des méthodes de validation au modèle standard. Ce parcours est distinct des transitions de `dss.request` et aucun fichier de vue stock spécifique n'est déclaré dans le manifeste.
+Jusqu'à la version `2.15`, `models/stock_picking.py` ajoutait au transfert de stock ses propres champs DSS, une seconde machine à états (`brouillon` → `soumis` → `valide_chef` → `valide_magasin` → `valide_securite` → `approuve`) et un contrôle d'écart branché sur la popup Odoo « Transfert immédiat ? ».
 
-Deux incohérences sont directement visibles dans le code : `action_soumettre_dss()` écrit la valeur `soumis`, absente de la sélection `dss_validation_state`; par ailleurs, `valide_securite` porte le libellé « Validation Demandeur ». La séquence `dss.number` de cette extension est distincte de la séquence `dss.request`.
+Ce circuit n'a jamais été utilisé, ce que la base a confirmé : aucune vue ni aucun menu ne l'exposait, la séquence `dss.number` n'existait pas (tous les numéros valaient `/`) et les 53 transferts étaient restés à l'état `brouillon`. Un seul élément restait actif : le contrôle d'écart, qui pouvait bloquer la validation de n'importe quel transfert de stock dès qu'une « quantité standard » aurait été renseignée, en exigeant un champ visible sur aucun écran.
 
-L'extension de `stock.immediate.transfer.process()` appelle `check_dss_ecart()` avant la méthode parente. Ce contrôle exige une justification lorsque `dss_standard_qty` est non nul et diffère de la quantité du move de plus de `0.001`.
+Le circuit a donc été retiré en `2.16` : les fichiers sont neutralisés et ne sont plus importés, aucune extension de `stock.picking` ni de `product.template` ne subsiste, et un test de garde-fou empêche leur réintroduction. Les colonnes restent en base mais plus aucun code ne les lit.
 
 ## 5. Fiche de mémorisation
 
@@ -51,5 +51,5 @@ L'extension de `stock.immediate.transfer.process()` appelle `check_dss_ecart()` 
 | Flux principal | Les méthodes de `dss.request` créent et terminent les pickings. |
 | Retour de clôture | Les sorties seules, les approvisionnements distants et le dépannage réintègrent les quantités retournées à l'emplacement source après l'intervention. |
 | Contrôle de quantité | Présent avant sortie et transfert; pas dans la méthode d'entrée. |
-| Circuit secondaire | Le workflow ajouté à `stock.picking` est séparé et comporte une valeur d'état incohérente. |
-| Sources | [`dss_request_stock.py`](../../models/dss_request_stock.py), [`stock_picking.py`](../../models/stock_picking.py). |
+| Circuit secondaire | Retiré en 2.16 : le module ne modifie plus le comportement de l'application Stock. |
+| Sources | [`dss_request_stock.py`](../../models/dss_request_stock.py). |

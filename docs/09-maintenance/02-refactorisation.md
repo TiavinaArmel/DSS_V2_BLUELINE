@@ -11,7 +11,9 @@
 | Rapport PDF et pièce jointe | `models/dss_request_bon_livraison.py` |
 | Notifications et journal | `models/dss_notification.py` |
 | Wizards | `models/dss_*_wizard.py` |
-| Extensions des modèles standard | `models/product_product.py`, `product_template.py`, `stock_picking.py` |
+| Extension d'un modèle standard | `models/product_product.py` uniquement depuis 2.16 |
+
+> `models/stock_picking.py` et `models/product_template.py` ne sont plus importés depuis la version `2.16` : le circuit DSS parallèle qu'ils portaient a été retiré. Les fichiers restent sur le disque, documentés, en attente de leur suppression physique.
 
 ## 2. Chargement des extensions
 

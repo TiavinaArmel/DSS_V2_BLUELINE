@@ -61,7 +61,7 @@ Les groupes et les droits d’accès sont configurés dans le dossier `security/
 |---|---|
 | Nom technique | `dss_v2` |
 | Nom affiché | DSS V2 - Demande de Sortie de Stock |
-| Version du module | 2.15 |
+| Version du module | 2.17 |
 | Version Odoo supportée actuellement | Odoo 10 Community |
 | Catégorie | Inventory |
 | Auteur | Tiavina Armel |
@@ -183,6 +183,6 @@ Module développé pour la gestion des demandes de sortie de stock dans Odoo 10 
 
 | Repère | À retenir |
 |---|---|
-| Version | `2.15`, selon le manifeste. |
+| Version | `2.17`, selon le manifeste. |
 | Workflow | Chef puis Stock; le workflow principal n'a pas d'étape Sécurité. |
 | Documentation détaillée | [`docs/README.md`](docs/README.md). |

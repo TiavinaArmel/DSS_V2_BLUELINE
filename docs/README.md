@@ -2,7 +2,7 @@
 
 ## 1. Présentation rapide
 
-DSS V2 est un module Odoo de gestion des demandes de sortie de stock : saisie d'articles, validations Chef et Stock, mouvements Odoo, suivi dans le chatter et génération d'un bon de livraison PDF. Le manifeste indique la version `2.15`; le `README.md` du module cible Odoo 10 Community. Le cahier de projet mentionne Python 2.7 et PostgreSQL, mais le manifeste ne fixe pas la version de Python.
+DSS V2 est un module Odoo de gestion des demandes de sortie de stock : saisie d'articles, validations Chef et Stock, mouvements Odoo, suivi dans le chatter et génération d'un bon de livraison PDF. Le manifeste indique la version `2.17`; le `README.md` du module cible Odoo 10 Community. Le cahier de projet mentionne Python 2.7 et PostgreSQL, mais le manifeste ne fixe pas la version de Python.
 
 ## 2. Prérequis
 

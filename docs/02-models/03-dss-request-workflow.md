@@ -60,15 +60,16 @@ Les actions de validation Chef et Stock contrôlent l'état attendu, mais leur m
 | `action_open_wizard_cloture_exception` | `dss.cloture.wizard` |
 | `action_open_wizard_chef` | `dss.validation.chef.wizard` |
 | `action_open_wizard_stock` | `dss.validation.stock.wizard` |
-| `action_open_wizard_approuver` | `dss.validation.approuver.wizard` |
 
-Le dernier modèle référencé n'est pas déclaré dans les fichiers Python recensés et aucun bouton correspondant n'est défini dans la vue principale. Ne pas le confondre avec le wizard de validation Stock.
+Toutes les méthodes ci-dessus pointent vers un modèle réellement déclaré dans le module.
+
+Une septième méthode, `action_open_wizard_approuver()`, référençait `dss.validation.approuver.wizard` : ce modèle n'a jamais été écrit, aucun bouton ne l'appelait, et l'appeler aurait produit une erreur serveur « Model not found ». Elle a été **supprimée en version `2.17`**. Un test de garde-fou vérifie son absence.
 
 ## 5. Fiche de mémorisation
 
 | Repère | À retenir |
 |---|---|
 | Transitions | Chef puis Stock; l'approbation suit la réussite du routeur de mouvements. |
-| Rejet | Le wizard exige un motif; la méthode `action_rejeter()` ne vérifie pas l'état de départ. |
+| Rejet | Le wizard exige un motif; `action_rejeter()` contrôle l'état et le groupe via `_check_rejet_access()`. |
 | Renvoi | Contrôles serveur explicites du groupe Chef et de l'état rejeté. |
 | Source | [`models/dss_request_workflow.py`](../../models/dss_request_workflow.py). |
