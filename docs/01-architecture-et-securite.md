@@ -23,10 +23,10 @@ Les fichiers compilés Python (`.pyc`) présents localement ne sont pas des sour
 
 | Couche | Dossier ou fichier | Rôle vérifié |
 |---|---|---|
-| Métadonnées | `__manifest__.py` | Déclare la version `2.14`, les dépendances et les fichiers de données chargés. |
+| Métadonnées | `__manifest__.py` | Déclare la version `2.15`, les dépendances et les fichiers de données chargés. |
 | Modèles | `models/` | Définit la demande, ses lignes, les extensions Odoo et les traitements métier. |
 | Interface | `views/` | Déclare les vues, filtres, menus et fenêtres modales. |
-| Sécurité | `security/` | Crée quatre groupes, déclare les ACL CSV par rôle et **dix règles d'enregistrement** depuis la version `2.14`. |
+| Sécurité | `security/` | Crée quatre groupes, déclare les ACL CSV par rôle et **dix règles d'enregistrement** depuis la version `2.15`. |
 | Données | `data/` | Déclare la séquence DSS et le template de courriel. |
 | Rapport | `report/` | Déclare le rapport QWeb du bon de livraison et son format A5 paysage. |
 | Assets | `static/`, `views/assets_backend.xml` | Fournit les CSS du chatter et du rapport. |
@@ -95,4 +95,4 @@ Le workflow courant utilise le modèle DSS `dss.service`, associé aux utilisate
 | Source de vérité | Le manifeste, les modèles Python et les XML définissent le comportement réel. |
 | Sécurité | Groupes, ACL, restrictions de vue et règles d'enregistrement sont des mécanismes distincts. |
 | Workflow principal | `dss.request` n'a pas d'étape de validation Sécurité. |
-| Versions | Le manifeste indique `2.14`; il ne déclare pas de version Python. |
+| Versions | Le manifeste indique `2.15`; il ne déclare pas de version Python. |

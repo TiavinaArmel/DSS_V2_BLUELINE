@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    TÂCHES PLANIFIÉES DU MODULE DSS.
+
+    Une tâche planifiée (ir.cron) est exécutée automatiquement par Odoo selon
+    un intervalle, sans intervention humaine. Elle est traitée par le
+    planificateur interne (cron) du serveur Odoo.
+-->
+<odoo>
+    <!-- noupdate="1" : la définition n'est pas réécrite à chaque montée de
+         version du module. Cela préserve la date du prochain passage
+         (nextcall), sinon elle serait réinitialisée à chaque mise à jour. -->
+    <data noupdate="1">
+        <!-- Purge des courriels de notification au-delà de 60 jours.
+             La durée elle-même est définie en Python par la constante
+             _DSS_MAIL_RETENTION_DAYS, dans models/dss_notification.py. -->
+        <record id="ir_cron_dss_purge_mails" model="ir.cron">
+            <field name="name">DSS - Purge des e-mails de notification (60 jours)</field>
+            <!-- user_id : utilisateur sous lequel la tâche s'exécute.
+                 base.user_root est l'utilisateur système (superutilisateur),
+                 ce qui évite tout blocage de droits lors des suppressions. -->
+            <field name="user_id" ref="base.user_root"/>
+            <!-- interval_number + interval_type : une exécution par jour. -->
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <!-- numbercall = -1 : nombre d'exécutions illimité. -->
+            <field name="numbercall">-1</field>
+            <!-- doall = False : si plusieurs passages ont été manqués,
+                 on n'exécute que le dernier au lieu de les rejouer tous. -->
+            <field name="doall" eval="False"/>
+            <!-- Modèle et méthode appelés lors de chaque passage.
+                 La méthode est décorée @api.model : elle ne dépend
+                 d'aucun enregistrement particulier. -->
+            <field name="model">dss.request</field>
+            <field name="function">_dss_cron_purge_old_mails</field>
+            <!-- args : paramètres transmis à la méthode, ici aucun. -->
+            <field name="args">()</field>
+            <!-- active = True : la tâche est active dès l'installation. -->
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

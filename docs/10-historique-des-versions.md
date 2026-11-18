@@ -4,6 +4,7 @@
 
 | Version ou repère | Information vérifiable |
 |---|---|
+| `2.15` | Fiabilité : contrainte serveur interdisant les quantités négatives, exigence d'une quantité strictement positive à la soumission, fusion des deux conditions d'affichage de la quantité sortie, purge quotidienne des courriels de plus de 60 jours. |
 | `2.14` | Sécurisation : ACL rattachées à chaque rôle, dix règles d'enregistrement, interdiction d'écrire l'état hors workflow, contrôles serveur du rôle Magasin et de l'étape d'ajustement, blocage de l'auto-validation par le Chef, ACL des assistants de confirmation. |
 | `2.13` | Courriels : détection des adresses de bouclage pour ne plus envoyer de logo ni de lien cassés, statut affiché sous forme de libellé, texte d'action propre à chaque événement, motifs échappés, sujet enrichi du type d'intervention, adresse de réponse de la société et pied de page dynamique. |
 | `2.12` | Le `depannage` suit le parcours de clôture calculé de la nouvelle installation : `qty_installee` préremplie à `qty_sortie`, retour saisi à la clôture et entrée de stock générée à ce moment. Le `basculement` reste en saisie manuelle. |
@@ -15,14 +16,14 @@
 | `2.6` | Version du manifeste précédant le retrait de `hr` en `2.7`. |
 | `2.2` | Répertoire de migration contenant le renommage conditionnel de l'identifiant externe du format papier. |
 
-Les fichiers présents ne fournissent pas un journal complet des changements pour les versions `2.0` à `2.14`. Les changements intermédiaires ne sont donc pas détaillés ici sans source vérifiable.
+Les fichiers présents ne fournissent pas un journal complet des changements pour les versions `2.0` à `2.15`. Les changements intermédiaires ne sont donc pas détaillés ici sans source vérifiable.
 
 ## 2. État actuel du manifeste
 
 | Clé | Valeur |
 |---|---|
 | Nom | DSS V2 - Demande de Sortie de Stock |
-| Version | `2.14` |
+| Version | `2.15` |
 | Auteur | Tiavina Armel |
 | Dépendances | `web`, `stock`, `mail` |
 | Installable | Oui (`installable=True`) |
@@ -50,7 +51,7 @@ Pour les interventions `nouvelle_installation` et `installation_interne` (sens `
 
 ## 5. Convention de versioning
 
-La version `2.7` retire `hr` des dépendances du module et supprime le fichier de données vide `data/dss_department_data.xml`. La migration 2.5 est conservée pour transférer les données RH historiques lorsque leurs tables existent. La version `2.8` inclut explicitement `is_sortie_only` dans les valeurs initiales des lignes du wizard Stock, afin que le client Odoo puisse évaluer les règles `attrs` dès l'ouverture. La version `2.9` ajoute les contrôles de quantité et de motif au parcours « Retour de matériel », ainsi qu'une clôture de confirmation en lecture seule. La version `2.10` ne modifie aucune donnée ni aucun état du workflow : elle uniformise le rendu des messages de chatter et déclare explicitement leur sous-type, sans migration de base nécessaire. La version `2.11` étend le parcours de clôture des interventions de sens `Sortie` au transfert interne `appro_distant`, et adapte le mouvement de retour à la source réelle du matériel (`location_dest_id`). La version `2.12` applique le même parcours au `depannage`, dont l'entrée de stock est désormais créée à la clôture à partir de la quantité retournée, et laisse le `basculement` en saisie manuelle. La version `2.13` ne modifie ni le workflow ni les quantités : elle corrige les liens des courriels et rend leur contenu explicite, sans migration de base. La version `2.14` ne change aucune règle métier du circuit : elle ajoute uniquement des contrôles d'accès et des garde-fous serveur, donc aucune migration de données n'est nécessaire.
+La version `2.7` retire `hr` des dépendances du module et supprime le fichier de données vide `data/dss_department_data.xml`. La migration 2.5 est conservée pour transférer les données RH historiques lorsque leurs tables existent. La version `2.8` inclut explicitement `is_sortie_only` dans les valeurs initiales des lignes du wizard Stock, afin que le client Odoo puisse évaluer les règles `attrs` dès l'ouverture. La version `2.9` ajoute les contrôles de quantité et de motif au parcours « Retour de matériel », ainsi qu'une clôture de confirmation en lecture seule. La version `2.10` ne modifie aucune donnée ni aucun état du workflow : elle uniformise le rendu des messages de chatter et déclare explicitement leur sous-type, sans migration de base nécessaire. La version `2.11` étend le parcours de clôture des interventions de sens `Sortie` au transfert interne `appro_distant`, et adapte le mouvement de retour à la source réelle du matériel (`location_dest_id`). La version `2.12` applique le même parcours au `depannage`, dont l'entrée de stock est désormais créée à la clôture à partir de la quantité retournée, et laisse le `basculement` en saisie manuelle. La version `2.13` ne modifie ni le workflow ni les quantités : elle corrige les liens des courriels et rend leur contenu explicite, sans migration de base. La version `2.14` ne change aucune règle métier du circuit : elle ajoute uniquement des contrôles d'accès et des garde-fous serveur, donc aucune migration de données n'est nécessaire. La version `2.15` ajoute des contraintes de quantité et une tâche planifiée de purge : aucun changement de schéma, mais un upgrade du module est nécessaire pour créer la tâche planifiée.
 
 Le manifeste expose un numéro de version, mais les sources auditées ne documentent pas de règle de versioning complète ni un changelog exhaustif. Ajouter une entrée datée et sourcée lors d'une évolution future permettrait d'établir cet historique sans le reconstruire par supposition.
 
@@ -58,6 +59,6 @@ Le manifeste expose un numéro de version, mais les sources auditées ne documen
 
 | Repère | À retenir |
 |---|---|
-| Version actuelle | `2.14`, lue dans `__manifest__.py`. |
+| Version actuelle | `2.15`, lue dans `__manifest__.py`. |
 | Historique antérieur | Non reconstituable de manière fiable avec les seuls fichiers audités. |
 | Migrations | Scripts conservés dans `migrations/2.2/`, `migrations/2.5/` et `migrations/2.6/`. |

@@ -5,6 +5,12 @@ from odoo import (
     fields,
     api,
 )
+# ValidationError : erreur métier affichée à l'utilisateur, qui annule l'action.
+from odoo.exceptions import ValidationError
+# float_compare : compare deux décimaux en respectant une précision donnée.
+# Indispensable ici, car comparer des flottants avec < 0 peut refuser -0.001
+# à cause des arrondis internes de Python.
+from odoo.tools.float_utils import float_compare
 
 
 class DssRequestLine(
@@ -126,3 +132,67 @@ class DssRequestLine(
             self.qty_demandee_readonly = (
                 self.request_id.type_intervention == "retour_materiel"
             )
+
+    # ------------------------------------------------------------------
+    # CONTRÔLE DES QUANTITÉS (version 2.15)
+    # @api.constrains : méthode appelée automatiquement par Odoo après chaque
+    # create() et après chaque write() sur les champs listés. Si elle lève une
+    # exception, l'écriture est annulée : rien n'est enregistré en base.
+    # Elle s'exécute côté serveur : impossible de la contourner par un import
+    # ou un appel RPC, contrairement à un attribut de vue.
+    # ------------------------------------------------------------------
+    @api.constrains("qty_demandee", "qty_sortie", "qty_installee", "qty_retour")
+    def _check_quantities_are_not_negative(self):
+        """Refuse toute quantité négative sur une ligne de demande.
+
+        POURQUOI CETTE RÈGLE EXISTE
+        Une quantité négative n'a aucun sens métier et provoque deux effets
+        graves, tous deux constatés dans le code :
+
+          1. Les mouvements de stock sont filtrés sur « quantité > 0 » :
+             une sortie négative ne crée donc AUCUN mouvement, mais la
+             demande peut tout de même être validée puis clôturée. On obtient
+             une DSS officiellement approuvée qui n'a jamais bougé de stock.
+
+          2. La clôture impose « 0 <= quantité saisie <= quantité sortie ».
+             Si la quantité sortie est négative, aucune valeur ne peut
+             satisfaire cette condition : la demande devient impossible à
+             clôturer et exige une correction manuelle en base.
+
+        CHOIX DE CONCEPTION : >= 0 ET NON > 0
+        On se limite ici au SIGNE. Exiger « > 0 » empêcherait l'utilisateur
+        d'ajouter une ligne vide puis de la remplir, puisque la contrainte
+        s'exécute dès la création de la ligne. L'exigence d'une quantité
+        réellement exploitable est vérifiée plus tard, à la soumission, par
+        dss.request._check_lines_have_positive_quantity(), qui connaît le
+        type d'intervention et peut donc choisir le bon champ.
+
+        PRÉCISION
+        float_compare(..., precision_digits=2) compare avec deux décimales,
+        comme partout dans le module : -0.001 est ainsi traité comme zéro
+        et ne bloque pas la saisie pour un simple arrondi.
+        """
+        # On parcourt chaque ligne pour identifier précisément la fautive.
+        for line in self:
+            # Les quatre quantités métier suivent la même règle de signe.
+            for field_name in (
+                "qty_demandee",
+                "qty_sortie",
+                "qty_installee",
+                "qty_retour",
+            ):
+                # line[champ] lit la valeur courante, y compris non stockée.
+                value = line[field_name]
+                # Une valeur inférieure à zéro est refusée.
+                if float_compare(value, 0.0, precision_digits=2) < 0:
+                    # _fields[...].string renvoie le libellé du champ
+                    # (« Qte Demandee », etc.) : le message reste lisible.
+                    raise ValidationError(
+                        u"La quantité « %s » ne peut pas être négative "
+                        u"pour l'article %s (valeur saisie : %s)."
+                        % (
+                            line._fields[field_name].string,
+                            line.product_id.name or u"sans article",
+                            value,
+                        )
+                    )

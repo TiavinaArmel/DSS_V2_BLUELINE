@@ -94,6 +94,42 @@ class DssRequestWorkflow(models.Model):
         # join() assemble les articles avec une balise de saut de ligne HTML comme séparateur.
         return u"<br/>".join(lignes_detail)
 
+    def _check_lines_have_positive_quantity(self):
+        """Exige une quantité strictement positive sur chaque ligne soumise.
+
+        POURQUOI ICI ET PAS DANS UNE CONTRAINTE ?
+        La contrainte de la ligne (voir dss.request.line) se limite au signe
+        (>= 0), car elle s'exécute dès la création d'une ligne vide. Le choix
+        du champ à contrôler dépend du TYPE D'INTERVENTION, qui appartient à
+        la demande, pas à la ligne. On effectue donc le contrôle au moment de
+        la soumission, quand la demande est complète :
+
+          - retour de matériel : la seule quantité métier est qty_retour ;
+          - tous les autres types : c'est qty_demandee.
+
+        Sans ce contrôle, une demande à quantité nulle serait validée par le
+        Chef puis par le Magasin, sans créer le moindre mouvement de stock.
+        """
+        # Une demande à la fois : le contrôle porte sur ses propres lignes.
+        self.ensure_one()
+        # Le type d'intervention décide quel champ porte la quantité métier.
+        is_return = self.type_intervention == "retour_materiel"
+        field_name = "qty_retour" if is_return else "qty_demandee"
+        # Parcours des lignes pour signaler l'article fautif nommément.
+        for line in self.line_ids:
+            value = line[field_name]
+            # <= 0 : zéro n'est pas une quantité exploitable non plus.
+            if float_compare(value, 0.0, precision_digits=2) <= 0:
+                raise ValidationError(
+                    u"Article %s : la quantité « %s » doit être strictement "
+                    u"positive avant la soumission (valeur actuelle : %s)."
+                    % (
+                        line.product_id.name or u"sans article",
+                        line._fields[field_name].string,
+                        value,
+                    )
+                )
+
     @api.multi
     def action_soumettre(self):
         """
@@ -166,6 +202,10 @@ class DssRequestWorkflow(models.Model):
                 raise ValidationError("Le champ Emplacement destination est obligatoire pour un Transfert.")
             if not rec.line_ids:
                 raise ValidationError("Vous devez ajouter au moins un article avant de soumettre.")
+            # Contrôle des quantités : une ligne à zéro (ou négative) rendrait
+            # la demande inexploitable côté stock. Le type d'intervention
+            # détermine le champ contrôlé (voir la méthode).
+            rec._check_lines_have_positive_quantity()
             if rec.type_intervention == "retour_materiel":
                 rec._normalize_return_material_lines(clear_motifs=True)
             rec.signataire_demandeur_id = self.env.user

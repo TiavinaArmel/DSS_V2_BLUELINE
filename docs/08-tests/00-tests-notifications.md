@@ -71,6 +71,20 @@ Le fichier [`tests/test_dss_security.py`](../../tests/test_dss_security.py) vér
 | `test_chef_cannot_validate_his_own_request` | Un Chef demandeur ne peut pas valider sa propre demande. |
 | `test_validation_wizards_are_open_to_their_groups` | Les assistants de confirmation Chef et Stock sont accessibles à leur groupe. |
 
+## 2 ter. Tests de fiabilité des quantités et de purge (version 2.15)
+
+| Test | Contrôle vérifié |
+|---|---|
+| `test_negative_quantity_is_refused_on_create` | Une quantité négative est refusée dès la création de la ligne (contrainte `@api.constrains`). |
+| `test_negative_quantity_is_refused_on_write` | Une quantité négative est refusée lors d'une modification, et l'écriture est annulée. |
+| `test_zero_quantity_is_accepted_to_allow_empty_line` | Le zéro reste autorisé : on peut ajouter une ligne vide puis la remplir. |
+| `test_submission_requires_positive_demanded_quantity` | Une ligne à quantité demandée nulle bloque la soumission. |
+| `test_submission_requires_positive_return_for_return_material` | Un retour de matériel exige une quantité retournée strictement positive. |
+| `test_submission_accepts_positive_quantities` | Une quantité positive passe le contrôle. |
+| `test_cron_purges_old_sent_mails_and_keeps_log` | Le cron supprime un courriel de plus de 60 jours à l'état `sent`, mais conserve le journal. |
+| `test_cron_keeps_recent_mails` | Un courriel récent n'est jamais purgé. |
+| `test_cron_keeps_pending_mails_even_when_old` | Un courriel encore en file (`outgoing`) n'est pas purgé, même ancien. |
+
 ## 3. Exécution
 
 L'exécution doit se faire avec le lanceur et l'interpréteur de l'installation Odoo 10, sur une base de test. Exemple de commande à adapter à cette installation :

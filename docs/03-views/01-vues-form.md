@@ -31,7 +31,7 @@ Les actions Chef et Magasin sont des boutons directs du `<header>`; aucun `<span
 | Sens et écart | `sens_mouvement`, `has_ecart` et `motif_ecart` sont affichés sans modification depuis la fiche principale. |
 | Articles | `line_ids` devient readonly hors brouillon; article reçoit `dss_location_id` depuis `parent.location_id`. |
 | Quantité demandée | Lecture seule selon `qty_demandee_readonly`. |
-| Quantité sortie | Vue héritée : readonly si `is_magasin_user` est faux; le groupe Magasin est calculé côté Python. |
+| Quantité sortie | Deux vues héritées combinent leurs règles depuis 2.15 : le champ est en lecture seule si l'utilisateur n'est **pas** du Magasin **ou** si la ligne est un retour de matériel. Auparavant, la seconde vue écrasait purement et simplement la première condition. |
 | Chatter | Affiche `message_follower_ids` et `message_ids`. |
 
 Une vue héritée réservée aux groupes Chef, Magasin et Sécurité désactive `create`, `edit`, `delete` et retire le bouton Soumettre. Ces paramètres d'interface ne remplacent pas les ACL serveur.
@@ -43,4 +43,5 @@ Une vue héritée réservée aux groupes Chef, Magasin et Sécurité désactive 
 | Bouton | `type="object"` délègue à une méthode Python; les boutons de validation ouvrent d'abord un wizard. |
 | Visibilité | `groups` et `attrs` pilotent l'affichage côté interface. |
 | Restrictions | La vue « readonly » ne constitue pas une règle d'enregistrement. |
+| Attributs de vue | Un `position="attributes"` **remplace** l'attribut : la dernière vue appliquée gagne. Toute règle à conserver doit être répétée dans cette vue. |
 | Source | [`views/dss_request_views.xml`](../../views/dss_request_views.xml), [`views/dss_request_display_views.xml`](../../views/dss_request_display_views.xml). |

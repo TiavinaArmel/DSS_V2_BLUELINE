@@ -35,6 +35,8 @@ La notification est créée dans la file Odoo, elle n'est pas envoyée directeme
 
 Le message de chatter est posté comme note interne (`subtype="mail.mt_note"`). Son corps vaut `<b>{utilisateur}</b> a soumis la demande.<br/>` suivi d'une ligne par article. Les libellés sont accentués : `Qté demandée`, `Qté sortie`, `Qté installée`, `Qté retour`; seules les quantités non nulles sont affichées, et une intervention de retour de matériel n'affiche que `Qté retour`. Le nom de l'utilisateur et le nom de chaque article passent par `html_escape()` avant l'injection HTML, et les lignes sont séparées par `<br/>`.
 
+Depuis la version `2.15`, la soumission vérifie aussi que chaque ligne porte une **quantité strictement positive** : `qty_retour` pour un retour de matériel, `qty_demandee` pour tous les autres types (`_check_lines_have_positive_quantity()`). Une demande à quantité nulle serait sinon validée par le Chef puis par le Magasin sans créer le moindre mouvement de stock.
+
 ## 4. Fiche de mémorisation
 
 | Repère | À retenir |

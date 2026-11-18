@@ -2,6 +2,8 @@
 
 # Importe le module standard qui ecrit des informations dans les journaux Odoo.
 import logging
+# timedelta sert a calculer une date limite « maintenant moins N jours ».
+from datetime import timedelta
 from xml.sax.saxutils import escape as html_escape
 
 # Importe les outils Odoo pour les modeles, les champs et les API.
@@ -13,6 +15,11 @@ _logger = logging.getLogger(__name__)
 # Hotes qui designent la machine du destinataire, jamais le serveur Odoo.
 # Une adresse privee du reseau interne (192.168.x, 10.x, 172.16.x) reste valide.
 _DSS_LOOPBACK_HOSTS = ("localhost", "127.0.0.1", "::1", "0.0.0.0")
+
+# Duree de conservation des courriels de notification, en jours.
+# Le journal dss.notification.log est conserve : seule la copie du message
+# est supprimee. 60 jours laissent une fenetre de controle suffisante.
+_DSS_MAIL_RETENTION_DAYS = 60
 
 
 class DssNotificationLog(models.Model):
@@ -556,3 +563,74 @@ class DssRequestNotification(models.Model):
                 + rec._dss_group_emails("dss_v2.group_dss_magasin")
                 + rec._dss_requester_emails(),
             )
+
+    # ------------------------------------------------------------------
+    # PURGE DES COURRIELS (version 2.15)
+    # ------------------------------------------------------------------
+    @api.model
+    def _dss_cron_purge_old_mails(self):
+        """Supprime les courriels de notification de plus de 60 jours.
+
+        POURQUOI CETTE PURGE
+        Le modele d'e-mail fixe auto_delete = False : chaque notification
+        laisse un enregistrement mail.mail complet, corps HTML inclus. C'est
+        volontaire (on peut controler ce qui a ete envoye), mais sans limite
+        la table mail_mail grossit indefiniment et alourdit les sauvegardes.
+
+        CE QUI EST CONSERVE
+        Le journal dss.notification.log n'est PAS supprime : il garde la
+        demande concernee, la cle d'evenement, les destinataires et sa date
+        de creation. Seul le contenu du courriel disparait. Le lien mail_id
+        est vide automatiquement par Odoo (comportement par defaut d'un
+        Many2one : ondelete = 'set null'), donc aucune erreur de reference.
+
+        CE QUI EST ECARTE
+        Seuls les courriels reellement ENVOYES (state = 'sent') sont purges.
+        Un courriel encore en file ('outgoing') ou en erreur ('exception')
+        est conserve : il sert au diagnostic.
+
+        APPEL
+        Cette methode est declenchee par la tache planifiee
+        « DSS - Purge des e-mails de notification (60 jours) », declaree dans
+        data/dss_cron.xml. @api.model permet de l'appeler sans enregistrement.
+        """
+        # Odoo 10 : fields.Datetime.now() renvoie une CHAINE, pas un objet
+        # datetime. On la convertit avec from_string() pour pouvoir soustraire
+        # une duree, puis on repasse en chaine avec to_string() : le format
+        # reste exactement celui attendu par la base.
+        now = fields.Datetime.from_string(fields.Datetime.now())
+        limit_date = fields.Datetime.to_string(
+            now - timedelta(days=_DSS_MAIL_RETENTION_DAYS)
+        )
+
+        # Recherche des journaux assez anciens qui pointent encore vers un mail.
+        # sudo() est necessaire : le cron s'execute en root, mais le modele
+        # dss.notification.log est reserve a l'administrateur systeme.
+        logs = self.env["dss.notification.log"].sudo().search(
+            [
+                # create_date est rempli automatiquement par Odoo.
+                ("create_date", "<", limit_date),
+                ("mail_id", "!=", False),
+            ]
+        )
+        # mapped() transforme les journaux en liste de courriels sans doublon.
+        mails = logs.mapped("mail_id")
+        # filtered() ne conserve que les courriels deja envoyes.
+        mails = mails.filtered(lambda mail: mail.state == "sent")
+
+        purged = 0
+        if mails:
+            # unlink() supprime les courriels ; le champ mail_id des journaux
+            # est remis a vide par Odoo, les journaux restent intacts.
+            purged = len(mails)
+            mails.unlink()
+
+        # Trace l'operation dans le journal Odoo pour le suivi technique.
+        _logger.info(
+            "DSS : purge des courriels de notification de plus de %s jours : "
+            "%s courriel(s) supprime(s).",
+            _DSS_MAIL_RETENTION_DAYS,
+            purged,
+        )
+        # La valeur retournee apparait dans l'historique de la tache planifiee.
+        return purged

@@ -107,6 +107,11 @@
                                         attrs="{'readonly': ['|',
                                             ('qty_demandee_readonly', '=', True),
                                             ('is_retour_materiel', '=', True)]}"/>
+                                    <!-- Qté sortie : jamais modifiable sur un retour de matériel.
+                                         Cette condition sert de valeur par défaut. La vue héritée
+                                         dss_request_display_views.xml la remplace par une condition
+                                         plus restrictive qui l'inclut explicitement (Magasin ET pas
+                                         un retour de matériel) : aucune règle n'est donc perdue. -->
                                     <field name="qty_sortie"
                                         attrs="{'readonly': [('is_retour_materiel', '=', True)]}"/>
                                     <field name="qty_installee"

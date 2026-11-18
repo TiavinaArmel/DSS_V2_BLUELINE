@@ -362,3 +362,67 @@ class TestDssQuantities(common.TransactionCase):
 
         self.assertFalse(default_line["is_sortie_only"])
         self.assertEqual(default_line["qty_retour"], 4.0)
+
+    # ------------------------------------------------------------------
+    # Contrôle des quantités (version 2.15 - point I1)
+    # ------------------------------------------------------------------
+
+    def test_negative_quantity_is_refused_on_create(self):
+        """Une quantité négative est refusée dès la création de la ligne."""
+        request, line = self._request_with_line()
+
+        with self.assertRaises(ValidationError):
+            self.Line.create({
+                "request_id": request.id,
+                "product_id": self.product.id,
+                "qty_demandee": -3.0,
+            })
+
+    def test_negative_quantity_is_refused_on_write(self):
+        """Une quantité négative est refusée lors d'une modification."""
+        request, line = self._request_with_line()
+
+        with self.assertRaises(ValidationError):
+            line.write({"qty_sortie": -2.0})
+
+        # La valeur enregistrée n'a pas changé : l'écriture a été annulée.
+        line.invalidate_cache()
+        self.assertEqual(line.qty_sortie, 0.0)
+
+    def test_zero_quantity_is_accepted_to_allow_empty_line(self):
+        """Zéro reste autorisé sur une ligne : on peut ajouter puis remplir."""
+        request, line = self._request_with_line()
+
+        empty = self.Line.create({
+            "request_id": request.id,
+            "product_id": self.product.id,
+            "qty_demandee": 0.0,
+        })
+
+        self.assertEqual(empty.qty_demandee, 0.0)
+
+    def test_submission_requires_positive_demanded_quantity(self):
+        """Une ligne à quantité demandée nulle bloque la soumission."""
+        request, line = self._request_with_line(demand=0.0)
+
+        with self.assertRaisesRegexp(ValidationError, "strictement positive"):
+            request._check_lines_have_positive_quantity()
+
+    def test_submission_requires_positive_return_for_return_material(self):
+        """Un retour de matériel exige une quantité retournée positive."""
+        request, line = self._return_material_request(0.0)
+
+        with self.assertRaisesRegexp(ValidationError, "strictement positive"):
+            request._check_lines_have_positive_quantity()
+
+        # Une quantité de retour valide fait passer le contrôle.
+        line.write({"qty_retour": 4.0})
+        request._check_lines_have_positive_quantity()
+
+    def test_submission_accepts_positive_quantities(self):
+        """Une quantité strictement positive passe le contrôle de soumission."""
+        request, line = self._request_with_line(demand=10.0)
+
+        request._check_lines_have_positive_quantity()
+
+        self.assertEqual(line.qty_demandee, 10.0)

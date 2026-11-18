@@ -62,6 +62,21 @@ Le code fixe `model=False`, `res_id=False` et `auto_delete=False`, puis crée le
 
 Le modèle `dss.notification.log` garde la demande, la clé d'événement, le mail et les destinataires. Sa contrainte unique limite chaque paire demande/événement à une entrée. Une notification déjà journalisée ne sera pas recréée par un nouvel appel de même clé.
 
+### Conservation et purge des messages
+
+Le modèle d'e-mail fixe `auto_delete = False` : chaque notification laisse un `mail.mail` complet, corps HTML inclus. C'est volontaire, pour permettre le contrôle de ce qui a été envoyé, mais la table `mail_mail` grossit sans limite.
+
+Depuis la version `2.15`, une tâche planifiée **« DSS - Purge des e-mails de notification (60 jours) »** (`data/dss_cron.xml`) appelle `_dss_cron_purge_old_mails()` une fois par jour. Elle supprime les courriels dont le journal a plus de 60 jours, à condition qu'ils soient à l'état `sent`.
+
+| Élément | Sort réservé |
+|---|---|
+| `mail.mail` de plus de 60 jours, état `sent` | Supprimé |
+| `mail.mail` encore en file (`outgoing`) ou en erreur (`exception`) | Conservé pour le diagnostic |
+| `dss.notification.log` | **Toujours conservé** : demande, événement, destinataires et date restent disponibles |
+| Champ `mail_id` du journal | Vidé automatiquement par Odoo (`ondelete = 'set null'`) |
+
+La durée est définie une seule fois, par la constante `_DSS_MAIL_RETENTION_DAYS`, dans `models/dss_notification.py`. La tâche est déclarée avec `noupdate="1"` : une montée de version du module ne réinitialise pas sa date de prochain passage.
+
 Pour `stock_approval`, les motifs de modification sont regroupés par article dans une liste HTML non ordonnée. Le bloc n'utilise pas `<br/>`, afin d'éviter l'affichage de balises dans le courriel.
 
 ## 4. Configuration SMTP et diagnostic
@@ -82,6 +97,7 @@ Ne jamais ajouter de mot de passe SMTP, de mot de passe de base ou de jeton dans
 | Repère | À retenir |
 |---|---|
 | Chatter | Trace métier visible sur la fiche DSS, toujours postée en note interne (`mail.mt_note`) et échappée en HTML. |
+| Conservation | Les courriels sont purgés après 60 jours ; le journal des notifications, lui, reste intact. |
 | Email | Mail autonome en file, pas attaché au chatter DSS. |
 | SMTP | Configuration d'instance, pas du code du module. |
 | Sources | [`dss_notification.py`](../../models/dss_notification.py), [`dss_mail_templates.xml`](../../data/dss_mail_templates.xml), [`test_dss_notifications.py`](../../tests/test_dss_notifications.py). |

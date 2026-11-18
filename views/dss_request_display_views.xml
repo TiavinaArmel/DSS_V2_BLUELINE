@@ -1,18 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!--
+        COMPLÉMENT D'AFFICHAGE DU FORMULAIRE DSS.
+
+        Problème corrigé en version 2.15
+        Deux vues héritées modifiaient le MÊME attribut attrs du champ
+        qty_sortie :
+          - dss_request_views.xml (vue de base) : readonly si retour de matériel ;
+          - ce fichier : readonly si l'utilisateur n'appartient pas au Magasin.
+
+        En Odoo, position="attributes" REMPLACE l'attribut : la vue appliquée
+        en dernier écrasait la première, et la règle « retour de matériel »
+        disparaissait sans aucun message. C'est le type de régression invisible
+        qui réapparaît six mois plus tard.
+
+        Solution retenue
+        La condition ci-dessous contient LES DEUX règles dans une seule
+        déclaration. Elle est plus restrictive que celle de la vue de base,
+        donc l'écrasement ne perd plus aucune information :
+          - l'utilisateur doit être du groupe Magasin ;
+          - ET la ligne ne doit pas être un retour de matériel.
+        La vue de base conserve sa propre condition à titre de valeur par
+        défaut, au cas où cette vue serait un jour retirée.
+    -->
     <record id="view_dss_request_form_display_inherit" model="ir.ui.view">
         <field name="name">dss.request.form.display.inherit</field>
         <field name="model">dss.request</field>
         <field name="inherit_id" ref="dss_v2.view_dss_request_form"/>
         <field name="arch" type="xml">
-            <!-- Champ technique nécessaire à l'attrs ci-dessous -->
+            <!-- Champ technique calculé côté Python : vrai si l'utilisateur
+                 connecté appartient au groupe DSS / Magasin. Il est masqué
+                 mais nécessaire pour que les règles attrs puissent l'évaluer. -->
             <xpath expr="//field[@name='line_ids']/tree" position="inside">
                 <field name="is_magasin_user" invisible="1"/>
             </xpath>
 
-            <!-- Qté Sortie : réservé au Responsable Stock -->
+            <!-- Qté sortie : modifiable uniquement par le Responsable Stock
+                 et jamais pour un retour de matériel.
+                 Le connecteur '|' signifie OU : la ligne est en lecture seule
+                 dès que l'une des deux conditions est vraie. -->
             <xpath expr="//field[@name='line_ids']//field[@name='qty_sortie']" position="attributes">
-                <attribute name="attrs">{'readonly': [('is_magasin_user', '=', False)]}</attribute>
+                <attribute name="attrs">{'readonly': ['|', ('is_magasin_user', '=', False), ('is_retour_materiel', '=', True)]}</attribute>
             </xpath>
         </field>
     </record>

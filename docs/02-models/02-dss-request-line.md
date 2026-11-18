@@ -36,6 +36,7 @@ dss.request.line_ids (One2many) -> dss.request.line
 |---|---|---|
 | `_compute_qty_standard` | `@api.depends('product_id', 'request_id.location_id')` | Somme le stock de l'article dans l'emplacement exact, sans inclure les sous-emplacements; vaut `0.0` si l'article ou l'emplacement manque. Le champ est déclaré `store=True`. |
 | `_compute_is_sortie_only` | `@api.depends('request_id.sens_mouvement', 'request_id.type_intervention')` | Active les règles de clôture calculée : sens `Sortie`, sens `Transfert` et `depannage`. La règle est centralisée dans `dss.request._closure_uses_complement_quantities()`. |
+| `_check_quantities_are_not_negative` | `@api.constrains('qty_demandee', 'qty_sortie', 'qty_installee', 'qty_retour')` | Refuse toute quantité négative, à la création comme à la modification, avec `float_compare(..., precision_digits=2)`. Le zéro reste autorisé pour permettre d'ajouter une ligne vide puis de la remplir. |
 | `_onchange_product_id_qty_demandee_readonly` | `@api.onchange('product_id')` | Si la ligne a une demande parente, reflète le type `retour_materiel` dans `qty_demandee_readonly`. |
 
 Le modèle parent met également à jour cet indicateur lors du changement du type d'intervention. L'`onchange` agit sur le formulaire; il ne constitue pas à lui seul une contrainte de sécurité serveur.
@@ -47,5 +48,6 @@ Le modèle parent met également à jour cet indicateur lors du changement du ty
 | Relation | Une demande possède plusieurs lignes; chaque ligne pointe vers un seul article. |
 | Disponibilité locale | `qty_standard` est calculé depuis `stock.quant` avec `location_id = request_id.location_id`; les sous-emplacements sont exclus. |
 | Quantités | Pour les sorties seules, l'approvisionnement distant et le dépannage, installation et retour sont saisis à la clôture, l'un étant calculé à partir de l'autre; un retour positif est remis à l'emplacement source. Le basculement conserve sa saisie manuelle. La demande initiale n'est pas écrasée par le wizard. |
+| Signe des quantités | Aucune quantité ne peut être négative (contrainte serveur depuis 2.15). Une quantité sortie négative rendait la clôture impossible, le contrôle imposant `0 ≤ saisie ≤ quantité sortie`. |
 | Retour de matériel | `qty_retour` est la seule quantité métier; les quantités demandée, sortie et installée sont normalisées à zéro à la soumission et à la validation Stock. |
 | Source | [`models/dss_request_line.py`](../../models/dss_request_line.py). |

@@ -8,6 +8,10 @@ de serveur SMTP. Ils verifient surtout les objets mail.mail et le journal DSS.
 # Importe les outils de tests integres a Odoo.
 from odoo.tests import common
 
+# datetime et timedelta servent a vieillir artificiellement un journal
+# pour tester la purge des courriels.
+from datetime import datetime, timedelta
+
 
 class TestDssNotifications(common.TransactionCase):
     """Verifie le routage des notifications DSS sans utiliser de serveur SMTP."""
@@ -679,3 +683,88 @@ class TestDssNotifications(common.TransactionCase):
         )
         self.assertIn("TEST-DSS-SUBJECT", log.mail_id.subject)
         self.assertIn("Depannage", log.mail_id.subject)
+
+    # ------------------------------------------------------------------
+    # Purge des courriels (version 2.15)
+    # ------------------------------------------------------------------
+
+    def _notification_for_purge(self, request_name):
+        """Crée une notification et retourne son journal.
+
+        L'adresse .invalid est réservée : aucun courriel réel n'est envoyé.
+        """
+        # URL publique factice pour que le modèle rende un contenu complet.
+        self.env["ir.config_parameter"].sudo().set_param(
+            "web.base.url", "https://odoo.example.test"
+        )
+        request = self.Request.create({"name": request_name})
+        self.assertTrue(
+            request._dss_notify_once(
+                "submission", "Soumission", ["no-real-send@example.invalid"]
+            )
+        )
+        return self.NotificationLog.search(
+            [
+                ("request_id", "=", request.id),
+                ("event_key", "=", "submission"),
+            ],
+            limit=1,
+        )
+
+    def _backdate_log(self, log, days):
+        """Vieillit artificiellement un journal de N jours.
+
+        create_date est en lecture seule dans l'interface, mais l'ORM accepte
+        l'écriture : c'est la seule façon de simuler une ancienne notification
+        sans attendre 60 jours.
+        """
+        old_date = (datetime.now() - timedelta(days=days)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        log.write({"create_date": old_date})
+        return old_date
+
+    def test_cron_purges_old_sent_mails_and_keeps_log(self):
+        """Le cron supprime le courriel ancien mais conserve le journal."""
+        log = self._notification_for_purge("TEST-DSS-PURGE-OLD")
+        mail = log.mail_id
+        self.assertTrue(mail)
+
+        # Le courriel doit être considéré comme envoyé pour être purgeable.
+        mail.write({"state": "sent"})
+        # On le vieillit de 90 jours, donc au-delà des 60 jours de rétention.
+        self._backdate_log(log, 90)
+
+        purged = self.Request._dss_cron_purge_old_mails()
+
+        self.assertEqual(purged, 1)
+        # Le courriel a disparu...
+        self.assertFalse(mail.exists())
+        # ... mais la trace métier reste, sans lien vers le courriel supprimé.
+        self.assertTrue(log.exists())
+        self.assertFalse(log.mail_id)
+
+    def test_cron_keeps_recent_mails(self):
+        """Un courriel récent n'est jamais purgé."""
+        log = self._notification_for_purge("TEST-DSS-PURGE-RECENT")
+        mail = log.mail_id
+        mail.write({"state": "sent"})
+        # Seulement 10 jours : la fenêtre de 60 jours n'est pas dépassée.
+        self._backdate_log(log, 10)
+
+        purged = self.Request._dss_cron_purge_old_mails()
+
+        self.assertEqual(purged, 0)
+        self.assertTrue(mail.exists())
+
+    def test_cron_keeps_pending_mails_even_when_old(self):
+        """Un courriel encore en file n'est pas purgé, même ancien."""
+        log = self._notification_for_purge("TEST-DSS-PURGE-PENDING")
+        mail = log.mail_id
+        # On ne touche pas à l'état : le courriel reste 'outgoing'.
+        self._backdate_log(log, 90)
+
+        purged = self.Request._dss_cron_purge_old_mails()
+
+        self.assertEqual(purged, 0)
+        self.assertTrue(mail.exists())
