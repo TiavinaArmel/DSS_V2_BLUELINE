@@ -33,6 +33,7 @@ Les actions Chef et Magasin sont des boutons directs du `<header>`; aucun `<span
 | Quantité demandée | Lecture seule selon `qty_demandee_readonly`. |
 | Quantité sortie | Deux vues héritées combinent leurs règles depuis 2.15 : le champ est en lecture seule si l'utilisateur n'est **pas** du Magasin **ou** si la ligne est un retour de matériel. Auparavant, la seconde vue écrasait purement et simplement la première condition. |
 | Chatter | Affiche `message_follower_ids` et `message_ids`. |
+| Rejet | Depuis 2.18, un bandeau rouge conditionnel (`state = rejete`) s'affiche en haut du formulaire. La barre d'état ne peut pas représenter un rejet : ce n'est pas une étape du parcours, et Odoo exclut de la même façon son propre état `cancel`. |
 
 Une vue héritée réservée aux groupes Chef, Magasin et Sécurité désactive `create`, `edit`, `delete` et retire le bouton Soumettre. Ces paramètres d'interface ne remplacent pas les ACL serveur.
 

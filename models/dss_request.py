@@ -43,14 +43,18 @@ class DssRequest(models.Model):
         readonly=True,
         default="/",
     )
+    # Les libellés accentués sont écrits en chaînes Unicode explicites u"...".
+    # Pourquoi : le module tourne sous Python 2 (Odoo 10) et ces libellés sont
+    # envoyés au navigateur en JSON. Une chaîne d'octets contenant des accents
+    # provoquerait une UnicodeDecodeError à la sérialisation. u"..." l'évite.
     state = fields.Selection(
         [
             ("brouillon", "Brouillon"),
             ("valide_chef", "Validation Chef"),
             ("valide_magasin", "Validation Stock"),
-            ("approuve", "Approuve"),
-            ("cloture", "Cloture"),
-            ("rejete", "Rejete"),
+            ("approuve", u"Approuvé"),
+            ("cloture", u"Clôturé"),
+            ("rejete", u"Rejeté"),
         ],
         string="Statut",
         default="brouillon",
@@ -72,14 +76,15 @@ class DssRequest(models.Model):
         string="Emplacement destination",
         domain=[("usage", "=", "internal")],
     )
+    # Libellés accentués en Unicode explicite, pour la même raison que « state ».
     type_intervention = fields.Selection(
         [
             ("nouvelle_installation", "Nouvelle installation client"),
             ("basculement", "Basculement client"),
-            ("depannage", "Depannage"),
+            ("depannage", u"Dépannage"),
             ("appro_distant", "Approvisionnement de stock distant"),
             ("installation_interne", "Installation interne (relais, infrastructure)"),
-            ("retour_materiel", "Retour de materiel (desinstallation)"),
+            ("retour_materiel", u"Retour de matériel (désinstallation)"),
         ],
         string="Type d intervention",
     )

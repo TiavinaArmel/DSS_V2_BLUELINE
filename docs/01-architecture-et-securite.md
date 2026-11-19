@@ -55,7 +55,7 @@ L'ordre exact des imports Python est défini dans [`models/__init__.py`](../mode
 | `dss_v2.group_dss_demandeur` | DSS / Demandeur | Menu « Mes demandes ». |
 | `dss_v2.group_dss_chef` | DSS / Chef | Boutons Chef, filtres et menu de validation. |
 | `dss_v2.group_dss_magasin` | DSS / Magasin | Boutons Stock, modification des quantités et menus Magasin. |
-| `dss_v2.group_dss_securite` | DSS / Securite | Vue en lecture seule et menu « À contrôler » provisoire. |
+| `dss_v2.group_dss_securite` | DSS / Securite | Vue en lecture seule et menu de consultation « Demandes approuvées ». |
 
 Le groupe Sécurité n'ajoute pas d'étape au workflow `dss.request`. Les états et transitions de cette demande sont décrits dans [le cycle de vie](04-workflow/00-cycle-de-vie.md). Un circuit différent existe sur `stock.picking`; voir [les héritages](02-models/08-heritages.md).
 

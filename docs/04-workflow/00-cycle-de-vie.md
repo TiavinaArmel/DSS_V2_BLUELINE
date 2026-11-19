@@ -20,9 +20,9 @@ Le groupe Sécurité ne forme pas une étape du circuit de `dss.request`. Le par
 | `brouillon` | Brouillon | État par défaut et destination du renvoi par un Chef. |
 | `valide_chef` | Validation Chef | Attente de l'action Chef. |
 | `valide_magasin` | Validation Stock | Attente de l'action Magasin. |
-| `approuve` | Approuve | État après le routeur de mouvements et avant clôture. |
-| `cloture` | Cloture | État assigné par le wizard de clôture. |
-| `rejete` | Rejete | État assigné par l'action de rejet. |
+| `approuve` | Approuvé | État après le routeur de mouvements et avant clôture. |
+| `cloture` | Clôturé | État assigné par le wizard de clôture. |
+| `rejete` | Rejeté | État assigné par l'action de rejet. |
 
 ## 3. Transitions
 
@@ -31,7 +31,7 @@ Le groupe Sécurité ne forme pas une étape du circuit de `dss.request`. Le par
 | `brouillon` | `valide_chef` | `action_soumettre()` | Champs de soumission et au moins une ligne; pas de contrôle explicite de l'état initial. |
 | `valide_chef` | `valide_magasin` | `action_valider_chef()` | Vérifie l'état `valide_chef`. |
 | `valide_magasin` | `approuve` | `action_valider_magasin()` | Vérifie l'état et exécute les mouvements avant d'approuver. |
-| Tout état en cas d'appel direct | `rejete` | `action_rejeter()` | Pas de contrôle serveur de l'état initial; les boutons sont conditionnés par la vue. |
+| `valide_chef` ou `valide_magasin` | `rejete` | `action_rejeter()` | `_check_rejet_access()` vérifie l'état **et** le rôle : Chef du service à l'étape Chef, groupe Magasin à l'étape Stock. Tout autre état est refusé. |
 | `rejete` | `brouillon` | `action_renvoyer_demandeur()` | Vérifie l'état et le groupe Chef. |
 | `approuve` | `cloture` | `DssClotureWizard.action_confirmer()` | Clôture normale par le demandeur d'origine ou exceptionnelle par le Chef avec motif; état et acteur vérifiés côté serveur. |
 

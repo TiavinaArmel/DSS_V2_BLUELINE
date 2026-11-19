@@ -16,14 +16,27 @@ La requête SQL cible le module `dss_v2` et le modèle `report.paperformat`. Ell
 
 ## 3. Version et exécution
 
-Le manifeste indique actuellement la version `2.17`. Les scripts `2.5` et `2.6` modifient des données et des contraintes de base; sauvegarder la base et vérifier les journaux d'upgrade avant toute intervention. Leur présence dans le dépôt ne prouve pas qu'ils ont été exécutés sur une instance donnée.
+Le manifeste indique actuellement la version `2.18`. Les scripts `2.5`, `2.6` et `2.18` modifient des données et des contraintes de base; sauvegarder la base et vérifier les journaux d'upgrade avant toute intervention. Leur présence dans le dépôt ne prouve pas qu'ils ont été exécutés sur une instance donnée.
 
 Depuis la version `2.7`, `hr` n'est plus une dépendance d'exécution. Le code de migration `2.5` est conservé pour les bases historiques; il vérifie la présence des tables RH avant de les lire.
+
+### 3 bis. Script `2.18` — unicité du BCI
+
+`migrations/2.18/pre-migration.py` prépare la contrainte d'unicité sur le champ `bci` de `dss.request`. Il s'exécute **avant** la création de la contrainte par Odoo, et fait trois choses :
+
+| Étape | Action |
+|---|---|
+| 1 | Retire les espaces autour des BCI existants (`btrim`), comme le fait déjà `write()` à l'enregistrement |
+| 2 | Convertit les BCI vides en `NULL`, pour qu'ils ne comptent pas comme une valeur répétée |
+| 3 | Liste les doublons restants et **interrompt la migration** avec un message nommant les demandes concernées |
+
+**Le script ne supprime aucune donnée.** Choisir quelle demande conserve un BCI est une décision métier : un administrateur corrige les fiches signalées, puis relance la mise à jour. Sans cette étape, PostgreSQL refuserait la création de l'index unique avec une erreur technique difficile à interpréter.
 
 ## 4. Fiche de mémorisation
 
 | Repère | À retenir |
 |---|---|
-| Migration trouvée | Renommage d'XML ID, extraction du modèle de service et attribution du propriétaire aux demandes existantes. |
+| Migration trouvée | Renommage d'XML ID (2.2), extraction du modèle de service (2.5), attribution du propriétaire (2.6), normalisation et contrôle des BCI (2.18). |
 | Prudence | Les scripts ne sont pas une procédure de restauration; sauvegarder la base selon les pratiques d'exploitation avant migration. |
+| BCI | Le script 2.18 bloque volontairement en cas de doublon, plutôt que de laisser échouer la contrainte SQL. |
 | Source | [`migrations/`](../../migrations/). |

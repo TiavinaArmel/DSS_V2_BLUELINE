@@ -10,13 +10,13 @@
 | À valider | DSS | Chef | Active par défaut le filtre `chef_filter_a_valider`. |
 | À valider Stock | DSS | Magasin | Active par défaut le filtre `magasin_filter_a_valider_stock`. |
 | À remettre | DSS | Magasin | Active par défaut le filtre `magasin_filter_approuvees_a_remettre`. |
-| À contrôler | DSS | Sécurité | Domaine fixe `state = approuve`. |
+| Demandes approuvées | DSS | Sécurité | Domaine fixe `state = approuve`. |
 
 ## 2. Menu par groupe
 
 Les actions Chef et Magasin définissent `search_default_*` dans leur contexte : elles préactivent un filtre de recherche retirable depuis l'interface. À l'inverse, l'action Sécurité définit un `domain`; ce domaine fait partie de l'action et sert de filtre de liste.
 
-Le menu « À contrôler » est provisoire : le modèle `dss.request` ne définit pas d'état ni d'action de validation Sécurité.
+Le menu « Demandes approuvées » est un **raccourci de consultation** : le modèle `dss.request` ne définit ni état ni action de validation Sécurité. Il s'appelait « À contrôler » jusqu'à la version `2.17`, ce qui laissait croire à une validation attendue ; le libellé a été corrigé en `2.18`.
 
 ## 3. Fiche de mémorisation
 

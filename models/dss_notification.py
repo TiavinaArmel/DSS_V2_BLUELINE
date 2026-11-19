@@ -557,7 +557,9 @@ class DssRequestNotification(models.Model):
                 # Identifie l'evenement de cloture pour eviter les doublons.
                 "closure",
                 # Libelle affiche dans l'e-mail.
-                "Cloture",
+                # Accentue et en Unicode explicite : ce libelle termine le sujet
+                # du courriel ("DSS xxx - Clôture"), comme les libelles d'etat.
+                u"Clôture",
                 # Informe le Chef et le Magasin ; le demandeur reste également informé.
                 rec._dss_group_emails("dss_v2.group_dss_chef")
                 + rec._dss_group_emails("dss_v2.group_dss_magasin")

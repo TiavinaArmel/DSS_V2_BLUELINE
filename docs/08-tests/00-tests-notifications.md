@@ -97,17 +97,41 @@ Le fichier [`tests/test_dss_security.py`](../../tests/test_dss_security.py) vér
 | `test_approval_wizard_method_is_removed` | `action_open_wizard_approuver()` a disparu de `dss.request` (2.17). |
 | `test_approval_wizard_model_is_still_absent` | Le modèle `dss.validation.approuver.wizard`, jamais écrit, n'est pas réapparu (2.17). |
 
-## 3. Exécution
+## 3. Mode opératoire d'exécution
 
-L'exécution doit se faire avec le lanceur et l'interpréteur de l'installation Odoo 10, sur une base de test. Exemple de commande à adapter à cette installation :
+### 3.1 Préparer une base de test
+
+Les tests créent des utilisateurs, des services et parfois des emplacements de stock. Ils ne doivent **jamais** être lancés sur la base de production.
 
 ```bash
-python odoo-bin -c odoo.conf -d BASE_DE_TEST -u dss_v2 --test-enable --stop-after-init
+# Copie de la base de production vers une base de test
+sudo -u postgres createdb DSS_V2_TEST -T DSS_V2_DB
 ```
 
-L'audit documentaire n'a pas exécuté Odoo ni cette commande; le résultat des tests n'est donc pas certifié ici.
+### 3.2 Lancer les tests
 
-La compilation Python et l'analyse des diagnostics peuvent être exécutées localement. Les tests Odoo doivent être lancés sur une base de test et avec l'interpréteur compatible avec l'instance Odoo 10; ne pas lancer le module sur une base de production.
+Utiliser l'interpréteur **de l'instance Odoo 10** (Python 2.7) et son fichier de configuration :
+
+```bash
+python odoo-bin -c odoo.conf -d DSS_V2_TEST -u dss_v2 --test-enable --stop-after-init
+```
+
+### 3.3 Lire le résultat
+
+| Signal dans la sortie | Signification |
+|---|---|
+| `Ran N tests` puis `OK` | Tous les tests passent |
+| `FAIL` | Assertion métier fausse : le comportement ne correspond plus à la documentation |
+| `ERROR` | Exception pendant le test (souvent un modèle ou un champ manquant) |
+| `AccessError` inattendu | Un droit ou une règle d'enregistrement bloque le scénario testé |
+| Aucun test exécuté | Le module n'a pas été mis à jour (`-u dss_v2`), ou le dossier `tests/` n'est pas découvert |
+
+### 3.4 Portée réelle de l'exécution
+
+- Les tests couvrent les notifications, la sécurité, les quantités, la clôture, les services, les emplacements et les garde-fous. Ils **ne couvrent pas** le rendu PDF, les e-mails réellement envoyés ni les vues.
+- Aucun courriel réel n'est envoyé : toutes les adresses utilisent le domaine réservé `.invalid`.
+- La clé `"tests"` du manifeste est **informative** : Odoo 10 découvre automatiquement les fichiers du dossier `tests/`, elle n'a aucun effet d'exécution.
+- Le résultat n'est valable que pour l'environnement ciblé : une exécution locale ne certifie pas la base de production.
 
 ## 3 bis. Incident Unicode du wizard de quantités
 

@@ -11,7 +11,7 @@
 | `dss_v2.group_dss_demandeur` | DSS / Demandeur | Accès au menu « Mes demandes ». |
 | `dss_v2.group_dss_chef` | DSS / Chef | Validations Chef, rejet au niveau Chef, renvoi et clôture exceptionnelle. |
 | `dss_v2.group_dss_magasin` | DSS / Magasin | Validation Stock, rejet au niveau Stock, modification des quantités et impression du BL. |
-| `dss_v2.group_dss_securite` | DSS / Securite | Vue de demande en lecture seule et menu provisoire « À contrôler ». |
+| `dss_v2.group_dss_securite` | DSS / Securite | Vue de demande en lecture seule et menu de consultation « Demandes approuvées ». Aucune étape de validation. |
 
 Le groupe Sécurité n'a pas de transition dans le workflow principal `dss.request`; le libellé du groupe ne prouve donc pas qu'une étape d'approbation est implémentée.
 

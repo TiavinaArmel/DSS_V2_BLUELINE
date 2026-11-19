@@ -69,20 +69,29 @@
         sequence="40"/>
 
     <!--
-        Menu Sécurité provisoire.
-        Aucun état ou filtre spécifique à la Sécurité n'existe actuellement
-        dans dss.request ; l'état approuve sert donc temporairement de base
-        pour la liste « À contrôler ».
+        Menu de consultation du groupe DSS / Securite.
+
+        IMPORTANT : le groupe Sécurité n'a AUCUNE étape de validation dans le
+        circuit. Le workflow s'arrête après la validation Stock, puis la
+        demande est clôturée par le demandeur. Ce menu n'est donc qu'un
+        raccourci de consultation, en lecture seule, vers les demandes déjà
+        approuvées, pour un profil de contrôle.
+
+        Il s'intitulait auparavant « À contrôler », ce qui laissait croire à
+        une validation attendue de la Sécurité. Le libellé a été corrigé en
+        version 2.18 pour refléter le comportement réel du circuit.
+        Les identifiants techniques sont conservés pour ne pas laisser
+        d'enregistrements orphelins dans les bases déjà installées.
     -->
     <record id="action_dss_securite_a_controler" model="ir.actions.act_window">
-        <field name="name">À contrôler</field>
+        <field name="name">Demandes approuvées (consultation)</field>
         <field name="res_model">dss.request</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[('state', '=', 'approuve')]</field>
     </record>
 
     <menuitem id="menu_dss_securite_a_controler"
-        name="À contrôler"
+        name="Demandes approuvées"
         parent="menu_dss_root"
         action="action_dss_securite_a_controler"
         groups="dss_v2.group_dss_securite"

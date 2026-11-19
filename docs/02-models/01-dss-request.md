@@ -72,17 +72,22 @@ Le code ne déclare pas de transition Sécurité pour `dss.request`.
 | `brouillon` | Brouillon | État initial; soumission depuis le formulaire. |
 | `valide_chef` | Validation Chef | Étape présentée au groupe Chef. |
 | `valide_magasin` | Validation Stock | Étape présentée au groupe Magasin. |
-| `approuve` | Approuve | Après génération des mouvements par l'action Stock. |
-| `cloture` | Cloture | État défini par le wizard de clôture. |
-| `rejete` | Rejete | État défini par l'action de rejet. |
+| `approuve` | Approuvé | Après génération des mouvements par l'action Stock. |
+| `cloture` | Clôturé | État défini par le wizard de clôture. |
+| `rejete` | Rejeté | État défini par l'action de rejet. |
 
-Les libellés sans accents ci-dessus sont ceux du code source; la vue peut présenter d'autres textes pour les boutons.
+Les libellés sont accentués depuis la version `2.18` et déclarés en chaînes Unicode (`u"..."`), car Odoo 10 s'exécute en Python 2 et ces libellés sont sérialisés en JSON vers le navigateur.
 
-## 6. Fiche de mémorisation
+## 6. Limite connue : module mono-société
+
+`dss.request` ne possède **aucun champ `company_id`**. Le module est donc conçu pour une seule société : dans une base Odoo multi-société, les demandes de toutes les sociétés seraient visibles par les rôles DSS autorisés, sans cloisonnement. Cette limite est assumée et documentée ; l'ajouter supposerait un champ société, une règle d'enregistrement par société et une valeur par défaut à la création.
+
+## 7. Fiche de mémorisation
 
 | Repère | À retenir |
 |---|---|
 | Numérotation | `create()` utilise le code de séquence `dss.request`. |
 | Sens | `sens_mouvement` est stocké et recalculé selon `type_intervention`. |
 | Contrôles | Les champs requis de soumission sont validés par l'action, pas par `required=True` sur tous les champs. |
+| Société | Mono-société : aucun `company_id`, donc aucun cloisonnement par société. |
 | Source | [`models/dss_request.py`](../../models/dss_request.py). |

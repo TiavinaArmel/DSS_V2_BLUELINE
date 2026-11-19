@@ -682,7 +682,8 @@ class TestDssNotifications(common.TransactionCase):
             limit=1,
         )
         self.assertIn("TEST-DSS-SUBJECT", log.mail_id.subject)
-        self.assertIn("Depannage", log.mail_id.subject)
+        # Le libellé du type d'intervention est accentué depuis la version 2.18.
+        self.assertIn(u"Dépannage", log.mail_id.subject)
 
     # ------------------------------------------------------------------
     # Purge des courriels (version 2.15)

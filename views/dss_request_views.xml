@@ -50,6 +50,27 @@
                         statusbar_visible="brouillon,valide_chef,valide_magasin,approuve,cloture"/>
                 </header>
                 <sheet>
+                    <!-- ===================================================== -->
+                    <!-- BANNIÈRE DE REJET                                     -->
+                    <!-- ===================================================== -->
+                    <!-- Le rejet n'apparaît pas dans la barre d'état : ce n'est
+                         pas une ÉTAPE du parcours, mais une SORTIE LATÉRALE.
+                         Odoo applique la même règle à ses propres objets : le
+                         formulaire d'un transfert de stock exclut son état
+                         « cancel » de statusbar_visible.
+                         Conséquence : quand une demande est rejetée, la barre
+                         n'a aucune étape à surligner. Ce bandeau remplace ce
+                         signal manquant, sans dénaturer le parcours.
+                         Les styles sont en ligne : aucune dépendance à une
+                         classe CSS qui pourrait ne pas exister en Odoo 10. -->
+                    <div attrs="{'invisible': [('state', '!=', 'rejete')]}"
+                         style="background-color:#fdecea;border:1px solid #d9534f;
+                                color:#a94442;padding:10px 14px;border-radius:4px;
+                                margin-bottom:14px;font-size:14px;line-height:21px;">
+                        <strong>Cette demande a été rejetée.</strong>
+                        Le motif et l'auteur du rejet figurent dans l'historique,
+                        en bas de cette fiche.
+                    </div>
                     <!-- Le titre n'est masqué que tant que le numéro technique vaut encore /. -->
                     <div class="oe_title" attrs="{'invisible': [('name', '=', '/')]}">
                         <h1><field name="name" readonly="1"/></h1>
